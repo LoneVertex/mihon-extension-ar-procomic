@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        CRITICAL: Mihon discovers extensions by scanning for packages that declare
+        <uses-feature android:name="tachiyomi.extension" />.
+        WITHOUT this, Mihon silently ignores the package entirely.
+        Confirmed from MangaSwat APK manifest analysis (2026-07-29).
+    -->
+    <uses-feature android:name="tachiyomi.extension" />
+
     <application
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name">
-        <!--
-            Meta-data keys confirmed from MangaSwat (working extension, 2026-07-28).
-            Mihon's ExtensionLoader scans for 'tachiyomi.extension.class' — NOT 'source.class'.
-            Using wrong key names was the root cause of the extension not appearing in Mihon.
-        -->
+        android:label="Tachiyomi: ProComic"
+        android:allowBackup="false"
+        android:extractNativeLibs="false">
         <meta-data
             android:name="tachiyomi.extension.class"
             android:value=".ProComic" />

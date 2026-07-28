@@ -17,12 +17,12 @@ kotlin {
 }
 
 android {
-    compileSdk = 37
+    compileSdk = 35
     namespace = "eu.kanade.tachiyomi.extension.ar.procomic"
 
     defaultConfig {
         minSdk = 26
-        targetSdk = 37
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 

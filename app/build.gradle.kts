@@ -59,7 +59,7 @@ dependencies {
     // Tachiyomi/Mihon extension library — provides HttpSource, SManga, SChapter, etc.
     // Group: keiyoushi (not tachiyomiorg). Version is a commit hash for the v16 API.
     // Confirmed: keiyoushi/extensions-source uses this exact coordinate.
-    compileOnly("com.github.keiyoushi:extensions-lib:6e0c96cea8")
+    compileOnly("com.github.keiyoushi:extensions-lib:18a8e26be2")
 
     // Kotlin + Serialization (bundled in APK; not provided by Tachiyomi at runtime)
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")

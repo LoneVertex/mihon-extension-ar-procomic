@@ -7,9 +7,6 @@
             android:name="source.class"
             android:value=".ProComic" />
         <meta-data
-            android:name="source.factory"
-            android:value="eu.kanade.tachiyomi.extension.ar.procomic.ProComicFactory" />
-        <meta-data
             android:name="source.lang"
             android:value="ar" />
         <meta-data

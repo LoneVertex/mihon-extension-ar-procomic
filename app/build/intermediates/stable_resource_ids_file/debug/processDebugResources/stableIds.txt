@@ -1,0 +1,2 @@
+eu.kanade.tachiyomi.extension.ar.procomic:string/source_lang = 0x7f010001
+eu.kanade.tachiyomi.extension.ar.procomic:string/app_name = 0x7f010000

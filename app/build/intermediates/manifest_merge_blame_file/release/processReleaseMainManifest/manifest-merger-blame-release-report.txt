@@ -1,0 +1,45 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="eu.kanade.tachiyomi.extension.ar.procomic"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="35" />
+10
+11    <application android:extractNativeLibs="false" >
+11-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:3:5-19:19
+12        <meta-data
+12-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:4:9-6:41
+13            android:name="source.class"
+13-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:5:13-40
+14            android:value=".ProComic" />
+14-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:6:13-38
+15        <meta-data
+15-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:7:9-9:89
+16            android:name="source.factory"
+16-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:8:13-42
+17            android:value="eu.kanade.tachiyomi.extension.ar.procomic.ProComicFactory" />
+17-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:9:13-86
+18        <meta-data
+18-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:10:9-12:34
+19            android:name="source.lang"
+19-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:11:13-39
+20            android:value="ar" />
+20-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:12:13-31
+21        <meta-data
+21-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:13:9-15:40
+22            android:name="source.name"
+22-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:14:13-39
+23            android:value="ProComic" />
+23-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:15:13-37
+24        <meta-data
+24-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:16:9-18:37
+25            android:name="source.nsfw"
+25-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:17:13-39
+26            android:value="false" />
+26-->/home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/AndroidManifest.xml:18:13-34
+27    </application>
+28
+29</manifest>

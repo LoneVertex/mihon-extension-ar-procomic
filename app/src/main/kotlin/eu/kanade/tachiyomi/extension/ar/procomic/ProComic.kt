@@ -10,6 +10,8 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
+import java.net.URLEncoder
+import java.net.URLDecoder
 
 /**
  * ProComic Tachiyomi/Mihon Extension
@@ -95,11 +97,10 @@ class ProComic : HttpSource() {
     // server-side search. Filter params (type, genre) are passed as URL params since
     // the server may respect them for the listing even if text search is client-only.
     //
-    // We store the query per thread for use in searchMangaParse.
-    private val pendingSearchQuery = ThreadLocal<String>()
+    // We pass the query in the URL fragment so it survives across coroutines.
+    // private val pendingSearchQuery = ThreadLocal<String>()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        pendingSearchQuery.set(query.trim())
         val url = buildString {
             append(baseUrl)
             append("/ar/series?page=$page")
@@ -123,6 +124,7 @@ class ProComic : HttpSource() {
             }
 
             // RSC marker
+            if (query.isNotBlank()) append("#q=${java.net.URLEncoder.encode(query, "UTF-8")}")
             append("&_rsc=src$page")
         }
         return GET(url, headers)
@@ -131,7 +133,7 @@ class ProComic : HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage {
         val body = response.body!!.string()
         val series = ProComicUtils.extractSeriesList(body)
-        val query = pendingSearchQuery.get() ?: ""
+        val query = response.request.url.fragment?.removePrefix("q=")?.let { java.net.URLDecoder.decode(it, "UTF-8") } ?: ""
         val filtered = if (query.isBlank()) {
             series
         } else {

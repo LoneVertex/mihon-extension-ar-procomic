@@ -40,7 +40,11 @@ object ProComicUtils {
      * Filters out type == "novel" (Tachiyomi cannot render prose).
      */
     fun extractSeriesList(body: String): List<ProComicSeriesDto> {
-        val seriesJson = extractJsonArrayAfterKey(body, "initialSeries") ?: return emptyList()
+        val seriesJson = extractJsonArrayAfterKey(body, "initialSeries") ?: if (body.length > 1000) {
+            throw Exception("ProComic: 'initialSeries' key not found in RSC response (${body.length} bytes). Site may have updated.")
+        } else {
+            return emptyList()
+        }
         return try {
             json.decodeFromString<List<ProComicSeriesDto>>(seriesJson)
                 .filter { it.type != "novel" }
@@ -86,7 +90,7 @@ object ProComicUtils {
         // Try "chapters" key first, then "initialChapters"
         val chaptersJson = extractJsonArrayAfterKey(body, "chapters")
             ?: extractJsonArrayAfterKey(body, "initialChapters")
-            ?: return emptyList()
+            ?: throw Exception("ProComic: 'chapters'/'initialChapters' key not found in RSC response. Site may have updated.")
 
         return try {
             json.decodeFromString<List<ProComicChapterDto>>(chaptersJson)
@@ -106,6 +110,7 @@ object ProComicUtils {
      * images are embedded in the RSC response for guest users.
      */
     fun extractPageImages(body: String): List<String> {
+        // Log comment: returning emptyList if no images found, less critical.
         val imagesJson = extractJsonArrayAfterKey(body, "images") ?: return emptyList()
         return try {
             val arr = json.parseToJsonElement(imagesJson)
@@ -117,7 +122,7 @@ object ProComicUtils {
             } else emptyList()
         } catch (e: Exception) {
             // Fallback: regex for CDN URLs
-            Regex(""""(https://cdn\d*\.procomic\.(?:pro|net)/[^"]+)"""")
+            Regex("\"(https://[^\"]+\\.procomic\\.(pro|net)/[^\"]+\\.(avif|webp|jpg|jpeg|png))\"")
                 .findAll(body)
                 .map { it.groupValues[1] }
                 .toList()

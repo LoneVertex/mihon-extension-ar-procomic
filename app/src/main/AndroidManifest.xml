@@ -3,17 +3,25 @@
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name">
+        <!--
+            Meta-data keys confirmed from MangaSwat (working extension, 2026-07-28).
+            Mihon's ExtensionLoader scans for 'tachiyomi.extension.class' — NOT 'source.class'.
+            Using wrong key names was the root cause of the extension not appearing in Mihon.
+        -->
         <meta-data
-            android:name="source.class"
+            android:name="tachiyomi.extension.class"
             android:value=".ProComic" />
         <meta-data
-            android:name="source.lang"
-            android:value="ar" />
-        <meta-data
-            android:name="source.name"
+            android:name="tachiyomix.name"
             android:value="ProComic" />
         <meta-data
-            android:name="source.nsfw"
-            android:value="false" />
+            android:name="tachiyomi.extension.nsfw"
+            android:value="0" />
+        <meta-data
+            android:name="tachiyomix.contentWarning"
+            android:value="0" />
+        <meta-data
+            android:name="tachiyomix.extensionLib"
+            android:value="1.6" />
     </application>
 </manifest>

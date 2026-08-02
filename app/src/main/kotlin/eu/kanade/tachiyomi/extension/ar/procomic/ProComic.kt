@@ -49,24 +49,37 @@ class ProComic : HttpSource() {
         "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 
     /**
-     * Headers required for RSC requests:
-     *   - User-Agent: Mobile Chrome (confirmed working with WAF in Stage 3C)
-     *   - RSC: 1 — triggers Next.js RSC streaming response (text/x-component)
-     *   - Accept-Language: ar,en;q=0.9 — returns Arabic-first content
-     *   - Next-Router-State-Tree: URL-encoded empty router tree for compatibility
+     * Base headers for ALL requests — including WebView navigation.
+     * RSC-specific headers are intentionally excluded here so that WebView
+     * receives a normal text/html response instead of the RSC wire format.
+     *
+     * EVIDENCE (Probe P05, 2026-08-01): Without RSC:1, server returns
+     * text/html (282651B). With RSC:1, server returns text/x-component (169177B).
+     * User screenshot confirmed WebView displayed raw RSC: '1:"$Sreact.fragment"'.
      */
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", mobileUserAgent)
-        .add("RSC", "1")
         .add("Accept-Language", "ar,en;q=0.9")
-        .add("Next-Router-State-Tree", "%5B%22%22%2C%7B%7D%5D")
         .add("Referer", baseUrl)
+
+    /**
+     * Headers for RSC data requests ONLY — never used for WebView navigation.
+     *
+     * RSC:1 is the sole required header to trigger text/x-component responses.
+     * Next-Router-State-Tree is included for spec conformance but confirmed
+     * optional: RSC:1 alone yields a full initialSeries RSC payload.
+     * (Probe P05: RSC:1 only → 169177B with initialSeries; NRST only → HTML.)
+     */
+    private fun rscHeaders(): Headers = headersBuilder()
+        .add("RSC", "1")
+        .add("Next-Router-State-Tree", "%5B%22%22%2C%7B%7D%5D")
+        .build()
 
     // ---- Popular ----
     // Confirmed: /ar/series?_rsc=1 returns 165KB RSC with series listing
     // Sort parameter "popular" is inferred — verify with live test in Task 5
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/ar/series?sort=popular&page=$page&_rsc=pop$page", headers)
+        return GET("$baseUrl/ar/series?sort=popular&page=$page&_rsc=pop$page", rscHeaders())
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
@@ -79,7 +92,7 @@ class ProComic : HttpSource() {
 
     // ---- Latest Updates ----
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/ar/series?sort=latest&page=$page&_rsc=lat$page", headers)
+        return GET("$baseUrl/ar/series?sort=latest&page=$page&_rsc=lat$page", rscHeaders())
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
@@ -127,7 +140,7 @@ class ProComic : HttpSource() {
             if (query.isNotBlank()) append("#q=${java.net.URLEncoder.encode(query, "UTF-8")}")
             append("&_rsc=src$page")
         }
-        return GET(url, headers)
+        return GET(url, rscHeaders())
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -149,7 +162,7 @@ class ProComic : HttpSource() {
     // ---- Series Detail ----
     // manga.url is stored as "/ar/series/{type}/{id}/{slug}" (see toSManga)
     override fun mangaDetailsRequest(manga: SManga): Request {
-        return GET("$baseUrl${manga.url}?_rsc=det", headers)
+        return GET("$baseUrl${manga.url}?_rsc=det", rscHeaders())
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
@@ -182,7 +195,7 @@ class ProComic : HttpSource() {
     //   /ar/series/{type}/{seriesId}/{slug}/{chapterId}/{chapterNumber}
     // CDN enforces publicImageCount (3) server-side for guests.
     override fun pageListRequest(chapter: SChapter): Request {
-        return GET("$baseUrl${chapter.url}?_rsc=pgs", headers)
+        return GET("$baseUrl${chapter.url}?_rsc=pgs", rscHeaders())
     }
 
     override fun pageListParse(response: Response): List<Page> {
@@ -209,11 +222,10 @@ class ProComic : HttpSource() {
     // ---- Image Request ----
     // Add Referer header for CDN image requests.
     override fun imageRequest(page: Page): Request {
+        // headersBuilder() no longer contains RSC headers, so no removeAll() needed.
         val imageHeaders = headersBuilder()
             .set("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
             .set("Referer", "$baseUrl/")
-            .removeAll("RSC")
-            .removeAll("Next-Router-State-Tree")
             .build()
         return GET(page.imageUrl!!, imageHeaders)
     }

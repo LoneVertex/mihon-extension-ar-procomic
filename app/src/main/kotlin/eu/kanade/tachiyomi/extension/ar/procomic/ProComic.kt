@@ -84,9 +84,13 @@ class ProComic : HttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val body = response.body!!.string()
-        val series = ProComicUtils.extractSeriesList(body)
+        val url = response.request.url.toString()
+        ProComicDiag.logResponse("POPULAR", response, body)
+        val series = ProComicUtils.extractSeriesList(body, "POPULAR", url)
         val mangas = series.map { it.toSManga() }
         // Heuristic: if we got a full page of results, assume there's a next page
+        ProComicDiag.logStage("POPULAR", 99,
+            "MangasPage: ${mangas.size} items, hasNextPage=${mangas.size >= 20}")
         return MangasPage(mangas, hasNextPage = mangas.size >= 20)
     }
 
@@ -96,7 +100,14 @@ class ProComic : HttpSource() {
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        return popularMangaParse(response)
+        val body = response.body!!.string()
+        val url = response.request.url.toString()
+        ProComicDiag.logResponse("LATEST", response, body)
+        val series = ProComicUtils.extractSeriesList(body, "LATEST", url)
+        val mangas = series.map { it.toSManga() }
+        ProComicDiag.logStage("LATEST", 99,
+            "MangasPage: ${mangas.size} items, hasNextPage=${mangas.size >= 20}")
+        return MangasPage(mangas, hasNextPage = mangas.size >= 20)
     }
 
     // ---- Search ----
@@ -145,8 +156,14 @@ class ProComic : HttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         val body = response.body!!.string()
-        val series = ProComicUtils.extractSeriesList(body)
-        val query = response.request.url.fragment?.removePrefix("q=")?.let { java.net.URLDecoder.decode(it, "UTF-8") } ?: ""
+        val url = response.request.url.toString()
+        ProComicDiag.logResponse("SEARCH", response, body)
+        val series = ProComicUtils.extractSeriesList(body, "SEARCH", url)
+        val query = response.request.url.fragment
+            ?.removePrefix("q=")
+            ?.let { java.net.URLDecoder.decode(it, "UTF-8") } ?: ""
+        ProComicDiag.logStage("SEARCH", 6,
+            "query=${query.take(50)}, series before text-filter=${series.size}")
         val filtered = if (query.isBlank()) {
             series
         } else {
@@ -156,6 +173,8 @@ class ProComic : HttpSource() {
             }
         }
         val mangas = filtered.map { it.toSManga() }
+        ProComicDiag.logStage("SEARCH", 99,
+            "MangasPage: ${mangas.size} items after text-filter")
         return MangasPage(mangas, hasNextPage = mangas.size >= 20 && query.isBlank())
     }
 
@@ -167,7 +186,9 @@ class ProComic : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val body = response.body!!.string()
-        return ProComicUtils.extractSeriesDetail(body)?.toSManga()
+        val url = response.request.url.toString()
+        ProComicDiag.logResponse("DETAIL", response, body)
+        return ProComicUtils.extractSeriesDetail(body, "DETAIL", url)?.toSManga()
             ?: throw Exception("ProComic: could not parse series details from RSC response")
     }
 
@@ -180,12 +201,14 @@ class ProComic : HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val body = response.body!!.string()
+        val url = response.request.url.toString()
+        ProComicDiag.logResponse("CHAPTERS", response, body)
         // Reconstruct the manga URL from the request URL (remove ?_rsc=det)
         val mangaUrl = response.request.url.toString()
             .removePrefix(baseUrl)
             .substringBefore("?")
 
-        return ProComicUtils.extractChapterList(body).map { dto ->
+        return ProComicUtils.extractChapterList(body, "CHAPTERS", url).map { dto ->
             dto.toSChapter(mangaUrl)
         }
     }
@@ -200,7 +223,10 @@ class ProComic : HttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val body = response.body!!.string()
-        val images = ProComicUtils.extractPageImages(body)
+        val url = response.request.url.toString()
+        ProComicDiag.logResponse("PAGES", response, body)
+        val images = ProComicUtils.extractPageImages(body, "PAGES", url)
+        ProComicDiag.logStage("PAGES", 99, "images found: ${images.size}")
 
         if (images.isEmpty()) {
             // Escalation: no images found in RSC — CDN may require auth.

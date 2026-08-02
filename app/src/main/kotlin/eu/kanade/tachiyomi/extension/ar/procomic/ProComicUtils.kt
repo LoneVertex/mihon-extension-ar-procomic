@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.ar.procomic
 
+import android.util.Log
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonObject
@@ -38,17 +39,74 @@ object ProComicUtils {
      * Field order confirmed: id, title, slug, description, type, status, thumbnail, ...
      *
      * Filters out type == "novel" (Tachiyomi cannot render prose).
+     *
+     * @param diagTag  Logcat stage tag (e.g. "POPULAR"). Empty string suppresses all logging.
+     * @param diagUrl  Request URL for exception context.
      */
-    fun extractSeriesList(body: String): List<ProComicSeriesDto> {
+    fun extractSeriesList(
+        body: String,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): List<ProComicSeriesDto> {
+        val diag = diagTag.isNotEmpty()
+        if (diag) {
+            ProComicDiag.logStage(diagTag, 1,
+                "extractSeriesList: bodyLen=${body.length}, " +
+                "sha256=${ProComicDiag.sha256(body)}")
+        }
+
+        val keyPattern = "\"initialSeries\":["
+        val keyIdx = body.indexOf(keyPattern)
+        if (diag) {
+            if (keyIdx >= 0) {
+                ProComicDiag.logStage(diagTag, 2,
+                    "\"initialSeries\":[ FOUND at index=$keyIdx")
+            } else {
+                ProComicDiag.logStage(diagTag, 2,
+                    "\"initialSeries\":[ NOT FOUND  bodyLen=${body.length}")
+            }
+        }
+
         val seriesJson = extractJsonArrayAfterKey(body, "initialSeries") ?: if (body.length > 1000) {
-            throw Exception("ProComic: 'initialSeries' key not found in RSC response (${body.length} bytes). Site may have updated.")
+            throw Exception(
+                "ProComic: 'initialSeries' key not found in RSC response " +
+                "(${body.length} bytes). Site may have updated."
+            )
         } else {
+            if (diag) ProComicDiag.logStage(diagTag, 3,
+                "body too short (${body.length} chars) — returning emptyList")
             return emptyList()
         }
+
+        if (diag) {
+            ProComicDiag.logStage(diagTag, 3,
+                "extractJsonArray OK: jsonLen=${seriesJson.length}, " +
+                "sha256=${ProComicDiag.sha256(seriesJson)}")
+            ProComicDiag.logStage(diagTag, 3,
+                "json first 200: ${seriesJson.take(200)}")
+        }
+
         return try {
-            json.decodeFromString<List<ProComicSeriesDto>>(seriesJson)
-                .filter { it.type != "novel" }
+            if (diag) ProComicDiag.logStage(diagTag, 4,
+                "decodeFromString<List<ProComicSeriesDto>> START")
+            val decoded = json.decodeFromString<List<ProComicSeriesDto>>(seriesJson)
+            if (diag) ProComicDiag.logStage(diagTag, 4,
+                "decodeFromString SUCCESS: ${decoded.size} items")
+
+            val filtered = decoded.filter { it.type != "novel" }
+            if (diag) {
+                ProComicDiag.logStage(diagTag, 5,
+                    "filter(type!=novel): ${decoded.size} → ${filtered.size} items")
+                filtered.forEachIndexed { i, dto ->
+                    ProComicDiag.logStage(diagTag, 5,
+                        "  [$i] id=${dto.id}, type=${dto.type}, " +
+                        "title=${dto.title.take(40)}")
+                }
+            }
+            filtered
         } catch (e: Exception) {
+            if (diag) ProComicDiag.logException(diagTag,
+                "decodeFromString<List<ProComicSeriesDto>>", diagUrl, e)
             emptyList()
         }
     }
@@ -56,25 +114,62 @@ object ProComicUtils {
     /**
      * Extract series detail from a series detail RSC response.
      * On detail pages, a single series object (not array) is embedded as a prop.
+     *
+     * @param diagTag  Logcat stage tag (e.g. "DETAIL"). Empty string suppresses logging.
+     * @param diagUrl  Request URL for exception context.
      */
-    fun extractSeriesDetail(body: String): ProComicSeriesDto? {
+    fun extractSeriesDetail(
+        body: String,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): ProComicSeriesDto? {
+        val diag = diagTag.isNotEmpty()
+        if (diag) ProComicDiag.logStage(diagTag, 1,
+            "extractSeriesDetail: bodyLen=${body.length}")
+
         // Try array extraction first (some detail pages include the full series object in a list)
-        val listResult = extractSeriesList(body)
-        if (listResult.isNotEmpty()) return listResult.first()
+        val listResult = extractSeriesList(body, diagTag, diagUrl)
+        if (listResult.isNotEmpty()) {
+            if (diag) ProComicDiag.logStage(diagTag, 2,
+                "array path: found ${listResult.size} items, returning first")
+            return listResult.first()
+        }
+        if (diag) ProComicDiag.logStage(diagTag, 2,
+            "array path empty — trying single-object fallback")
 
         // Fallback: find the first occurrence of "id":<int>,"title":"...","slug":"...","type":"..."
         // and extract the surrounding JSON object
         val idx = body.indexOf("\"id\":")
-        if (idx < 0) return null
+        if (idx < 0) {
+            if (diag) ProComicDiag.logStage(diagTag, 3,
+                "\"id\": NOT FOUND — returning null")
+            return null
+        }
 
         // Find the opening brace of the object containing this id
         val start = body.lastIndexOf("{", idx).takeIf { it >= 0 } ?: return null
-        val objJson = extractJsonObject(body, start) ?: return null
+        if (diag) ProComicDiag.logStage(diagTag, 3,
+            "object brace at index=$start (id-key at $idx)")
+
+        val objJson = extractJsonObject(body, start) ?: run {
+            if (diag) ProComicDiag.logStage(diagTag, 3,
+                "extractJsonObject returned null")
+            return null
+        }
+        if (diag) ProComicDiag.logStage(diagTag, 3,
+            "extractJsonObject OK: len=${objJson.length}")
 
         return try {
-            json.decodeFromString<ProComicSeriesDto>(objJson)
+            if (diag) ProComicDiag.logStage(diagTag, 4,
+                "decodeFromString<ProComicSeriesDto> START")
+            val dto = json.decodeFromString<ProComicSeriesDto>(objJson)
                 .takeIf { it.type != "novel" }
+            if (diag) ProComicDiag.logStage(diagTag, 4,
+                "decodeFromString result: id=${dto?.id}, type=${dto?.type}")
+            dto
         } catch (e: Exception) {
+            if (diag) ProComicDiag.logException(diagTag,
+                "decodeFromString<ProComicSeriesDto>", diagUrl, e)
             null
         }
     }
@@ -85,18 +180,55 @@ object ProComicUtils {
      * Extract the chapter list from a series detail RSC response.
      * Chapters appear in "chapters":[{...},...] or "initialChapters":[...] props.
      * Only returns chapters with language == "AR".
+     *
+     * @param diagTag  Logcat stage tag (e.g. "CHAPTERS"). Empty string suppresses logging.
+     * @param diagUrl  Request URL for exception context.
      */
-    fun extractChapterList(body: String): List<ProComicChapterDto> {
+    fun extractChapterList(
+        body: String,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): List<ProComicChapterDto> {
+        val diag = diagTag.isNotEmpty()
+        if (diag) ProComicDiag.logStage(diagTag, 1,
+            "extractChapterList: bodyLen=${body.length}")
+
+        val chapIdx = body.indexOf("\"chapters\":[")
+        val initIdx = body.indexOf("\"initialChapters\":[")
+        if (diag) {
+            ProComicDiag.logStage(diagTag, 2, "\"chapters\":[ index=$chapIdx")
+            ProComicDiag.logStage(diagTag, 2, "\"initialChapters\":[ index=$initIdx")
+        }
+
         // Try "chapters" key first, then "initialChapters"
         val chaptersJson = extractJsonArrayAfterKey(body, "chapters")
             ?: extractJsonArrayAfterKey(body, "initialChapters")
-            ?: throw Exception("ProComic: 'chapters'/'initialChapters' key not found in RSC response. Site may have updated.")
+            ?: throw Exception(
+                "ProComic: 'chapters'/'initialChapters' key not found in RSC response. " +
+                "Site may have updated."
+            )
+
+        if (diag) ProComicDiag.logStage(diagTag, 3,
+            "chaptersJson: len=${chaptersJson.length}")
 
         return try {
-            json.decodeFromString<List<ProComicChapterDto>>(chaptersJson)
-                .filter { it.language == "AR" }
-                .sortedByDescending { it.chapterNumber.toFloatOrNull() ?: 0f }
+            if (diag) ProComicDiag.logStage(diagTag, 4,
+                "decodeFromString<List<ProComicChapterDto>> START")
+            val decoded = json.decodeFromString<List<ProComicChapterDto>>(chaptersJson)
+            if (diag) ProComicDiag.logStage(diagTag, 4,
+                "decodeFromString: ${decoded.size} total")
+
+            val arOnly = decoded.filter { it.language == "AR" }
+            if (diag) ProComicDiag.logStage(diagTag, 5,
+                "AR filter: ${decoded.size} → ${arOnly.size}")
+
+            val sorted = arOnly.sortedByDescending { it.chapterNumber.toFloatOrNull() ?: 0f }
+            if (diag) ProComicDiag.logStage(diagTag, 6,
+                "returning ${sorted.size} chapters")
+            sorted
         } catch (e: Exception) {
+            if (diag) ProComicDiag.logException(diagTag,
+                "decodeFromString<List<ProComicChapterDto>>", diagUrl, e)
             emptyList()
         }
     }
@@ -108,24 +240,58 @@ object ProComicUtils {
      * Images appear as "images":["url1","url2",...] in the RSC stream.
      * CDN enforces the publicImageCount limit server-side — only the allowed
      * images are embedded in the RSC response for guest users.
+     *
+     * @param diagTag  Logcat stage tag (e.g. "PAGES"). Empty string suppresses logging.
+     * @param diagUrl  Request URL for exception context.
      */
-    fun extractPageImages(body: String): List<String> {
-        // Log comment: returning emptyList if no images found, less critical.
-        val imagesJson = extractJsonArrayAfterKey(body, "images") ?: return emptyList()
+    fun extractPageImages(
+        body: String,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): List<String> {
+        val diag = diagTag.isNotEmpty()
+        val imagesKeyIdx = body.indexOf("\"images\":[")
+        if (diag) ProComicDiag.logStage(diagTag, 1,
+            "extractPageImages: bodyLen=${body.length}, " +
+            "\"images\":[ at=$imagesKeyIdx")
+
+        val imagesJson = extractJsonArrayAfterKey(body, "images") ?: run {
+            if (diag) ProComicDiag.logStage(diagTag, 2,
+                "\"images\":[ NOT FOUND — returning emptyList")
+            return emptyList()
+        }
+        if (diag) ProComicDiag.logStage(diagTag, 2,
+            "imagesJson: len=${imagesJson.length}, " +
+            "first100=${imagesJson.take(100)}")
+
         return try {
             val arr = json.parseToJsonElement(imagesJson)
             if (arr is JsonArray) {
-                arr.mapNotNull { element ->
+                val urls = arr.mapNotNull { element ->
                     element.jsonPrimitive.takeIf { it.isString }?.content
                         ?.takeIf { it.startsWith("https://") }
                 }
-            } else emptyList()
+                if (diag) ProComicDiag.logStage(diagTag, 3,
+                    "parsed ${urls.size} image URLs")
+                urls
+            } else {
+                if (diag) ProComicDiag.logStage(diagTag, 3,
+                    "imagesJson is not a JsonArray")
+                emptyList()
+            }
         } catch (e: Exception) {
+            if (diag) ProComicDiag.logException(diagTag,
+                "parseToJsonElement(images)", diagUrl, e)
             // Fallback: regex for CDN URLs
-            Regex("\"(https://[^\"]+\\.procomic\\.(pro|net)/[^\"]+\\.(avif|webp|jpg|jpeg|png))\"")
+            val fallback = Regex(
+                "\"(https://[^\"]+\\.procomic\\.(pro|net)/[^\"]+\\.(avif|webp|jpg|jpeg|png))\""
+            )
                 .findAll(body)
                 .map { it.groupValues[1] }
                 .toList()
+            if (diag) ProComicDiag.logStage(diagTag, 3,
+                "regex fallback: ${fallback.size} URLs")
+            fallback
         }
     }
 

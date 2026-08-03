@@ -158,9 +158,13 @@ class ProComic : HttpSource() {
                 }
             }
 
-            // RSC marker
-            if (query.isNotBlank()) append("#q=${java.net.URLEncoder.encode(query, "UTF-8")}")
+            // RSC cache-buster MUST come before the # fragment.
+            // If placed after #, it becomes part of the fragment string and
+            // contaminates the query recovered in searchMangaParse.
+            // Correct: /ar/series?page=1&_rsc=src1#q=assassin
+            // Wrong:   /ar/series?page=1#q=assassin&_rsc=src1  ← fragment = "q=assassin&_rsc=src1"
             append("&_rsc=src$page")
+            if (query.isNotBlank()) append("#q=${java.net.URLEncoder.encode(query, "UTF-8")}")
         }
         return GET(url, rscHeaders())
     }

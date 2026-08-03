@@ -7,11 +7,12 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
-import java.net.URLEncoder
 import java.net.URLDecoder
+import java.net.URLEncoder
 
 /**
  * ProComic Tachiyomi/Mihon Extension
@@ -203,24 +204,74 @@ class ProComic : HttpSource() {
     }
 
     // ---- Chapter List ----
-    // Chapter list is embedded in the same RSC response as series detail.
-    // We reuse the mangaDetailsRequest endpoint.
+    // ARCHITECTURE NOTE (2026-08-03):
+    // Two chapter delivery mechanisms exist on procomic.net:
+    //
+    // A) New-style series (approx id >= 686):
+    //    URL: /ar/series/{type}/{id}/{slug}   RSC has "initialChapters":[...]
+    //
+    // B) Old-style series (approx id < 686):
+    //    URL: /ar/series/{type}/{id}/{slug}   → RSC REDIRECT to /ar/{slug}-{id}
+    //    The redirect target RSC has NO initialChapters. Chapters are at REST API.
+    //
+    // REST API solution: GET /api/chapters?contentId={seriesId}
+    //   • Returns {chapters:[...ProComicChapterDto...], total:N, hasMore:bool}
+    //   • Page size = 20; pagination via &page=N
+    //   • Works for ALL series (old and new style)
+    //   • Confirmed for series 676 (34 chaps, hasMore=true) and 690 (4 chaps)
+    //
+    // manga.url is embedded as &_u= so chapterListParse can build chapter URLs.
     override fun chapterListRequest(manga: SManga): Request {
-        return mangaDetailsRequest(manga)
+        val seriesId = manga.url.split("/").getOrNull(4) ?: ""
+        val encodedMangaUrl = java.net.URLEncoder.encode(manga.url, "UTF-8")
+        return GET(
+            "$baseUrl/api/chapters?contentId=$seriesId&_u=$encodedMangaUrl",
+            headers, // REST API — no RSC headers
+        )
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val body = response.body!!.string()
-        val url = response.request.url.toString()
-        ProComicDiag.logResponse("CHAPTERS", response, body)
-        // Reconstruct the manga URL from the request URL (remove ?_rsc=det)
-        val mangaUrl = response.request.url.toString()
-            .removePrefix(baseUrl)
-            .substringBefore("?")
+        val url = response.request.url
+        val mangaUrl = url.queryParameter("_u")
+            ?.let { java.net.URLDecoder.decode(it, "UTF-8") } ?: ""
+        val contentId = url.queryParameter("contentId") ?: ""
 
-        return ProComicUtils.extractChapterList(body, "CHAPTERS", url).map { dto ->
-            dto.toSChapter(mangaUrl)
+        // Parse first page
+        val firstPage = ProComicUtils.json.decodeFromString<ProComicChapterListResponse>(
+            response.body!!.string()
+        )
+        ProComicDiag.logStage("CHAPTERS", 1,
+            "REST API: total=${firstPage.total}, page1=${firstPage.chapters.size}, " +
+            "hasMore=${firstPage.hasMore}")
+
+        val all = firstPage.chapters.toMutableList()
+
+        // Fetch remaining pages while hasMore == true
+        var page = 2
+        var hasMore = firstPage.hasMore
+        while (hasMore) {
+            val next = client.newCall(
+                GET("$baseUrl/api/chapters?contentId=$contentId&page=$page", headers)
+            ).execute()
+            val nextData = ProComicUtils.json.decodeFromString<ProComicChapterListResponse>(
+                next.body!!.string()
+            )
+            ProComicDiag.logStage("CHAPTERS", page,
+                "page=$page: ${nextData.chapters.size} chapters, hasMore=${nextData.hasMore}")
+            all.addAll(nextData.chapters)
+            hasMore = nextData.hasMore
+            page++
+            if (page > 50) break // safety guard against infinite loop
         }
+
+        // Show all approved chapters regardless of language.
+        // NOTE: procomic.net currently publishes EN chapters first, AR may follow.
+        // Filtering to AR-only would result in 0 chapters for most series.
+        val approved = all.filter { it.status == "approved" }
+        ProComicDiag.logStage("CHAPTERS", 99,
+            "total fetched=${all.size}, approved=${approved.size}, mangaUrl=$mangaUrl")
+
+        return approved.map { it.toSChapter(mangaUrl) }
     }
 
     // ---- Page List ----

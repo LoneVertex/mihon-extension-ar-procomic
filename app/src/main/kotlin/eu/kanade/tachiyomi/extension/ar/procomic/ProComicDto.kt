@@ -112,8 +112,12 @@ data class ProComicExclusiveConfig(
 )
 
 /**
- * Chapter DTO — from chapter list embedded in series detail RSC.
+ * Chapter DTO — used by BOTH:
+ *   1. RSC parsing (key "initialChapters" for new-style series >= id ~686)
+ *   2. REST API response: GET /api/chapters?contentId={id}
+ *
  * Language values observed: "AR", "EN", "ZH"
+ * NOTE: many series only have "EN" chapters — the AR filter was removed.
  */
 @Serializable
 data class ProComicChapterDto(
@@ -128,6 +132,20 @@ data class ProComicChapterDto(
     @SerialName("cdn_path") val cdnPath: String? = null,
     val metadata: ProComicChapterMetadata? = null,
     @SerialName("created_at") val createdAt: String? = null,
+)
+
+/**
+ * Response wrapper for REST API: GET /api/chapters?contentId={seriesId}[&page=N]
+ *
+ * Confirmed structure (2026-08-03):
+ *   {"chapters": [...ProComicChapterDto...], "total": 34, "hasMore": true}
+ * Page size appears to be 20. Pagination required for series with > 20 chapters.
+ */
+@Serializable
+data class ProComicChapterListResponse(
+    val chapters: List<ProComicChapterDto> = emptyList(),
+    val total: Int = 0,
+    val hasMore: Boolean = false,
 )
 
 @Serializable

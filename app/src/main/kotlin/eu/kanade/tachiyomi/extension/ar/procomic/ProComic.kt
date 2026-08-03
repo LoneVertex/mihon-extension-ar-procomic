@@ -78,10 +78,12 @@ class ProComic : HttpSource() {
         .build()
 
     // ---- Popular ----
-    // Confirmed: /ar/series?_rsc=1 returns 165KB RSC with series listing
-    // Sort parameter "popular" is inferred — verify with live test in Task 5
+    // CONFIRMED 2026-08-02: the server ignores sort= and page= — it always returns all
+    // series (currently 18 total, 14 non-novel) regardless of query params.
+    // sort=popular is kept for forward-compatibility in case the server adds support.
+    // Client-side sort: Popular = most recently ADDED (id descending).
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/ar/series?sort=popular&page=$page&_rsc=pop$page", rscHeaders())
+        return GET("$baseUrl/ar/series?_rsc=pop$page", rscHeaders())
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
@@ -89,16 +91,20 @@ class ProComic : HttpSource() {
         val url = response.request.url.toString()
         ProComicDiag.logResponse("POPULAR", response, body)
         val series = ProComicUtils.extractSeriesList(body, "POPULAR", url)
-        val mangas = series.map { it.toSManga() }
-        // Heuristic: if we got a full page of results, assume there's a next page
+        // Sort newest series (highest id) first as a proxy for "popular" on a new site
+        val sorted = series.sortedByDescending { it.id }
+        val mangas = sorted.map { it.toSManga() }
+        // Server returns all series in a single page — never request page 2
         ProComicDiag.logStage("POPULAR", 99,
-            "MangasPage: ${mangas.size} items, hasNextPage=${mangas.size >= 20}")
-        return MangasPage(mangas, hasNextPage = mangas.size >= 20)
+            "MangasPage: ${mangas.size} items, hasNextPage=false (server ignores page param)")
+        return MangasPage(mangas, hasNextPage = false)
     }
 
     // ---- Latest Updates ----
+    // Client-side sort: Latest = most recently UPDATED (updatedAt descending).
+    // This gives visual differentiation from Popular despite the same server payload.
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/ar/series?sort=latest&page=$page&_rsc=lat$page", rscHeaders())
+        return GET("$baseUrl/ar/series?_rsc=lat$page", rscHeaders())
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
@@ -106,10 +112,12 @@ class ProComic : HttpSource() {
         val url = response.request.url.toString()
         ProComicDiag.logResponse("LATEST", response, body)
         val series = ProComicUtils.extractSeriesList(body, "LATEST", url)
-        val mangas = series.map { it.toSManga() }
+        // Sort most recently updated series first (ISO-8601 strings sort lexicographically)
+        val sorted = series.sortedByDescending { it.updatedAt ?: "" }
+        val mangas = sorted.map { it.toSManga() }
         ProComicDiag.logStage("LATEST", 99,
-            "MangasPage: ${mangas.size} items, hasNextPage=${mangas.size >= 20}")
-        return MangasPage(mangas, hasNextPage = mangas.size >= 20)
+            "MangasPage: ${mangas.size} items, hasNextPage=false")
+        return MangasPage(mangas, hasNextPage = false)
     }
 
     // ---- Search ----

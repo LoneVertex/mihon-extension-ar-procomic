@@ -144,7 +144,7 @@ data class ProComicChapterDto(
 @Serializable
 data class ProComicChapterListResponse(
     val chapters: List<ProComicChapterDto> = emptyList(),
-    val total: Int = 0,
+    val total: Int? = null,      // server currently returns null, not an int
     val hasMore: Boolean = false,
 )
 

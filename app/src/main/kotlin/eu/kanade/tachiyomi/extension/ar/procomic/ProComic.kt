@@ -16,9 +16,11 @@ import java.net.URLDecoder
 /**
  * ProComic Tachiyomi/Mihon Extension
  *
- * Source: procomic.pro (Arabic manga/manhwa aggregator)
+ * Source: procomic.net (Arabic manga/manhwa aggregator)
  * Platform: Custom Next.js App Router (RSC streaming), internal brand "ProChan"
- * Previously known as: prochan.net → procomic.net → procomic.pro
+ * Domain history: prochan.net → procomic.net → procomic.pro → procomic.net
+ *   procomic.pro now returns HTTP 410 for all series detail pages; canonical domain
+ *   reverted to procomic.net (confirmed 2026-08-02 via live RSC probe).
  *
  * Architecture: HttpSource with RSC (React Server Components) stream parsing.
  *   All data is fetched via RSC requests (RSC: 1 header + ?_rsc= query param),
@@ -38,7 +40,7 @@ import java.net.URLDecoder
 class ProComic : HttpSource() {
 
     override val name = "ProComic"
-    override val baseUrl = "https://procomic.pro"
+    override val baseUrl = "https://procomic.net"
     override val lang = "ar"
     override val supportsLatest = true
 

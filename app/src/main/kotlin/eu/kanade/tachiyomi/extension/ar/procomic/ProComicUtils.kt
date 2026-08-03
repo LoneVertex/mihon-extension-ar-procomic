@@ -127,8 +127,17 @@ object ProComicUtils {
         if (diag) ProComicDiag.logStage(diagTag, 1,
             "extractSeriesDetail: bodyLen=${body.length}")
 
-        // Try array extraction first (some detail pages include the full series object in a list)
-        val listResult = extractSeriesList(body, diagTag, diagUrl)
+        // Try array extraction first (some detail pages include the full series object in a list).
+        // Wrapped in try-catch because extractSeriesList throws when it sees a large RSC body
+        // that doesn't have 'initialSeries' — which is EXPECTED for detail pages (they embed
+        // 'initialChapters' instead). We must not propagate that throw here.
+        val listResult = try {
+            extractSeriesList(body, diagTag, diagUrl)
+        } catch (e: Exception) {
+            if (diag) ProComicDiag.logStage(diagTag, 2,
+                "extractSeriesList threw (expected on detail pages): ${e.message?.take(80)}")
+            emptyList()
+        }
         if (listResult.isNotEmpty()) {
             if (diag) ProComicDiag.logStage(diagTag, 2,
                 "array path: found ${listResult.size} items, returning first")
@@ -200,11 +209,12 @@ object ProComicUtils {
             ProComicDiag.logStage(diagTag, 2, "\"initialChapters\":[ index=$initIdx")
         }
 
-        // Try "chapters" key first, then "initialChapters"
-        val chaptersJson = extractJsonArrayAfterKey(body, "chapters")
-            ?: extractJsonArrayAfterKey(body, "initialChapters")
+        // Try "initialChapters" first (confirmed key on procomic.net detail RSC as of 2026-08-02),
+        // then fall back to "chapters" for any future API changes.
+        val chaptersJson = extractJsonArrayAfterKey(body, "initialChapters")
+            ?: extractJsonArrayAfterKey(body, "chapters")
             ?: throw Exception(
-                "ProComic: 'chapters'/'initialChapters' key not found in RSC response. " +
+                "ProComic: 'initialChapters'/'chapters' key not found in RSC response. " +
                 "Site may have updated."
             )
 

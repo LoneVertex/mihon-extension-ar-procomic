@@ -123,22 +123,20 @@ class ProComic : HttpSource() {
 
     // ---- Search ----
     //
-    // EVIDENCE: Stage 5 verification confirmed that procomic.pro search is fully client-side.
-    // RSC requests with ?search=hunter always return 0 bytes regardless of Next-Router-State-Tree.
-    // The Next.js App Router does NOT server-render search results for this route.
+    // EVIDENCE: Stage 6 browser network investigation confirmed that procomic.net uses
+    // a dedicated server-side search REST endpoint:
+    // GET /api/public/series/search?status=approved&limit=18&page={page}&sort=latest&search={query}
     //
-    // APPROACH: Fetch the full series RSC listing (same as popular/latest), then filter
-    // client-side by title substring match. This is a valid fallback for sites without
-    // server-side search. Filter params (type, genre) are passed as URL params since
-    // the server may respect them for the listing even if text search is client-only.
+    // Type filter is supported server-side via &type={manga|manhwa|manhua}.
     //
-    // We pass the query in the URL fragment so it survives across coroutines.
-    // private val pendingSearchQuery = ThreadLocal<String>()
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = buildString {
             append(baseUrl)
-            append("/ar/series?page=$page")
+            append("/api/public/series/search?status=approved&limit=18&page=$page&sort=latest")
+
+            val effectiveQuery = query.trim().ifBlank { "a" }
+            append("&search=")
+            append(java.net.URLEncoder.encode(effectiveQuery, "UTF-8"))
 
             filters.forEach { filter ->
                 when (filter) {
@@ -148,49 +146,30 @@ class ProComic : HttpSource() {
                             append(filter.typeValues[filter.state])
                         }
                     }
-                    is GenreFilter -> {
-                        if (filter.state > 0) {
-                            append("&genre=")
-                            append(filter.genreValues[filter.state])
-                        }
-                    }
                     else -> {}
                 }
             }
-
-            // RSC cache-buster MUST come before the # fragment.
-            // If placed after #, it becomes part of the fragment string and
-            // contaminates the query recovered in searchMangaParse.
-            // Correct: /ar/series?page=1&_rsc=src1#q=assassin
-            // Wrong:   /ar/series?page=1#q=assassin&_rsc=src1  ← fragment = "q=assassin&_rsc=src1"
-            append("&_rsc=src$page")
-            if (query.isNotBlank()) append("#q=${java.net.URLEncoder.encode(query, "UTF-8")}")
         }
-        return GET(url, rscHeaders())
+        return GET(url, headers)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
         val body = response.body!!.string()
         val url = response.request.url.toString()
         ProComicDiag.logResponse("SEARCH", response, body)
-        val series = ProComicUtils.extractSeriesList(body, "SEARCH", url)
-        val query = response.request.url.fragment
-            ?.removePrefix("q=")
-            ?.let { java.net.URLDecoder.decode(it, "UTF-8") } ?: ""
-        ProComicDiag.logStage("SEARCH", 6,
-            "query=${query.take(50)}, series before text-filter=${series.size}")
-        val filtered = if (query.isBlank()) {
-            series
-        } else {
-            series.filter { dto ->
-                dto.title.contains(query, ignoreCase = true) ||
-                dto.slug.replace("-", " ").contains(query, ignoreCase = true)
-            }
-        }
-        val mangas = filtered.map { it.toSManga() }
+
+        val searchResponse = ProComicUtils.json.decodeFromString<ProComicSearchResponse>(body)
+        val nonNovel = searchResponse.data.filter { it.type != "novel" }
+        val mangas = nonNovel.map { it.toSManga() }
+
+        val currentPage = searchResponse.meta?.page ?: 1
+        val totalPages = searchResponse.meta?.pages ?: 1
+        val hasNextPage = currentPage < totalPages
+
         ProComicDiag.logStage("SEARCH", 99,
-            "MangasPage: ${mangas.size} items after text-filter")
-        return MangasPage(mangas, hasNextPage = mangas.size >= 20 && query.isBlank())
+            "MangasPage: ${mangas.size} items (filtered from ${searchResponse.data.size}), hasNextPage=$hasNextPage (page $currentPage of $totalPages)")
+
+        return MangasPage(mangas, hasNextPage = hasNextPage)
     }
 
     // ---- Series Detail ----
@@ -333,7 +312,10 @@ class ProComic : HttpSource() {
         // URL pattern: /ar/series/{type}/{id}/{slug}
         url = "/ar/series/$type/$id/$slug"
         title = this@toSManga.title
-        thumbnail_url = this@toSManga.thumbnail ?: this@toSManga.coverImage
+        thumbnail_url = this@toSManga.coverImage?.takeIf { it.startsWith("http") }
+            ?: this@toSManga.thumbnail?.takeIf { it.startsWith("http") }
+            ?: this@toSManga.thumbnail?.let { "https://app.procomic.net$it" }
+            ?: this@toSManga.coverImage
 
         // Use Arabic description if available, then English, then direct description field
         description = this@toSManga.metadata?.descriptions?.ar

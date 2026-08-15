@@ -58,6 +58,20 @@ private object StringOrListSerializer : KSerializer<String?> {
  */
 
 @Serializable
+data class ProComicSearchResponse(
+    val data: List<ProComicSeriesDto> = emptyList(),
+    val meta: ProComicSearchMeta? = null,
+)
+
+@Serializable
+data class ProComicSearchMeta(
+    val total: Int? = null,
+    val page: Int = 1,
+    val limit: Int = 18,
+    val pages: Int = 1,
+)
+
+@Serializable
 data class ProComicSeriesListResponse(
     val initialSeries: List<ProComicSeriesDto> = emptyList(),
     val total: Int = 0,
@@ -73,7 +87,6 @@ data class ProComicSeriesDto(
     val status: String? = null,
     val thumbnail: String? = null,
     @SerialName("coverImage") val coverImage: String? = null,
-    @SerialName("coverImageApp") val coverImageApp: String? = null,
     val metadata: ProComicSeriesMetadata? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,

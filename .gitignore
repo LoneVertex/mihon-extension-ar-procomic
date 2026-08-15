@@ -1,13 +1,29 @@
+# Gradle & Build Artifacts
+.gradle/
+build/
+**/build/
+.kotlin/
+*.apk
+*.aab
+*.flat
+*.dex
+*.class
+output-metadata.json
+
+# IDE & OS Files
 *.iml
-.gradle
-/local.properties
-/.idea
+.idea/
 .DS_Store
-/build
 /captures
 .externalNativeBuild
 .cxx
+
+# Local Environment & Configurations
+/local.properties
 local.properties
-*.apk
-*.aab
+
+# Temporary / Session Files
 *.bak
+*.log
+SESSION_STATE.json
+SESSION_TRANSFER.md

@@ -1,7 +1,0 @@
-eu.kanade.tachiyomi.extension.ar.procomic.app-pngs-0 /home/lonevertex/Documents/Projects/ProComic Extension/app/build/generated/res/pngs/release
-eu.kanade.tachiyomi.extension.ar.procomic.app-resValues-1 /home/lonevertex/Documents/Projects/ProComic Extension/app/build/generated/res/resValues/release
-eu.kanade.tachiyomi.extension.ar.procomic.app-packageReleaseResources-2 /home/lonevertex/Documents/Projects/ProComic Extension/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
-eu.kanade.tachiyomi.extension.ar.procomic.app-packageReleaseResources-3 /home/lonevertex/Documents/Projects/ProComic Extension/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
-eu.kanade.tachiyomi.extension.ar.procomic.app-release-4 /home/lonevertex/Documents/Projects/ProComic Extension/app/build/intermediates/merged_res/release/mergeReleaseResources
-eu.kanade.tachiyomi.extension.ar.procomic.app-main-5 /home/lonevertex/Documents/Projects/ProComic Extension/app/src/main/res
-eu.kanade.tachiyomi.extension.ar.procomic.app-release-6 /home/lonevertex/Documents/Projects/ProComic Extension/app/src/release/res

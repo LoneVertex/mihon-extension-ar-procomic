@@ -31,7 +31,7 @@ jobs:
         run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
 
       - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: procomic-extension-debug
           path: app/build/outputs/apk/debug/*.apk

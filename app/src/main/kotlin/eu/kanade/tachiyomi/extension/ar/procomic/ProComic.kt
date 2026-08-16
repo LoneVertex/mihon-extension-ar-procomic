@@ -258,26 +258,43 @@ class ProComic : HttpSource() {
     }
 
     // ---- Page List ----
-    // chapter.url stores the full reader path:
-    //   /ar/series/{type}/{seriesId}/{slug}/{chapterId}/{chapterNumber}
-    // CDN enforces publicImageCount (3) server-side for guests.
+    // Canonical ProComic reader route:
+    // https://procomic.pro/en/chapter/{slug}-{chapterNumber}-{chapterId}
     override fun pageListRequest(chapter: SChapter): Request {
-        return GET("$baseUrl${chapter.url}?_rsc=pgs", rscHeaders())
+        val chapterUrl = chapter.url.trim()
+        val canonicalUrl = when {
+            chapterUrl.startsWith("http") -> chapterUrl
+            chapterUrl.startsWith("/en/chapter/") || chapterUrl.startsWith("/ar/chapter/") -> {
+                "https://procomic.pro$chapterUrl"
+            }
+            else -> {
+                // chapter.url format: /ar/series/{type}/{seriesId}/{slug}/{chapterId}/{chapterNumber}
+                val parts = chapterUrl.trim('/').split('/')
+                if (parts.size >= 7) {
+                    val slug = parts[4]
+                    val chapterId = parts[5]
+                    val chapterNumber = parts[6]
+                    "https://procomic.pro/en/chapter/$slug-$chapterNumber-$chapterId"
+                } else if (parts.size >= 6) {
+                    val slug = parts[3]
+                    val chapterId = parts[4]
+                    val chapterNumber = parts[5]
+                    "https://procomic.pro/en/chapter/$slug-$chapterNumber-$chapterId"
+                } else {
+                    "https://procomic.pro$chapterUrl"
+                }
+            }
+        }
+        return GET(canonicalUrl, headers)
     }
 
     override fun pageListParse(response: Response): List<Page> {
         val body = response.body!!.string()
         val url = response.request.url.toString()
         ProComicDiag.logResponse("PAGES", response, body)
+
         val images = ProComicUtils.extractPageImages(body, "PAGES", url)
         ProComicDiag.logStage("PAGES", 99, "images found: ${images.size}")
-
-        if (images.isEmpty()) {
-            // Escalation: no images found in RSC — CDN may require auth.
-            // Return empty list; Tachiyomi will show empty chapter.
-            // Follow-up: implement WebView session cookie propagation.
-            return emptyList()
-        }
 
         return images.mapIndexed { index, imageUrl ->
             Page(index, imageUrl = imageUrl)

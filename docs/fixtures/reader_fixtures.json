@@ -1,0 +1,38 @@
+{
+  "fixtures": [
+    {
+      "name": "Fixture A: Series 690 Chapter 50821 (Valid Reader HTML)",
+      "seriesId": 690,
+      "chapterId": 50821,
+      "canonicalUrl": "https://procomic.pro/en/chapter/after-severing-our-ties-all-my-summons-became-dark-creatures-0-50821",
+      "expectedImageCount": 3,
+      "expectedImages": [
+        "https://app.procomic.pro/chapters/690/50821/p1/1785188000210-bp3wk0x3m06-4086df2c7bf6-desktop.avif",
+        "https://app.procomic.pro/chapters/690/50821/p2/1785188081002-2mzaao9xdsh-37fd56b92665-desktop.avif",
+        "https://app.procomic.pro/chapters/690/50821/p3/1785188091276-8luu5gddfhl-a55b69f3cd25-desktop.avif"
+      ]
+    },
+    {
+      "name": "Series 693 Chapter 51606 (Valid Reader HTML)",
+      "seriesId": 693,
+      "chapterId": 51606,
+      "canonicalUrl": "https://procomic.pro/en/chapter/urban-rebirth-supreme-sovereign-of-the-immortal-realm-2-51606",
+      "expectedImageCount": 3,
+      "expectedImages": [
+        "https://app.procomic.pro/chapters/693/51606/p1/1786163402626-xjr573mzw1k-7f28c459998c-desktop.avif",
+        "https://app.procomic.pro/chapters/693/51606/p2/1786163402638-zb39zmahnx-8a27ae897454-desktop.avif",
+        "https://app.procomic.pro/chapters/693/51606/p3/1786163402639-jprlt13y49-39dbe021f4fa-desktop.avif"
+      ]
+    },
+    {
+      "name": "Fixture B: Missing appImages Manifest",
+      "sampleSnippet": "<html><body><div>Loading...</div></body></html>",
+      "expectedBehavior": "Explicit Exception: No 'appImages' manifest found"
+    },
+    {
+      "name": "Fixture C: Non-Reader HTML with Unrelated Assets",
+      "sampleSnippet": "<html><body><img src=\"https://procomic.pro/logo.png\" /></body></html>",
+      "expectedBehavior": "Explicit Exception: No 'appImages' manifest found"
+    }
+  ]
+}

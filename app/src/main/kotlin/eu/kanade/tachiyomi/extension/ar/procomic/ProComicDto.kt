@@ -58,6 +58,12 @@ private object StringOrListSerializer : KSerializer<String?> {
  */
 
 @Serializable
+data class ProComicAppImage(
+    val mobile: String? = null,
+    val desktop: String? = null,
+)
+
+@Serializable
 data class ProComicSearchResponse(
     val data: List<ProComicSeriesDto> = emptyList(),
     val meta: ProComicSearchMeta? = null,

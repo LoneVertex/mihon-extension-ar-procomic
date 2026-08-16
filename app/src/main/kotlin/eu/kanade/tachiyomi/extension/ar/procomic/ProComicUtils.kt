@@ -246,13 +246,13 @@ object ProComicUtils {
     // ---- Page Image Extraction ----
 
     /**
-     * Extract page image URLs from a chapter reader RSC response.
-     * Images appear as "images":["url1","url2",...] in the RSC stream.
-     * CDN enforces the publicImageCount limit server-side — only the allowed
-     * images are embedded in the RSC response for guest users.
+     * Extract page image URLs from a chapter reader response.
+     * Parses the embedded `appImages` manifest from the HTML/RSC body:
+     *   "appImages":[{"mobile":"https://app.procomic.pro/...","desktop":"https://app.procomic.pro/..."}, ...]
      *
      * @param diagTag  Logcat stage tag (e.g. "PAGES"). Empty string suppresses logging.
      * @param diagUrl  Request URL for exception context.
+     * @throws Exception if no valid chapter images are found.
      */
     fun extractPageImages(
         body: String,
@@ -260,49 +260,53 @@ object ProComicUtils {
         diagUrl: String = "",
     ): List<String> {
         val diag = diagTag.isNotEmpty()
-        val imagesKeyIdx = body.indexOf("\"images\":[")
-        if (diag) ProComicDiag.logStage(diagTag, 1,
-            "extractPageImages: bodyLen=${body.length}, " +
-            "\"images\":[ at=$imagesKeyIdx")
+        if (diag) ProComicDiag.logStage(diagTag, 1, "extractPageImages: bodyLen=${body.length}")
 
-        val imagesJson = extractJsonArrayAfterKey(body, "images") ?: run {
-            if (diag) ProComicDiag.logStage(diagTag, 2,
-                "\"images\":[ NOT FOUND — returning emptyList")
-            return emptyList()
-        }
-        if (diag) ProComicDiag.logStage(diagTag, 2,
-            "imagesJson: len=${imagesJson.length}, " +
-            "first100=${imagesJson.take(100)}")
+        // 1. Find and extract the appImages JSON array
+        val appImagesJson = extractJsonArrayAfterKey(body, "appImages")
+        if (appImagesJson != null) {
+            if (diag) ProComicDiag.logStage(diagTag, 2, "appImagesJson extracted: len=${appImagesJson.length}")
+            try {
+                val decoded = json.decodeFromString<List<ProComicAppImage>>(appImagesJson)
+                val urls = decoded.mapNotNull { item ->
+                    (item.desktop?.takeIf { it.isNotBlank() } ?: item.mobile?.takeIf { it.isNotBlank() })
+                        ?.takeIf { it.startsWith("http") }
+                }.distinct()
 
-        return try {
-            val arr = json.parseToJsonElement(imagesJson)
-            if (arr is JsonArray) {
-                val urls = arr.mapNotNull { element ->
-                    element.jsonPrimitive.takeIf { it.isString }?.content
-                        ?.takeIf { it.startsWith("https://") }
+                // Filter to chapter-scoped CDN URLs if present
+                val chapterUrls = urls.filter { url ->
+                    url.contains("/chapters/")
                 }
-                if (diag) ProComicDiag.logStage(diagTag, 3,
-                    "parsed ${urls.size} image URLs")
-                urls
-            } else {
-                if (diag) ProComicDiag.logStage(diagTag, 3,
-                    "imagesJson is not a JsonArray")
-                emptyList()
+
+                val finalUrls = if (chapterUrls.isNotEmpty()) chapterUrls else urls
+                if (finalUrls.isNotEmpty()) {
+                    if (diag) ProComicDiag.logStage(diagTag, 3, "parsed ${finalUrls.size} images from appImages manifest")
+                    return finalUrls
+                }
+            } catch (e: Exception) {
+                if (diag) ProComicDiag.logException(diagTag, "decodeFromString<List<ProComicAppImage>>", diagUrl, e)
             }
-        } catch (e: Exception) {
-            if (diag) ProComicDiag.logException(diagTag,
-                "parseToJsonElement(images)", diagUrl, e)
-            // Fallback: regex for CDN URLs
-            val fallback = Regex(
-                "\"(https://[^\"]+\\.procomic\\.(pro|net)/[^\"]+\\.(avif|webp|jpg|jpeg|png))\""
-            )
-                .findAll(body)
-                .map { it.groupValues[1] }
-                .toList()
-            if (diag) ProComicDiag.logStage(diagTag, 3,
-                "regex fallback: ${fallback.size} URLs")
-            fallback
         }
+
+        // 2. Fallback: regex for chapter CDN image URLs directly in the page body
+        val chapterRegex = Regex(""""(https://app\.procomic\.(pro|net)/chapters/[^"]+\.(avif|webp|jpg|jpeg|png))"""")
+        val fallbackUrls = chapterRegex.findAll(body)
+            .map { it.groupValues[1] }
+            .distinct()
+            .toList()
+
+        if (fallbackUrls.isNotEmpty()) {
+            if (diag) ProComicDiag.logStage(diagTag, 4, "fallback regex found ${fallbackUrls.size} chapter images")
+            return fallbackUrls
+        }
+
+        // 3. Explicit Failure
+        val reason = when {
+            body.isBlank() -> "Response body was empty (0 bytes)"
+            !body.contains("appImages") -> "No 'appImages' manifest found in response"
+            else -> "Failed to decode valid chapter images from 'appImages' manifest"
+        }
+        throw Exception("ProComic Reader: $reason (bodyLength=${body.length}, url=$diagUrl)")
     }
 
     // ---- JSON Extraction Utilities ----

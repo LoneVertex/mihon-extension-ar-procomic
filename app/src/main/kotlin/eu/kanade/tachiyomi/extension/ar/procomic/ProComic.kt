@@ -173,9 +173,23 @@ class ProComic : HttpSource() {
     }
 
     // ---- Series Detail ----
-    // manga.url is stored as "/ar/series/{type}/{id}/{slug}" (see toSManga)
+    // manga.url remains "/ar/series/{type}/{id}/{slug}" for chapter REST parsing.
+    // The live canonical Details route is "/ar/series/{slug}-{id}".
     override fun mangaDetailsRequest(manga: SManga): Request {
-        return GET("$baseUrl${manga.url}?_rsc=det", rscHeaders())
+        val detailsPath = canonicalDetailsPath(manga.url)
+        return GET("$baseUrl$detailsPath?_rsc=det", rscHeaders())
+    }
+
+    private fun canonicalDetailsPath(mangaUrl: String): String {
+        val parts = mangaUrl.trim('/').split('/')
+        if (parts.size >= 5 && parts[0] == "ar" && parts[1] == "series") {
+            val id = parts[3]
+            val slug = parts[4]
+            if (id.isNotBlank() && slug.isNotBlank()) {
+                return "/ar/series/$slug-$id"
+            }
+        }
+        return mangaUrl
     }
 
     override fun mangaDetailsParse(response: Response): SManga {

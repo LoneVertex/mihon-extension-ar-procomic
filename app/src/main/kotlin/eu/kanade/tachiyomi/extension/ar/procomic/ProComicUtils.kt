@@ -127,6 +127,16 @@ object ProComicUtils {
         if (diag) ProComicDiag.logStage(diagTag, 1,
             "extractSeriesDetail: bodyLen=${body.length}")
 
+        // Canonical detail RSC embeds the complete DTO as {"series":{...}}.
+        // This is the raw response contract returned after the canonical slug-ID
+        // route's HTTP RSC redirect; do not depend on browser hydration.
+        val canonicalSeriesJson = extractJsonObjectAfterKey(body, "series")
+        if (canonicalSeriesJson != null) {
+            if (diag) ProComicDiag.logStage(diagTag, 2,
+                "canonical \"series\" object found: len=${canonicalSeriesJson.length}")
+            return decodeSeriesDetail(canonicalSeriesJson, diagTag, diagUrl)
+        }
+
         // Try array extraction first (some detail pages include the full series object in a list).
         // Wrapped in try-catch because extractSeriesList throws when it sees a large RSC body
         // that doesn't have 'initialSeries' — which is EXPECTED for detail pages (they embed
@@ -168,16 +178,24 @@ object ProComicUtils {
         if (diag) ProComicDiag.logStage(diagTag, 3,
             "extractJsonObject OK: len=${objJson.length}")
 
+        return decodeSeriesDetail(objJson, diagTag, diagUrl)
+    }
+
+    private fun decodeSeriesDetail(
+        seriesJson: String,
+        diagTag: String,
+        diagUrl: String,
+    ): ProComicSeriesDto? {
         return try {
-            if (diag) ProComicDiag.logStage(diagTag, 4,
+            if (diagTag.isNotEmpty()) ProComicDiag.logStage(diagTag, 4,
                 "decodeFromString<ProComicSeriesDto> START")
-            val dto = json.decodeFromString<ProComicSeriesDto>(objJson)
+            val dto = json.decodeFromString<ProComicSeriesDto>(seriesJson)
                 .takeIf { it.type != "novel" }
-            if (diag) ProComicDiag.logStage(diagTag, 4,
+            if (diagTag.isNotEmpty()) ProComicDiag.logStage(diagTag, 4,
                 "decodeFromString result: id=${dto?.id}, type=${dto?.type}")
             dto
         } catch (e: Exception) {
-            if (diag) ProComicDiag.logException(diagTag,
+            if (diagTag.isNotEmpty()) ProComicDiag.logException(diagTag,
                 "decodeFromString<ProComicSeriesDto>", diagUrl, e)
             null
         }
@@ -310,6 +328,19 @@ object ProComicUtils {
     }
 
     // ---- JSON Extraction Utilities ----
+
+    /**
+     * Find the first occurrence of `"key":{...}` in [body] and return the JSON object.
+     * The canonical Details response embeds the DTO under `"series"`.
+     */
+    private fun extractJsonObjectAfterKey(body: String, key: String): String? {
+        val keyPattern = "\"$key\":"
+        val keyIndex = body.indexOf(keyPattern)
+        if (keyIndex < 0) return null
+        val objectStart = body.indexOf('{', keyIndex + keyPattern.length)
+        if (objectStart < 0) return null
+        return extractJsonObject(body, objectStart)
+    }
 
     /**
      * Find the first occurrence of "key":[...] in [body] and return the JSON array string.

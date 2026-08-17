@@ -36,8 +36,8 @@ git diff --check
 The build command is:
 
 ```bash
-ANDROID_HOME=/home/ubuntu/android-sdk \
-ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
+ANDROID_HOME=/path/to/android-sdk \
+ANDROID_SDK_ROOT=/path/to/android-sdk \
 ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 ```
 

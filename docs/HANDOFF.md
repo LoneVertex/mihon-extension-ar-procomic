@@ -9,17 +9,17 @@
 
 ## Roles
 
-**Manus** owns the repository remediation, deterministic tests, software builds, evidence-backed documentation, and GitHub hygiene. Manus must not merge PR #10 during this phase and must not claim Android runtime validation before the external session passes.
+**The repository maintainer** owns the repository remediation, deterministic tests, software builds, evidence-backed documentation, and GitHub hygiene. The maintainer must not merge PR #10 during this phase and must not claim Android runtime validation before the external session passes.
 
-**Antigravity** performs the external Android/Mihon validation session when an Android-capable environment is available. Antigravity must use the exact final release APK and must not change application code, tests, fixtures, dependencies, or Gradle configuration during validation. Any defect found becomes a separately approved remediation task.
+**The external validator** performs the external Android/Mihon validation session when an Android-capable environment is available. The validator must use the exact final release APK and must not change application code, tests, fixtures, dependencies, or Gradle configuration during validation. Any defect found becomes a separately approved remediation task.
 
 **The user or designated manual validator** supplies or authorizes the Android/Mihon environment, records the requested screenshots/logcat/network evidence, and decides whether the runtime evidence is sufficient for release progression.
 
 ## Exact Build and APK Identity
 
 ```bash
-ANDROID_HOME=/home/ubuntu/android-sdk \
-ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
+ANDROID_HOME=/path/to/android-sdk \
+ANDROID_SDK_ROOT=/path/to/android-sdk \
 ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 ```
 

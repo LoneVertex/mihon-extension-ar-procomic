@@ -79,8 +79,8 @@ Runtime validation must distinguish route loading, Reader UI visibility, image U
 The deterministic gate runs every `testdata/test_*.py` suite and `git diff --check`. Current suites cover diagnostics redaction, Details contracts, chapter normalization, Popular, Latest, gate states and preference filtering, and parser hardening. The Android software build uses:
 
 ```bash
-ANDROID_HOME=/home/ubuntu/android-sdk \
-ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
+ANDROID_HOME=/path/to/android-sdk \
+ANDROID_SDK_ROOT=/path/to/android-sdk \
 ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 ```
 

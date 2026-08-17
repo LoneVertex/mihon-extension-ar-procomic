@@ -56,5 +56,28 @@
   ],
   "gate_metadata": [
     {"id": 8201, "chapter_number": "1", "language": "AR", "published_at": "2026-08-01T00:00:00Z", "supportMode": "default", "coins_unlocks": 5, "shortlink_unlocks": 12, "lockedByCoins": true}
+  ],
+  "same_language_duplicate": [
+    {"id": 8301, "chapter_number": "3", "language": "AR", "published_at": "2026-08-01T00:00:00Z", "translator": "old"},
+    {"id": 8302, "chapter_number": "3", "language": "AR", "published_at": "2026-08-02T00:00:00Z", "translator": "newer"},
+    {"id": 8303, "chapter_number": "3", "language": "AR", "published_at": "2026-08-02T00:00:00Z", "translator": "same-time-higher-id"}
+  ],
+  "timestamp_tie": [
+    {"id": 8401, "chapter_number": "4", "language": "AR", "published_at": "2026-08-03T00:00:00Z"},
+    {"id": 8402, "chapter_number": "4", "language": "AR", "published_at": "2026-08-03T00:00:00Z"}
+  ],
+  "decimal_and_unusual": [
+    {"id": 8501, "chapter_number": "1.5", "language": "AR", "published_at": "2026-08-01T00:00:00Z"},
+    {"id": 8502, "chapter_number": " 2.0 ", "language": "AR", "published_at": "2026-08-02T00:00:00Z"},
+    {"id": 8503, "chapter_number": "1", "language": "AR", "published_at": "2026-07-31T00:00:00Z"}
+  ],
+  "special_labels": [
+    {"id": 8601, "chapter_number": " Prologue ", "language": "AR", "published_at": "2026-08-01T00:00:00Z"},
+    {"id": 8602, "chapter_number": "S1", "language": "AR", "published_at": "2026-08-02T00:00:00Z"},
+    {"id": 8603, "chapter_number": "bonus", "language": "AR", "published_at": "2026-08-03T00:00:00Z"}
+  ],
+  "unknown_variants": [
+    {"id": 8701, "chapter_number": "1", "language": "", "published_at": "2026-08-01T00:00:00Z"},
+    {"id": 8702, "chapter_number": "2", "language": " xx ", "published_at": "2026-08-02T00:00:00Z"}
   ]
 }

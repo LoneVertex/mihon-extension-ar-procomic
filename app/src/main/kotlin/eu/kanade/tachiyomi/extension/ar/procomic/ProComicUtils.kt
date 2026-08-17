@@ -350,66 +350,6 @@ object ProComicUtils {
         return null
     }
 
-    // ---- Chapter List Extraction ----
-
-    /**
-     * Extract the chapter list from a series detail RSC response.
-     * Chapters appear in "chapters":[{...},...] or "initialChapters":[...] props.
-     * Only returns chapters with language == "AR".
-     *
-     * @param diagTag  Logcat stage tag (e.g. "CHAPTERS"). Empty string suppresses logging.
-     * @param diagUrl  Request URL for exception context.
-     */
-    fun extractChapterList(
-        body: String,
-        diagTag: String = "",
-        diagUrl: String = "",
-    ): List<ProComicChapterDto> {
-        val diag = diagTag.isNotEmpty()
-        if (diag) ProComicDiag.logStage(diagTag, 1,
-            "extractChapterList: bodyLen=${body.length}")
-
-        val chapIdx = body.indexOf("\"chapters\":[")
-        val initIdx = body.indexOf("\"initialChapters\":[")
-        if (diag) {
-            ProComicDiag.logStage(diagTag, 2, "\"chapters\":[ index=$chapIdx")
-            ProComicDiag.logStage(diagTag, 2, "\"initialChapters\":[ index=$initIdx")
-        }
-
-        // Try "initialChapters" first (confirmed key on procomic.net detail RSC as of 2026-08-02),
-        // then fall back to "chapters" for any future API changes.
-        val chaptersJson = extractJsonArrayAfterKey(body, "initialChapters")
-            ?: extractJsonArrayAfterKey(body, "chapters")
-            ?: throw Exception(
-                "ProComic: 'initialChapters'/'chapters' key not found in RSC response. " +
-                "Site may have updated."
-            )
-
-        if (diag) ProComicDiag.logStage(diagTag, 3,
-            "chaptersJson: len=${chaptersJson.length}")
-
-        return try {
-            if (diag) ProComicDiag.logStage(diagTag, 4,
-                "decodeFromString<List<ProComicChapterDto>> START")
-            val decoded = json.decodeFromString<List<ProComicChapterDto>>(chaptersJson)
-            if (diag) ProComicDiag.logStage(diagTag, 4,
-                "decodeFromString: ${decoded.size} total")
-
-            val arOnly = decoded.filter { it.language == "AR" }
-            if (diag) ProComicDiag.logStage(diagTag, 5,
-                "AR filter: ${decoded.size} → ${arOnly.size}")
-
-            val sorted = arOnly.sortedByDescending { it.chapterNumber.toFloatOrNull() ?: 0f }
-            if (diag) ProComicDiag.logStage(diagTag, 6,
-                "returning ${sorted.size} chapters")
-            sorted
-        } catch (e: Exception) {
-            if (diag) ProComicDiag.logException(diagTag,
-                "decodeFromString<List<ProComicChapterDto>>", diagUrl, e)
-            emptyList()
-        }
-    }
-
     // ---- Chapter Normalization ----
 
     /**

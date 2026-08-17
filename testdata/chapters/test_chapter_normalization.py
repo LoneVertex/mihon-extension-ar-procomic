@@ -103,7 +103,26 @@ def main() -> None:
     assert gated["lockedByCoins"] is True
     assert "isPaid" not in gated
 
-    print("chapter normalization tests: PASS (series 690/693/678, fallback, unknown, special, gates)")
+    same_language = normalize(data["same_language_duplicate"])
+    assert [r["id"] for r in same_language] == [8303]
+    assert same_language[0]["translator"] == "same-time-higher-id"
+
+    timestamp_tie = normalize(data["timestamp_tie"])
+    assert [r["id"] for r in timestamp_tie] == [8402]
+
+    decimals = normalize(data["decimal_and_unusual"])
+    assert [r["id"] for r in decimals] == [8502, 8501, 8503]
+    assert decimals[0]["chapter_number"] == " 2.0 "
+
+    special_labels = normalize(data["special_labels"])
+    assert {r["chapter_number"].strip().lower() for r in special_labels} == {"prologue", "s1", "bonus"}
+    assert all(identity(r)[0] == "special" for r in special_labels)
+
+    unknown_variants = normalize(data["unknown_variants"])
+    assert [r["language"] for r in unknown_variants] == ["XX", "UNKNOWN"]
+    assert all(not r["is_english_fallback"] for r in unknown_variants)
+
+    print("chapter normalization tests: PASS (series 690/693/678, fallback, unknown, special, gates, ties, decimals)")
 
 
 if __name__ == "__main__":

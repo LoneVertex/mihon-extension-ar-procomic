@@ -122,25 +122,38 @@ object ProComicUtils {
         body: String,
         diagTag: String = "",
         diagUrl: String = "",
-    ): ProComicSeriesDto? {
+        expectedId: Int? = null,
+        expectedSlug: String? = null,
+    ): ProComicDetailsResult? {
         val diag = diagTag.isNotEmpty()
         if (diag) ProComicDiag.logStage(diagTag, 1,
             "extractSeriesDetail: bodyLen=${body.length}")
 
-        // Canonical detail RSC embeds the complete DTO as {"series":{...}}.
-        // This is the raw response contract returned after the canonical slug-ID
-        // route's HTTP RSC redirect; do not depend on browser hydration.
+        // Canonical detail RSC embeds a complete DTO as {"series":{...}}.
+        // The value must be an object immediately after the key. A restricted
+        // response uses {"series":null}; never scan forward into params or any
+        // other unrelated object.
         val canonicalSeriesJson = extractJsonObjectAfterKey(body, "series")
         if (canonicalSeriesJson != null) {
             if (diag) ProComicDiag.logStage(diagTag, 2,
                 "canonical \"series\" object found: len=${canonicalSeriesJson.length}")
-            return decodeSeriesDetail(canonicalSeriesJson, diagTag, diagUrl)
+            val decoded = decodeSeriesDetail(canonicalSeriesJson, diagTag, diagUrl)
+            if (decoded != null && isStructurallyValidSeries(decoded, expectedId, expectedSlug)) {
+                return ProComicDetailsResult.Complete(decoded)
+            }
+            if (diag) ProComicDiag.logStage(diagTag, 3,
+                "canonical series candidate rejected by structural identity validation")
         }
 
-        // Try array extraction first (some detail pages include the full series object in a list).
-        // Wrapped in try-catch because extractSeriesList throws when it sees a large RSC body
-        // that doesn't have 'initialSeries' — which is EXPECTED for detail pages (they embed
-        // 'initialChapters' instead). We must not propagate that throw here.
+        val restricted = extractRestrictedDetails(body, expectedId, expectedSlug, diagTag)
+        if (restricted != null) {
+            if (diag) ProComicDiag.logStage(diagTag, 3,
+                "restricted series payload recognized: id=${restricted.id}, slug=${restricted.slug}")
+            return ProComicDetailsResult.Restricted(restricted)
+        }
+
+        // Try array extraction only after the canonical and restricted paths.
+        // Detail pages may not contain initialSeries; that absence is expected.
         val listResult = try {
             extractSeriesList(body, diagTag, diagUrl)
         } catch (e: Exception) {
@@ -148,37 +161,17 @@ object ProComicUtils {
                 "extractSeriesList threw (expected on detail pages): ${e.message?.take(80)}")
             emptyList()
         }
-        if (listResult.isNotEmpty()) {
+        val matchingListItem = listResult.firstOrNull {
+            isStructurallyValidSeries(it, expectedId, expectedSlug)
+        }
+        if (matchingListItem != null) {
             if (diag) ProComicDiag.logStage(diagTag, 2,
-                "array path: found ${listResult.size} items, returning first")
-            return listResult.first()
+                "array path: selected structurally valid id=${matchingListItem.id}")
+            return ProComicDetailsResult.Complete(matchingListItem)
         }
         if (diag) ProComicDiag.logStage(diagTag, 2,
-            "array path empty — trying single-object fallback")
-
-        // Fallback: find the first occurrence of "id":<int>,"title":"...","slug":"...","type":"..."
-        // and extract the surrounding JSON object
-        val idx = body.indexOf("\"id\":")
-        if (idx < 0) {
-            if (diag) ProComicDiag.logStage(diagTag, 3,
-                "\"id\": NOT FOUND — returning null")
-            return null
-        }
-
-        // Find the opening brace of the object containing this id
-        val start = body.lastIndexOf("{", idx).takeIf { it >= 0 } ?: return null
-        if (diag) ProComicDiag.logStage(diagTag, 3,
-            "object brace at index=$start (id-key at $idx)")
-
-        val objJson = extractJsonObject(body, start) ?: run {
-            if (diag) ProComicDiag.logStage(diagTag, 3,
-                "extractJsonObject returned null")
-            return null
-        }
-        if (diag) ProComicDiag.logStage(diagTag, 3,
-            "extractJsonObject OK: len=${objJson.length}")
-
-        return decodeSeriesDetail(objJson, diagTag, diagUrl)
+            "no structurally valid Details series candidate found")
+        return null
     }
 
     private fun decodeSeriesDetail(
@@ -199,6 +192,163 @@ object ProComicUtils {
                 "decodeFromString<ProComicSeriesDto>", diagUrl, e)
             null
         }
+    }
+
+    private fun isStructurallyValidSeries(
+        series: ProComicSeriesDto,
+        expectedId: Int?,
+        expectedSlug: String?,
+    ): Boolean {
+        if (expectedId != null && series.id != expectedId) return false
+        if (series.title.isBlank() || series.slug.isBlank() || series.type.isBlank()) return false
+        if (expectedSlug != null && series.slug != expectedSlug) return false
+        return true
+    }
+
+    private fun extractRestrictedDetails(
+        body: String,
+        expectedId: Int?,
+        expectedSlug: String?,
+        diagTag: String,
+    ): ProComicRestrictedDetails? {
+        val restricted = extractBooleanAfterKey(body, "restricted") ?: return null
+        if (!restricted) return null
+
+        val paramsJson = extractJsonObjectAfterKey(body, "params") ?: return null
+        val params = runCatching { json.decodeFromString<ProComicRestrictedParams>(paramsJson) }
+            .getOrNull() ?: return null
+        val id = params.id.toIntOrNull() ?: return null
+        if (expectedId != null && id != expectedId) return null
+        if (params.slug.isBlank() || params.type.isBlank()) return null
+        if (expectedSlug != null && params.slug != expectedSlug) return null
+
+        val title = extractRestrictedTitle(body) ?: return null
+        val summary = extractRestrictedSummary(body, id)
+        if (diagTag.isNotEmpty()) {
+            ProComicDiag.logStage(
+                diagTag,
+                3,
+                "restricted metadata: id=$id, hasSummary=${summary != null}, bodyLen=${body.length}",
+            )
+        }
+        return ProComicRestrictedDetails(
+            id = id,
+            title = title,
+            type = params.type,
+            slug = params.slug,
+            restricted = true,
+            coverImage = summary?.coverImage,
+            description = summary?.description,
+            totalChapters = summary?.totalChapters,
+            latestChapterNumber = summary?.latestChapterNumber,
+            latestChapterDate = summary?.latestChapterDate,
+            readHref = summary?.readHref,
+            readIsExternal = summary?.readIsExternal,
+            originalSources = summary?.originalSources ?: emptyList(),
+        )
+    }
+
+    private fun extractRestrictedTitle(body: String): String? {
+        val marker = "صفحة معلومات "
+        val start = body.indexOf(marker)
+        if (start < 0) return null
+        val titleStart = start + marker.length
+        val titleEnd = body.indexOf(':', titleStart)
+        if (titleEnd <= titleStart) return null
+        return body.substring(titleStart, titleEnd).trim().takeIf { it.isNotBlank() }
+    }
+
+    private fun extractRestrictedSummary(body: String, expectedId: Int): ProComicRestrictedSummary? {
+        val markerIndex = body.indexOf("\"coverImage\":")
+        if (markerIndex < 0) return null
+        val segment = body.substring(markerIndex, minOf(body.length, markerIndex + 900))
+        return ProComicRestrictedSummary(
+            coverImage = extractStringAfterKey(segment, "coverImage"),
+            description = extractStringAfterKey(segment, "description"),
+            totalChapters = extractIntAfterKey(segment, "totalChapters"),
+            latestChapterNumber = extractStringAfterKey(segment, "latestChapterNumber"),
+            latestChapterDate = extractStringAfterKey(segment, "latestChapterDate"),
+            readHref = extractStringAfterKey(segment, "readHref"),
+            readIsExternal = extractBooleanAfterKey(segment, "readIsExternal"),
+            originalSources = extractStringArrayAfterKey(segment, "originalSources"),
+        ).takeIf {
+            it.totalChapters != null ||
+                it.latestChapterNumber != null ||
+                it.latestChapterDate != null ||
+                it.readHref != null
+        }
+    }
+
+    private fun extractBooleanAfterKey(body: String, key: String): Boolean? {
+        val marker = "\"$key\":"
+        val keyIndex = body.indexOf(marker)
+        if (keyIndex < 0) return null
+        val valueStart = skipJsonWhitespace(body, keyIndex + marker.length)
+        return when {
+            body.startsWith("true", valueStart) -> true
+            body.startsWith("false", valueStart) -> false
+            else -> null
+        }
+    }
+
+    private fun extractIntAfterKey(body: String, key: String): Int? {
+        val marker = "\"$key\":"
+        val keyIndex = body.indexOf(marker)
+        if (keyIndex < 0) return null
+        val valueStart = skipJsonWhitespace(body, keyIndex + marker.length)
+        val end = body.indexOfFirstFrom(valueStart) { it == ',' || it == '}' }
+        return body.substring(valueStart, end).trim().toIntOrNull()
+    }
+
+    private fun extractStringAfterKey(body: String, key: String): String? {
+        val marker = "\"$key\":"
+        val keyIndex = body.indexOf(marker)
+        if (keyIndex < 0) return null
+        val valueStart = skipJsonWhitespace(body, keyIndex + marker.length)
+        if (valueStart >= body.length || body[valueStart] != '"') return null
+        val end = findJsonStringEnd(body, valueStart) ?: return null
+        return body.substring(valueStart + 1, end)
+    }
+
+    private fun extractStringArrayAfterKey(body: String, key: String): List<String> {
+        val marker = "\"$key\":"
+        val keyIndex = body.indexOf(marker)
+        if (keyIndex < 0) return emptyList()
+        val valueStart = skipJsonWhitespace(body, keyIndex + marker.length)
+        if (valueStart >= body.length || body[valueStart] != '[') return emptyList()
+        val end = body.indexOf(']', valueStart)
+        if (end < 0) return emptyList()
+        return Regex("\\\"([^\\\"]*)\\\"").findAll(body.substring(valueStart, end + 1))
+            .map { it.groupValues[1] }
+            .toList()
+    }
+
+    private fun skipJsonWhitespace(body: String, start: Int): Int {
+        var index = start
+        while (index < body.length && body[index].isWhitespace()) index++
+        return index
+    }
+
+    private fun String.indexOfFirstFrom(start: Int, predicate: (Char) -> Boolean): Int {
+        for (index in start until length) {
+            if (predicate(this[index])) return index
+        }
+        return length
+    }
+
+    private fun findJsonStringEnd(body: String, start: Int): Int? {
+        var escaped = false
+        for (index in (start + 1) until body.length) {
+            val char = body[index]
+            if (escaped) {
+                escaped = false
+            } else if (char == '\\') {
+                escaped = true
+            } else if (char == '"') {
+                return index
+            }
+        }
+        return null
     }
 
     // ---- Chapter List Extraction ----
@@ -448,9 +598,9 @@ object ProComicUtils {
         val keyPattern = "\"$key\":"
         val keyIndex = body.indexOf(keyPattern)
         if (keyIndex < 0) return null
-        val objectStart = body.indexOf('{', keyIndex + keyPattern.length)
-        if (objectStart < 0) return null
-        return extractJsonObject(body, objectStart)
+        val valueStart = skipJsonWhitespace(body, keyIndex + keyPattern.length)
+        if (valueStart >= body.length || body[valueStart] != '{') return null
+        return extractJsonObject(body, valueStart)
     }
 
     /**

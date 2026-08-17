@@ -196,8 +196,33 @@ class ProComic : HttpSource() {
         val body = response.body!!.string()
         val url = response.request.url.toString()
         ProComicDiag.logResponse("DETAIL", response, body)
-        return ProComicUtils.extractSeriesDetail(body, "DETAIL", url)?.toSManga()
-            ?: throw Exception("ProComic: could not parse series details from RSC response")
+        val (expectedId, expectedSlug) = detailsIdentity(url)
+        return when (val result = ProComicUtils.extractSeriesDetail(
+            body,
+            diagTag = "DETAIL",
+            diagUrl = url,
+            expectedId = expectedId,
+            expectedSlug = expectedSlug,
+        )) {
+            is ProComicDetailsResult.Complete -> result.series.toSManga()
+            is ProComicDetailsResult.Restricted -> result.details.toSManga()
+            null -> throw Exception("ProComic: could not parse series details from RSC response")
+        }
+    }
+
+    private fun ProComicRestrictedDetails.toSManga(): SManga = SManga.create().apply {
+        url = "/ar/series/$type/$id/$slug"
+        title = this@toSManga.title
+        thumbnail_url = coverImage?.takeIf { it.startsWith("http") }
+        description = description?.takeIf { it.isNotBlank() }
+        genre = type.replaceFirstChar { it.uppercase() }
+        status = SManga.UNKNOWN
+    }
+
+    private fun detailsIdentity(url: String): Pair<Int?, String?> {
+        val match = Regex("/ar/series/(.+)-(\\d+)(?:\\?.*)?$").find(url)
+            ?: return null to null
+        return match.groupValues[2].toIntOrNull() to match.groupValues[1]
     }
 
     // ---- Chapter List ----

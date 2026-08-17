@@ -98,6 +98,46 @@ data class ProComicSeriesDto(
     @SerialName("updated_at") val updatedAt: String? = null,
 )
 
+sealed interface ProComicDetailsResult {
+    data class Complete(val series: ProComicSeriesDto) : ProComicDetailsResult
+    data class Restricted(val details: ProComicRestrictedDetails) : ProComicDetailsResult
+}
+
+@Serializable
+data class ProComicRestrictedDetails(
+    val id: Int,
+    val title: String,
+    val type: String,
+    val slug: String,
+    val restricted: Boolean,
+    val coverImage: String? = null,
+    val description: String? = null,
+    val totalChapters: Int? = null,
+    val latestChapterNumber: String? = null,
+    val latestChapterDate: String? = null,
+    val readHref: String? = null,
+    val readIsExternal: Boolean? = null,
+    val originalSources: List<String> = emptyList(),
+)
+
+@Serializable
+data class ProComicRestrictedParams(
+    val type: String,
+    val id: String,
+    val slug: String,
+)
+
+data class ProComicRestrictedSummary(
+    val coverImage: String? = null,
+    val description: String? = null,
+    val totalChapters: Int? = null,
+    val latestChapterNumber: String? = null,
+    val latestChapterDate: String? = null,
+    val readHref: String? = null,
+    val readIsExternal: Boolean? = null,
+    val originalSources: List<String> = emptyList(),
+)
+
 @Serializable
 data class ProComicSeriesMetadata(
     val originalTitle: String? = null,

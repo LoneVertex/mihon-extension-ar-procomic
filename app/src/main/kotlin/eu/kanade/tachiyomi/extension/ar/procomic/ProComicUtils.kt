@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.net.URI
 
 /**
  * RSC (React Server Components) wire-format parser for procomic.pro.
@@ -28,6 +29,28 @@ object ProComicUtils {
         coerceInputValues = true
         isLenient = true
     }
+
+    private const val MAX_RSC_CANDIDATES = 8
+    private const val MAX_RSC_CANDIDATE_BYTES = 1_000_000
+    private val allowedPageImageHosts = setOf("app.procomic.pro")
+    private val allowedPageImageExtensions = setOf("avif", "webp", "jpg", "jpeg", "png")
+
+    /**
+     * Reader evidence confirms successful public page downloads only on
+     * `app.procomic.pro/chapters/` for 690/50821 and 693/51606 (HTTP 200, image/avif).
+     * The separate cdn2 host observed in raw metadata returned 403 and is not emitted by the
+     * current appImages contract, so it is deliberately not accepted as a page URL here.
+     */
+    fun isAllowedPageImageUrl(url: String): Boolean = runCatching {
+        val parsed = URI(url)
+        val path = parsed.path ?: return@runCatching false
+        parsed.scheme.equals("https", ignoreCase = true) &&
+            parsed.host?.lowercase() in allowedPageImageHosts &&
+            parsed.query == null &&
+            parsed.fragment == null &&
+            path.startsWith("/chapters/") &&
+            allowedPageImageExtensions.any { path.lowercase().endsWith(".$it") }
+    }.getOrDefault(false)
 
     // ---- Series List Extraction ----
 
@@ -575,11 +598,18 @@ object ProComicUtils {
      */
     private fun extractJsonObjectAfterKey(body: String, key: String): String? {
         val keyPattern = "\"$key\":"
-        val keyIndex = body.indexOf(keyPattern)
-        if (keyIndex < 0) return null
-        val valueStart = skipJsonWhitespace(body, keyIndex + keyPattern.length)
-        if (valueStart >= body.length || body[valueStart] != '{') return null
-        return extractJsonObject(body, valueStart)
+        var searchFrom = 0
+        repeat(MAX_RSC_CANDIDATES) {
+            val keyIndex = body.indexOf(keyPattern, searchFrom)
+            if (keyIndex < 0) return null
+            val valueStart = skipJsonWhitespace(body, keyIndex + keyPattern.length)
+            if (valueStart < body.length && body[valueStart] == '{') {
+                val candidate = extractJsonObject(body, valueStart)
+                if (candidate != null && candidate.length <= MAX_RSC_CANDIDATE_BYTES) return candidate
+            }
+            searchFrom = keyIndex + keyPattern.length
+        }
+        return null
     }
 
     /**
@@ -588,11 +618,16 @@ object ProComicUtils {
      */
     private fun extractJsonArrayAfterKey(body: String, key: String): String? {
         val keyPattern = "\"$key\":["
-        val start = body.indexOf(keyPattern)
-        if (start < 0) return null
-
-        val arrStart = start + keyPattern.length - 1 // position of '['
-        return extractJsonArray(body, arrStart)
+        var searchFrom = 0
+        repeat(MAX_RSC_CANDIDATES) {
+            val start = body.indexOf(keyPattern, searchFrom)
+            if (start < 0) return null
+            val arrStart = start + keyPattern.length - 1 // position of '['
+            val candidate = extractJsonArray(body, arrStart)
+            if (candidate != null && candidate.length <= MAX_RSC_CANDIDATE_BYTES) return candidate
+            searchFrom = start + keyPattern.length
+        }
+        return null
     }
 
     /**
@@ -610,7 +645,7 @@ object ProComicUtils {
         var escaped = false
         var pos = startPos
 
-        while (pos < body.length) {
+        while (pos < body.length && pos - startPos <= MAX_RSC_CANDIDATE_BYTES) {
             val c = body[pos]
             when {
                 escaped -> escaped = false
@@ -639,7 +674,7 @@ object ProComicUtils {
         var escaped = false
         var pos = startPos
 
-        while (pos < body.length) {
+        while (pos < body.length && pos - startPos <= MAX_RSC_CANDIDATE_BYTES) {
             val c = body[pos]
             if (escaped) {
                 escaped = false

@@ -16,6 +16,7 @@ import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.net.URLEncoder
 
 /**
@@ -53,7 +54,25 @@ class ProComic : HttpSource(), ConfigurableSource {
             ProComicGateState.SHORTLINK_UNLOCK,
             ProComicGateState.PERMANENTLY_LOCKED,
         )
+        const val MAX_RESPONSE_BYTES = 2_000_000
+        const val MAX_CHAPTER_PAGES = 50
     }
+
+    private fun readBoundedBody(response: Response): String {
+        val body = response.body ?: throw Exception("ProComic: response body is missing")
+        val declaredLength = body.contentLength()
+        if (declaredLength > MAX_RESPONSE_BYTES) {
+            throw Exception("ProComic: response exceeds ${MAX_RESPONSE_BYTES} bytes")
+        }
+        val bytes = body.source().readByteArray(MAX_RESPONSE_BYTES.toLong() + 1L)
+        if (bytes.size > MAX_RESPONSE_BYTES) {
+            throw Exception("ProComic: response exceeds ${MAX_RESPONSE_BYTES} bytes")
+        }
+        return bytes.toString(StandardCharsets.UTF_8)
+    }
+
+    private fun chapterPageFingerprint(data: ProComicChapterListResponse): String =
+        data.chapters.joinToString(",") { it.id.toString() }
 
     // Initialized when Mihon builds the source preference screen. Until then, preserve the
     // historical behavior of showing every normalized chapter.
@@ -118,7 +137,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         GET("$baseUrl/api/public/content/popular-new?limit=20", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val body = response.body!!.string()
+        val body = readBoundedBody(response)
         val url = response.request.url.toString()
         ProComicDiag.logResponse("POPULAR", response, body)
         val feed = ProComicUtils.json.decodeFromString<ProComicPopularResponse>(body)
@@ -149,7 +168,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         GET("$baseUrl/api/public/content/latest-updates?limit=18&category=all&page=$page", headers)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val body = response.body!!.string()
+        val body = readBoundedBody(response)
         val url = response.request.url.toString()
         ProComicDiag.logResponse("LATEST", response, body)
         val feed = ProComicUtils.json.decodeFromString<ProComicLatestResponse>(body)
@@ -205,7 +224,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val body = response.body!!.string()
+        val body = readBoundedBody(response)
         val url = response.request.url.toString()
         ProComicDiag.logResponse("SEARCH", response, body)
 
@@ -244,7 +263,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val body = response.body!!.string()
+        val body = readBoundedBody(response)
         val url = response.request.url.toString()
         ProComicDiag.logResponse("DETAIL", response, body)
         val (expectedId, expectedSlug) = detailsIdentity(url)
@@ -311,15 +330,17 @@ class ProComic : HttpSource(), ConfigurableSource {
 
         // Parse first page
         val firstPage = ProComicUtils.json.decodeFromString<ProComicChapterListResponse>(
-            response.body!!.string()
+            readBoundedBody(response)
         )
         ProComicDiag.logStage("CHAPTERS", 1,
             "REST API: total=${firstPage.total}, page1=${firstPage.chapters.size}, " +
             "hasMore=${firstPage.hasMore}")
 
         val all = firstPage.chapters.toMutableList()
+        val seenPageFingerprints = hashSetOf(chapterPageFingerprint(firstPage))
 
-        // Fetch remaining pages while hasMore == true
+        // Fetch remaining pages while hasMore == true. Stop on a repeated or empty page even if
+        // the server incorrectly keeps hasMore=true, and retain the hard upper bound as a final guard.
         var page = 2
         var hasMore = firstPage.hasMore
         while (hasMore) {
@@ -327,14 +348,23 @@ class ProComic : HttpSource(), ConfigurableSource {
                 GET("$baseUrl/api/chapters?contentId=$contentId&page=$page", headers)
             ).execute()
             val nextData = ProComicUtils.json.decodeFromString<ProComicChapterListResponse>(
-                next.body!!.string()
+                readBoundedBody(next)
             )
+            val fingerprint = chapterPageFingerprint(nextData)
             ProComicDiag.logStage("CHAPTERS", page,
                 "page=$page: ${nextData.chapters.size} chapters, hasMore=${nextData.hasMore}")
+            if (nextData.chapters.isEmpty()) {
+                ProComicDiag.logStage("CHAPTERS", page, "empty page terminates pagination")
+                break
+            }
+            if (!seenPageFingerprints.add(fingerprint)) {
+                ProComicDiag.logStage("CHAPTERS", page, "repeated page terminates pagination")
+                break
+            }
             all.addAll(nextData.chapters)
             hasMore = nextData.hasMore
             page++
-            if (page > 50) break // safety guard against infinite loop
+            if (page > MAX_CHAPTER_PAGES) break
         }
 
         // Show all approved chapters regardless of language.
@@ -424,11 +454,16 @@ class ProComic : HttpSource(), ConfigurableSource {
     // Add Referer header for CDN image requests.
     override fun imageRequest(page: Page): Request {
         // headersBuilder() no longer contains RSC headers, so no removeAll() needed.
+        val imageUrl = page.imageUrl ?: throw Exception("ProComic Reader: image URL is missing")
+        if (!ProComicUtils.isAllowedPageImageUrl(imageUrl)) {
+            ProComicDiag.logStage("PAGES", 98, "rejected unrecognized image host")
+            throw Exception("ProComic Reader: unrecognized image host")
+        }
         val imageHeaders = headersBuilder()
             .set("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
             .set("Referer", "$baseUrl/")
             .build()
-        return GET(page.imageUrl!!, imageHeaders)
+        return GET(imageUrl, imageHeaders)
     }
 
     // ---- Filters ----

@@ -303,6 +303,22 @@ data class ProComicChapterGate(
     val publicImageCount: Int?,
 )
 
+/**
+ * Conservative access classification for a chapter.
+ *
+ * [RESTRICTED_AUTH_REQUIRED] is a content-access state, not a paid state. It must never be
+ * inferred from a denied/restricted response and must remain visible when paid chapters are hidden.
+ */
+enum class ProComicGateState {
+    FREE,
+    COIN_LOCKED,
+    EXCLUSIVE,
+    SHORTLINK_UNLOCK,
+    PERMANENTLY_LOCKED,
+    RESTRICTED_AUTH_REQUIRED,
+    UNKNOWN,
+}
+
 data class ProComicNormalizedChapter(
     val source: ProComicChapterDto,
     val languageCode: String,

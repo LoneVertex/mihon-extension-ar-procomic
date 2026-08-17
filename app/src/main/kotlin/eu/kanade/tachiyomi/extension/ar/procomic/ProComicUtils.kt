@@ -353,6 +353,46 @@ object ProComicUtils {
     // ---- Chapter Normalization ----
 
     /**
+     * Classify verified chapter gate metadata conservatively.
+     *
+     * Access restriction is intentionally not represented by these fields. Callers must use
+     * [ProComicGateState.RESTRICTED_AUTH_REQUIRED] only when a separate restricted-content
+     * contract explicitly identifies it; an access denial alone is never a paid signal.
+     */
+    fun classifyGateState(gate: ProComicChapterGate): ProComicGateState {
+        val lockedForever = gate.lockedForever == true
+        val lockedByCoins = gate.lockedByCoins == true
+        val lockedByExclusive = gate.lockedByExclusive == true
+        val hasShortlink = gate.hasShortlink == true
+        val hasCoinCost = (gate.coinsRequired ?: 0) > 0 || gate.coinsUnlocks > 0
+        val hasShortlinkCost = gate.shortlinkUnlocks > 0
+        val allLockFlagsExplicitlyFalse = listOf(
+            gate.lockedForever,
+            gate.lockedByCoins,
+            gate.lockedByExclusive,
+            gate.hasShortlink,
+        ).all { it == false }
+
+        if (lockedForever) return ProComicGateState.PERMANENTLY_LOCKED
+        if (lockedByCoins && lockedByExclusive) return ProComicGateState.UNKNOWN
+        if (lockedByCoins) {
+            return if (gate.coinsRequired != null && gate.coinsRequired > 0) {
+                ProComicGateState.COIN_LOCKED
+            } else {
+                ProComicGateState.UNKNOWN
+            }
+        }
+        if (lockedByExclusive) return ProComicGateState.EXCLUSIVE
+        if (hasShortlink) return ProComicGateState.SHORTLINK_UNLOCK
+
+        // A positive cost without its corresponding explicit lock/unlock mechanism is incomplete.
+        if (hasCoinCost || hasShortlinkCost) return ProComicGateState.UNKNOWN
+        if (!allLockFlagsExplicitlyFalse) return ProComicGateState.UNKNOWN
+
+        return ProComicGateState.FREE
+    }
+
+    /**
      * Apply the Arabic-source chapter policy before creating Mihon SChapter models.
      *
      * The REST API returns distinct AR/EN records for the same numeric chapter. This

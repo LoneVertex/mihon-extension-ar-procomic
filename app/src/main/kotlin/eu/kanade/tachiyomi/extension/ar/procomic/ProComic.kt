@@ -1,10 +1,14 @@
 package eu.kanade.tachiyomi.extension.ar.procomic
 
+import android.content.SharedPreferences
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
@@ -39,12 +43,39 @@ import java.net.URLEncoder
  *
  * Evidence base: docs/research/procomic-recon.md (Stage 3C recon report, 2026-07-26)
  */
-class ProComic : HttpSource() {
+class ProComic : HttpSource(), ConfigurableSource {
+
+    private companion object {
+        const val PREF_SHOW_PAID_CHAPTERS = "show_paid_chapters"
+        val PAID_GATE_STATES = setOf(
+            ProComicGateState.COIN_LOCKED,
+            ProComicGateState.EXCLUSIVE,
+            ProComicGateState.SHORTLINK_UNLOCK,
+            ProComicGateState.PERMANENTLY_LOCKED,
+        )
+    }
+
+    // Initialized when Mihon builds the source preference screen. Until then, preserve the
+    // historical behavior of showing every normalized chapter.
+    private var sourcePreferences: SharedPreferences? = null
 
     override val name = "ProComic"
     override val baseUrl = "https://procomic.net"
     override val lang = "ar"
     override val supportsLatest = true
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        sourcePreferences = screen.context.applicationContext.getSharedPreferences("source_$id", 0)
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_SHOW_PAID_CHAPTERS
+            title = "عرض الفصول المدفوعة"
+            summary = "إظهار جميع الفصول. عند التعطيل، تُخفى الفصول المحددة بوضوح كمقفلة أو مدفوعة فقط."
+            setDefaultValue(true)
+        }.also(screen::addPreference)
+    }
+
+    private fun shouldShowPaidChapters(): Boolean =
+        sourcePreferences?.getBoolean(PREF_SHOW_PAID_CHAPTERS, true) ?: true
 
     // Mobile Chrome UA is required — plain curl UA gets same response, but this
     // matches what a real Tachiyomi+WebView session would present.
@@ -324,7 +355,20 @@ class ProComic : HttpSource() {
             "normalized=${normalized.size}, languages=${normalized.groupingBy { it.languageCode }.eachCount()}, " +
                 "fallbacks=${normalized.count { it.isEnglishFallback }}",
         )
-        return normalized.map { it.toSChapter(mangaUrl) }
+        val showPaidChapters = shouldShowPaidChapters()
+        val visible = if (showPaidChapters) {
+            normalized
+        } else {
+            normalized.filter { chapter ->
+                ProComicUtils.classifyGateState(chapter.gate) !in PAID_GATE_STATES
+            }
+        }
+        ProComicDiag.logStage(
+            "CHAPTERS",
+            99,
+            "showPaidChapters=$showPaidChapters, visible=${visible.size}, hidden=${normalized.size - visible.size}",
+        )
+        return visible.map { it.toSChapter(mangaUrl) }
     }
 
     // ---- Page List ----

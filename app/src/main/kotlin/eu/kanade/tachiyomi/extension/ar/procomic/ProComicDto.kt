@@ -151,6 +151,15 @@ data class ProComicChapterDto(
     @SerialName("cdn_path") val cdnPath: String? = null,
     val metadata: ProComicChapterMetadata? = null,
     @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("published_at") val publishedAt: String? = null,
+    val supportMode: String? = null,
+    @SerialName("coins_unlocks") val coinsUnlocks: Int = 0,
+    @SerialName("shortlink_unlocks") val shortlinkUnlocks: Int = 0,
+    val coinsRequired: Int? = null,
+    val hasShortlink: Boolean? = null,
+    val lockedForever: Boolean? = null,
+    val lockedByCoins: Boolean? = null,
+    val lockedByExclusive: Boolean? = null,
 )
 
 /**
@@ -165,6 +174,27 @@ data class ProComicChapterListResponse(
     val chapters: List<ProComicChapterDto> = emptyList(),
     val total: Int? = null,      // server currently returns null, not an int
     val hasMore: Boolean = false,
+)
+
+data class ProComicChapterGate(
+    val supportMode: String?,
+    val coinsUnlocks: Int,
+    val shortlinkUnlocks: Int,
+    val coinsRequired: Int?,
+    val hasShortlink: Boolean?,
+    val lockedForever: Boolean?,
+    val lockedByCoins: Boolean?,
+    val lockedByExclusive: Boolean?,
+    val publicImageCount: Int?,
+)
+
+data class ProComicNormalizedChapter(
+    val source: ProComicChapterDto,
+    val languageCode: String,
+    val languageDisplay: String,
+    val numericNumber: Float?,
+    val gate: ProComicChapterGate,
+    val isEnglishFallback: Boolean = false,
 )
 
 @Serializable

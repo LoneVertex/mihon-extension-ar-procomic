@@ -261,6 +261,117 @@ object ProComicUtils {
         }
     }
 
+    // ---- Chapter Normalization ----
+
+    /**
+     * Apply the Arabic-source chapter policy before creating Mihon SChapter models.
+     *
+     * The REST API returns distinct AR/EN records for the same numeric chapter. This
+     * pipeline selects AR when available, keeps EN only as a visible fallback, preserves
+     * verified gate metadata, deduplicates after language selection, and sorts the final
+     * records deterministically.
+     */
+    fun normalizeChapters(
+        chapters: List<ProComicChapterDto>,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): List<ProComicNormalizedChapter> {
+        val normalized = chapters.map { chapter ->
+            ProComicNormalizedChapter(
+                source = chapter,
+                languageCode = normalizeLanguageCode(chapter.language),
+                languageDisplay = languageDisplayName(chapter.language),
+                numericNumber = chapter.chapterNumber.toFloatOrNull(),
+                gate = chapter.toGateState(),
+            )
+        }
+
+        val selected = normalized
+            .groupBy { chapterIdentity(it) }
+            .values
+            .mapNotNull { group ->
+                val arabic = group.filter { it.languageCode == "AR" }
+                val english = group.filter { it.languageCode == "EN" }
+                when {
+                    arabic.isNotEmpty() -> chooseStable(arabic, englishFallback = false)
+                    english.isNotEmpty() -> chooseStable(english, englishFallback = true)
+                    else -> chooseStable(group, englishFallback = false)
+                }
+            }
+            .sortedWith(normalizedChapterComparator)
+
+        if (diagTag.isNotEmpty()) {
+            ProComicDiag.logStage(
+                diagTag,
+                7,
+                "normalizeChapters: input=${chapters.size}, output=${selected.size}, url=$diagUrl",
+            )
+        }
+        return selected
+    }
+
+    private fun normalizeLanguageCode(language: String): String =
+        language.trim().uppercase().ifBlank { "UNKNOWN" }
+
+    private fun languageDisplayName(language: String): String {
+        return when (val code = normalizeLanguageCode(language)) {
+            "AR" -> "Arabic"
+            "EN" -> "English"
+            else -> code
+        }
+    }
+
+    private fun chapterIdentity(chapter: ProComicNormalizedChapter): String {
+        val numeric = chapter.numericNumber
+        return if (numeric != null) {
+            "numeric:${numeric.toString()}"
+        } else {
+            "special:${chapter.source.chapterNumber.trim().lowercase()}"
+        }
+    }
+
+    private fun chooseStable(
+        records: List<ProComicNormalizedChapter>,
+        englishFallback: Boolean,
+    ): ProComicNormalizedChapter {
+        val selected = records.maxWithOrNull(
+            compareBy<ProComicNormalizedChapter> {
+                it.source.publishedAt ?: it.source.createdAt ?: ""
+            }.thenBy { it.source.id },
+        ) ?: error("ProComic: empty normalized chapter group")
+        return selected.copy(isEnglishFallback = englishFallback)
+    }
+
+    private val normalizedChapterComparator = Comparator<ProComicNormalizedChapter> { left, right ->
+        val leftNumber = left.numericNumber
+        val rightNumber = right.numericNumber
+        val numberComparison = when {
+            leftNumber != null && rightNumber == null -> -1
+            leftNumber == null && rightNumber != null -> 1
+            leftNumber != null && rightNumber != null -> rightNumber.compareTo(leftNumber)
+            else -> left.source.chapterNumber.compareTo(right.source.chapterNumber)
+        }
+        if (numberComparison != 0) return@Comparator numberComparison
+
+        val timestampComparison = (right.source.publishedAt ?: right.source.createdAt ?: "")
+            .compareTo(left.source.publishedAt ?: left.source.createdAt ?: "")
+        if (timestampComparison != 0) return@Comparator timestampComparison
+        right.source.id.compareTo(left.source.id)
+    }
+
+    private fun ProComicChapterDto.toGateState(): ProComicChapterGate =
+        ProComicChapterGate(
+            supportMode = supportMode,
+            coinsUnlocks = coinsUnlocks,
+            shortlinkUnlocks = shortlinkUnlocks,
+            coinsRequired = coinsRequired,
+            hasShortlink = hasShortlink,
+            lockedForever = lockedForever,
+            lockedByCoins = lockedByCoins,
+            lockedByExclusive = lockedByExclusive,
+            publicImageCount = metadata?.protection?.publicImageCount,
+        )
+
     // ---- Page Image Extraction ----
 
     /**

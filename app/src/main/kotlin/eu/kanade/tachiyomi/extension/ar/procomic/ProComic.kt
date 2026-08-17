@@ -268,7 +268,18 @@ class ProComic : HttpSource() {
         ProComicDiag.logStage("CHAPTERS", 99,
             "total fetched=${all.size}, approved=${approved.size}, mangaUrl=$mangaUrl")
 
-        return approved.map { it.toSChapter(mangaUrl) }
+        val normalized = ProComicUtils.normalizeChapters(
+            approved,
+            diagTag = "CHAPTERS",
+            diagUrl = url.toString(),
+        )
+        ProComicDiag.logStage(
+            "CHAPTERS",
+            99,
+            "normalized=${normalized.size}, languages=${normalized.groupingBy { it.languageCode }.eachCount()}, " +
+                "fallbacks=${normalized.count { it.isEnglishFallback }}",
+        )
+        return normalized.map { it.toSChapter(mangaUrl) }
     }
 
     // ---- Page List ----
@@ -380,18 +391,22 @@ class ProComic : HttpSource() {
         }
     }
 
-    private fun ProComicChapterDto.toSChapter(mangaUrl: String): SChapter = SChapter.create().apply {
+    private fun ProComicNormalizedChapter.toSChapter(mangaUrl: String): SChapter = SChapter.create().apply {
+        val chapter = source
         // Full reader URL: /ar/series/{type}/{seriesId}/{slug}/{chapterId}/{chapterNumber}
-        url = "$mangaUrl/$id/$chapterNumber"
+        url = "$mangaUrl/${chapter.id}/${chapter.chapterNumber}"
         name = buildString {
-            append("الفصل $chapterNumber")  // "Chapter N" in Arabic
-            if (!this@toSChapter.title.isNullOrBlank()) {
+            append("الفصل ${chapter.chapterNumber}")  // "Chapter N" in Arabic
+            if (languageCode != "AR") {
+                append(" [$languageDisplay]")
+            }
+            if (!chapter.title.isNullOrBlank()) {
                 append(" - ")
-                append(this@toSChapter.title)
+                append(chapter.title)
             }
         }
-        chapter_number = chapterNumber.toFloatOrNull() ?: -1f
-        scanlator = translator?.takeIf { it.isNotBlank() } ?: "Pro Chan"
+        chapter_number = numericNumber ?: -1f
+        scanlator = chapter.translator?.takeIf { it.isNotBlank() } ?: "Pro Chan"
     }
 
 }

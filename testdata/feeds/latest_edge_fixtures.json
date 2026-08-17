@@ -1,0 +1,24 @@
+{
+  "empty": {"success": true, "data": []},
+  "duplicate_and_novel": {
+    "success": true,
+    "data": [
+      {"mangaId": 1, "mangaSlug": "a", "mangaTitle": "A", "coverImage": null, "cdn_path": "cdn1", "type": "manhua", "origin": "cn", "status": "مستمر", "isBlockedSeries": false, "isSensitiveImage": false, "viewStatus": "public", "supportStatus": "default", "chapters": []},
+      {"mangaId": 1, "mangaSlug": "a", "mangaTitle": "A duplicate", "coverImage": null, "cdn_path": "cdn1", "type": "manhua", "origin": "cn", "status": "مستمر", "isBlockedSeries": false, "isSensitiveImage": false, "viewStatus": "public", "supportStatus": "default", "chapters": []},
+      {"mangaId": 2, "mangaSlug": "novel", "mangaTitle": "Novel", "coverImage": null, "cdn_path": "cdn1", "type": "novel", "origin": "jp", "status": "مستمر", "isBlockedSeries": false, "isSensitiveImage": false, "viewStatus": "public", "supportStatus": "default", "chapters": []}
+    ]
+  },
+  "short_page": {
+    "success": true,
+    "data": [
+      {"mangaId": 3, "mangaSlug": "short", "mangaTitle": "Short", "coverImage": null, "cdn_path": "cdn1", "type": "manga", "origin": "jp", "status": "مستمر", "isBlockedSeries": false, "isSensitiveImage": false, "viewStatus": "public", "supportStatus": "default", "chapters": []}
+    ]
+  },
+  "missing_optional": {
+    "success": true,
+    "data": [
+      {"mangaId": 4, "mangaSlug": "minimal", "mangaTitle": "Minimal", "type": "manga", "chapters": []}
+    ]
+  },
+  "malformed": "{not-json"
+}

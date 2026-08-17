@@ -114,6 +114,49 @@ data class ProComicPopularContent(
     @SerialName("updated_at") val updatedAt: String? = null,
 )
 
+/**
+ * Public Latest feed: `/api/public/content/latest-updates?limit=18&category=all&page=N`.
+ * This schema is intentionally separate from Popular: series fields are flat and the
+ * latest chapter summaries carry their own language, timestamp, and gate metadata.
+ */
+@Serializable
+data class ProComicLatestResponse(
+    val success: Boolean = false,
+    val data: List<ProComicLatestSeries> = emptyList(),
+)
+
+@Serializable
+data class ProComicLatestSeries(
+    val mangaId: Int,
+    val mangaSlug: String,
+    val mangaTitle: String,
+    val coverImage: String? = null,
+    @SerialName("cdn_path") val cdnPath: String? = null,
+    val type: String,
+    val origin: String? = null,
+    val status: String? = null,
+    val isBlockedSeries: Boolean = false,
+    val isSensitiveImage: Boolean = false,
+    val viewStatus: String? = null,
+    val supportStatus: String? = null,
+    val chapters: List<ProComicLatestChapterSummary> = emptyList(),
+)
+
+@Serializable
+data class ProComicLatestChapterSummary(
+    val id: Int,
+    val slug: String? = null,
+    val number: String,
+    val language: String,
+    val publishedAt: String? = null,
+    val supportMode: String? = null,
+    val coinsRequired: Int? = null,
+    val hasShortlink: Boolean? = null,
+    val lockedForever: Boolean? = null,
+    val lockedByCoins: Boolean? = null,
+    val lockedByExclusive: Boolean? = null,
+)
+
 @Serializable
 data class ProComicSeriesDto(
     val id: Int,

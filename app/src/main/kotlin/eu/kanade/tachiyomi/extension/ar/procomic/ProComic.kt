@@ -24,7 +24,7 @@ import java.net.URLEncoder
  *   reverted to procomic.net (confirmed 2026-08-02 via live RSC probe).
  *
  * Architecture: HttpSource with mixed RSC (React Server Components) and public JSON API
- *   contracts. Search, Chapters, and Popular use verified public JSON endpoints; Details
+ *   contracts. Search, Chapters, Popular, and Latest use verified public JSON endpoints; Details
  *   uses canonical RSC; Reader uses raw HTML with an embedded page-image manifest.
  *   RSC requests use the RSC: 1 header and ?_rsc= query parameter and return text/x-component
  *   data containing embedded JSON fragments. No browser-only DOM scraping is used by the parser.
@@ -111,24 +111,35 @@ class ProComic : HttpSource() {
     }
 
     // ---- Latest Updates ----
-    // Client-side sort: Latest = most recently UPDATED (updatedAt descending).
-    // This gives visual differentiation from Popular despite the same server payload.
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/ar/series?_rsc=lat$page", rscHeaders())
-    }
+    // Verified public contract: /api/public/content/latest-updates?limit=18&category=all&page=N.
+    // Page values are authoritative, pages are server-ordered and disjoint in captures, and
+    // an empty data array is the only observed termination signal. Short pages continue.
+    override fun latestUpdatesRequest(page: Int): Request =
+        GET("$baseUrl/api/public/content/latest-updates?limit=18&category=all&page=$page", headers)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val body = response.body!!.string()
         val url = response.request.url.toString()
         ProComicDiag.logResponse("LATEST", response, body)
-        val series = ProComicUtils.extractSeriesList(body, "LATEST", url)
-        // Sort most recently updated series first (ISO-8601 strings sort lexicographically)
-        val sorted = series.sortedByDescending { it.updatedAt ?: "" }
-        val mangas = sorted.map { it.toSManga() }
-        ProComicDiag.logStage("LATEST", 99,
-            "MangasPage: ${mangas.size} items, hasNextPage=false")
-        return MangasPage(mangas, hasNextPage = false)
+        val feed = ProComicUtils.json.decodeFromString<ProComicLatestResponse>(body)
+        if (!feed.success) throw Exception("ProComic: Latest API returned success=false")
+
+        val seenIds = HashSet<Int>()
+        val series = feed.data.asSequence()
+            .filter { it.type != "novel" }
+            .filter { seenIds.add(it.mangaId) }
+            .toList()
+        val mangas = series.map { it.toLatestSManga() }
+        val hasNextPage = feed.data.isNotEmpty()
+
+        ProComicDiag.logStage(
+            "LATEST",
+            99,
+            "API data=${feed.data.size}, nonNovelUnique=${mangas.size}, hasNextPage=$hasNextPage, url=$url",
+        )
+        return MangasPage(mangas, hasNextPage = hasNextPage)
     }
+
 
     // ---- Search ----
     //
@@ -383,6 +394,22 @@ class ProComic : HttpSource() {
     )
 
     // ---- DTO → Model conversion helpers ----
+
+    private fun ProComicLatestSeries.toLatestSManga(): SManga = SManga.create().apply {
+        url = "/ar/series/$type/$mangaId/$mangaSlug"
+        title = this@toLatestSManga.mangaTitle
+        thumbnail_url = this@toLatestSManga.coverImage?.takeIf { it.startsWith("http") }
+        genre = this@toLatestSManga.type
+            .takeIf { it.isNotBlank() }
+            ?.replaceFirstChar { it.uppercase() }
+        status = when (this@toLatestSManga.status?.lowercase()) {
+            "ongoing", "مستمر" -> SManga.ONGOING
+            "completed", "مكتمل" -> SManga.COMPLETED
+            "dropped", "متوقف" -> SManga.CANCELLED
+            "hiatus", "متوقف مؤقتا", "متوقف مؤقتًا" -> SManga.ON_HIATUS
+            else -> SManga.UNKNOWN
+        }
+    }
 
     private fun ProComicPopularContent.toPopularSManga(): SManga = SManga.create().apply {
         url = "/ar/series/$type/$id/$slug"

@@ -1,0 +1,18 @@
+{
+  "empty": {"success": true, "data": []},
+  "duplicate": {
+    "success": true,
+    "data": [
+      {"content": {"id": 1, "title": "A", "slug": "a", "type": "manhua", "description": null, "status": "approved", "thumbnail": null, "metadata": null, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z"}, "viewCount": "10"},
+      {"content": {"id": 1, "title": "A duplicate", "slug": "a", "type": "manhua", "description": null, "status": "approved", "thumbnail": null, "metadata": null, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-02T00:00:00Z"}, "viewCount": "11"},
+      {"content": {"id": 2, "title": "Novel", "slug": "novel", "type": "novel", "description": null, "status": "approved", "thumbnail": null, "metadata": null, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z"}, "viewCount": "1"}
+    ]
+  },
+  "missing_optional": {
+    "success": true,
+    "data": [
+      {"content": {"id": 3, "title": "Minimal", "slug": "minimal", "type": "manga"}, "viewCount": null}
+    ]
+  },
+  "malformed": "{not-json"
+}

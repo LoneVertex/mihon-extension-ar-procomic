@@ -83,6 +83,37 @@ data class ProComicSeriesListResponse(
     val total: Int = 0,
 )
 
+/**
+ * Public Popular feed: `/api/public/content/popular-new?limit=N`.
+ * Unlike Search/Details, each row wraps the series in `content` and exposes `viewCount`
+ * as a string. The response has no observed continuation metadata.
+ */
+@Serializable
+data class ProComicPopularResponse(
+    val success: Boolean = false,
+    val data: List<ProComicPopularItem> = emptyList(),
+)
+
+@Serializable
+data class ProComicPopularItem(
+    val content: ProComicPopularContent,
+    val viewCount: String? = null,
+)
+
+@Serializable
+data class ProComicPopularContent(
+    val id: Int,
+    val title: String,
+    val slug: String,
+    val description: String? = null,
+    val type: String,
+    val status: String? = null,
+    val thumbnail: String? = null,
+    val metadata: ProComicSeriesMetadata? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
 @Serializable
 data class ProComicSeriesDto(
     val id: Int,
@@ -142,6 +173,7 @@ data class ProComicRestrictedSummary(
 data class ProComicSeriesMetadata(
     val originalTitle: String? = null,
     val altTitles: List<String>? = null,
+    val coverImage: String? = null,
     @Serializable(with = StringOrListSerializer::class)
     val author: String? = null,
     @Serializable(with = StringOrListSerializer::class)

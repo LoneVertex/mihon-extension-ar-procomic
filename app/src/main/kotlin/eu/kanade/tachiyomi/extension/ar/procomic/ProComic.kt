@@ -23,10 +23,11 @@ import java.net.URLEncoder
  *   procomic.pro now returns HTTP 410 for all series detail pages; canonical domain
  *   reverted to procomic.net (confirmed 2026-08-02 via live RSC probe).
  *
- * Architecture: HttpSource with RSC (React Server Components) stream parsing.
- *   All data is fetched via RSC requests (RSC: 1 header + ?_rsc= query param),
- *   which return the text/x-component wire format containing embedded JSON data.
- *   No HTML scraping, no REST API (no public /api/ routes exist).
+ * Architecture: HttpSource with mixed RSC (React Server Components) and public JSON API
+ *   contracts. Search, Chapters, and Popular use verified public JSON endpoints; Details
+ *   uses canonical RSC; Reader uses raw HTML with an embedded page-image manifest.
+ *   RSC requests use the RSC: 1 header and ?_rsc= query parameter and return text/x-component
+ *   data containing embedded JSON fragments. No browser-only DOM scraping is used by the parser.
  *
  * Known limitations:
  *   - Chapter pages are limited to publicImageCount (currently 3) for guest users.
@@ -79,25 +80,33 @@ class ProComic : HttpSource() {
         .build()
 
     // ---- Popular ----
-    // CONFIRMED 2026-08-02: the server ignores sort= and page= — it always returns all
-    // series (currently 18 total, 14 non-novel) regardless of query params.
-    // sort=popular is kept for forward-compatibility in case the server adds support.
-    // Client-side sort: Popular = most recently ADDED (id descending).
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/ar/series?_rsc=pop$page", rscHeaders())
-    }
+    // Verified public contract: /api/public/content/popular-new?limit=20 returns
+    // {success, data:[{content:{...}, viewCount:"..."}]}. page/offset/cursor values
+    // are ignored by the observed endpoint and no continuation metadata is returned.
+    override fun popularMangaRequest(page: Int): Request =
+        GET("$baseUrl/api/public/content/popular-new?limit=20", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val body = response.body!!.string()
         val url = response.request.url.toString()
         ProComicDiag.logResponse("POPULAR", response, body)
-        val series = ProComicUtils.extractSeriesList(body, "POPULAR", url)
-        // Sort newest series (highest id) first as a proxy for "popular" on a new site
-        val sorted = series.sortedByDescending { it.id }
-        val mangas = sorted.map { it.toSManga() }
-        // Server returns all series in a single page — never request page 2
-        ProComicDiag.logStage("POPULAR", 99,
-            "MangasPage: ${mangas.size} items, hasNextPage=false (server ignores page param)")
+        val feed = ProComicUtils.json.decodeFromString<ProComicPopularResponse>(body)
+        if (!feed.success) throw Exception("ProComic: Popular API returned success=false")
+
+        val seenIds = HashSet<Int>()
+        val content = feed.data.asSequence()
+            .map { it.content }
+            .filter { it.type != "novel" }
+            .filter { seenIds.add(it.id) }
+            .toList()
+        val mangas = content.map { it.toPopularSManga() }
+
+        ProComicDiag.logStage(
+            "POPULAR",
+            99,
+            "API data=${feed.data.size}, nonNovelUnique=${mangas.size}, hasNextPage=false, url=$url",
+        )
+        // The API exposes no authoritative continuation signal; do not fabricate page 2.
         return MangasPage(mangas, hasNextPage = false)
     }
 
@@ -374,6 +383,34 @@ class ProComic : HttpSource() {
     )
 
     // ---- DTO → Model conversion helpers ----
+
+    private fun ProComicPopularContent.toPopularSManga(): SManga = SManga.create().apply {
+        url = "/ar/series/$type/$id/$slug"
+        title = this@toPopularSManga.title
+        thumbnail_url = this@toPopularSManga.thumbnail?.takeIf { it.startsWith("http") }
+            ?: this@toPopularSManga.thumbnail?.let { "$baseUrl$it" }
+            ?: this@toPopularSManga.metadata?.coverImage?.takeIf { it.startsWith("http") }
+        description = this@toPopularSManga.metadata?.descriptions?.ar
+            ?: this@toPopularSManga.metadata?.descriptions?.en
+            ?: this@toPopularSManga.description
+        genre = buildList {
+            this@toPopularSManga.metadata?.genres?.forEach { add(it) }
+            if (this@toPopularSManga.type.isNotBlank()) {
+                add(this@toPopularSManga.type.replaceFirstChar { it.uppercase() })
+            }
+        }.distinct().joinToString(", ")
+        author = listOfNotNull(
+            this@toPopularSManga.metadata?.author,
+            this@toPopularSManga.metadata?.artist,
+        ).distinct().joinToString(", ").ifBlank { null }
+        status = when (this@toPopularSManga.metadata?.viewStatus?.lowercase()) {
+            "exclusive" -> SManga.ONGOING
+            "completed" -> SManga.COMPLETED
+            "dropped" -> SManga.CANCELLED
+            "hiatus" -> SManga.ON_HIATUS
+            else -> SManga.UNKNOWN
+        }
+    }
 
     private fun ProComicSeriesDto.toSManga(): SManga = SManga.create().apply {
         // URL pattern: /ar/series/{type}/{id}/{slug}

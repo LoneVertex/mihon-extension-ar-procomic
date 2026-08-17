@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.ar.procomic
 
-import android.util.Log
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonObject

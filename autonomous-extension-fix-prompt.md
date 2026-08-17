@@ -1,4 +1,6 @@
 # TASK: Autonomous Investigation & Build — Kotlin/Android Extension
+> **HISTORICAL / SUPERSEDED:** This prompt documents the original greenfield engineering methodology and is retained for provenance. It is not current implementation guidance; consult `README.md` and `docs/PROCOMIC_SYSTEM.md` for the current repository state.
+
 ## Superpowers-Methodology + Loop-Engineering Edition
 ## Instance: `ar.procomic` (procomic.pro) — Greenfield Build
 

@@ -13,5 +13,22 @@
     "data": [
       {"id": 4, "title": "Another Unrelated Title", "slug": "another-unrelated-title", "description": null, "type": "manhua"}
     ]
+  },
+  "lookahead": {
+    "pages": [
+      {"meta": {"total": 6, "page": 1, "limit": 3, "pages": 3}, "data": [
+        {"id": 1, "title": "Dragon Son-In-Law God", "slug": "dragon-son-in-law-god", "description": "A dragon story", "type": "manhua"},
+        {"id": 3, "title": "Unrelated Title", "slug": "unrelated-title", "description": null, "type": "manga"}
+      ]},
+      {"meta": {"total": 6, "page": 2, "limit": 3, "pages": 3}, "data": [
+        {"id": 4, "title": "Another Unrelated Title", "slug": "another-unrelated-title", "description": null, "type": "manhua"}
+      ]},
+      {"meta": {"total": 6, "page": 3, "limit": 3, "pages": 3}, "data": [
+        {"id": 5, "title": "Hidden Dragon in the City", "slug": "hidden-dragon-in-the-city", "description": null, "type": "manhua"}
+      ]}
+    ],
+    "repeated_page": {"meta": {"total": 6, "page": 3, "limit": 3, "pages": 4}, "data": [
+      {"id": 4, "title": "Another Unrelated Title", "slug": "another-unrelated-title", "description": null, "type": "manhua"}
+    ]}
   }
 }

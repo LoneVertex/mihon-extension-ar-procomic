@@ -67,6 +67,18 @@ def test_server_false_positives_are_filtered_without_losing_page_metadata() -> N
     assert page2["meta"]["page"] == 2 and page2["meta"]["pages"] == 2
 
 
+def test_bounded_lookahead_recovers_later_matches_without_looping() -> None:
+    payload = load("search_relevance_fixtures.json")["lookahead"]
+    pages = payload["pages"]
+    first_matches = [item["id"] for item in pages[0]["data"] if search_matches_query(item, "dragon")]
+    empty_matches = [item["id"] for item in pages[1]["data"] if search_matches_query(item, "dragon")]
+    later_matches = [item["id"] for item in pages[2]["data"] if search_matches_query(item, "dragon")]
+    assert first_matches == [1]
+    assert empty_matches == []
+    assert later_matches == [5]
+    assert payload["repeated_page"]["data"] == pages[1]["data"]
+
+
 def test_source_and_dto_match_the_safe_contract() -> None:
     source = SOURCE.read_text()
     dto = DTO.read_text()
@@ -77,6 +89,9 @@ def test_source_and_dto_match_the_safe_contract() -> None:
     assert 'Regex("cdn\\\\d+")' in mapping
     assert 'https://app.procomic.net$it' not in mapping
     assert 'matchesSearchQuery' in source
+    assert 'MAX_SEARCH_LOOKAHEAD_PAGES' in source
+    assert 'SEARCH_LOOKAHEAD' in source
+    assert 'searchPageFingerprint' in source
     assert 'searchTokens' in source
     assert '@SerialName("cdn_path") val cdnPath: String? = null' in dto
     assert '@Serializable(with = IntOrMapSerializer::class)' in dto
@@ -86,8 +101,9 @@ def main() -> None:
     test_absolute_values_have_priority()
     test_relative_values_require_validated_cdn_path()
     test_server_false_positives_are_filtered_without_losing_page_metadata()
+    test_bounded_lookahead_recovers_later_matches_without_looping()
     test_source_and_dto_match_the_safe_contract()
-    print("search contract tests: PASS (absolute priority, validated CDN fallback, unsafe rejection)")
+    print("search contract tests: PASS (validated thumbnails, relevance filtering, bounded lookahead)")
 
 
 if __name__ == "__main__":

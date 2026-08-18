@@ -57,6 +57,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         )
         const val MAX_RESPONSE_BYTES = 2_000_000
         const val MAX_CHAPTER_PAGES = 50
+        const val MAX_SEARCH_LOOKAHEAD_PAGES = 3
         val SEARCH_TOKEN_REGEX = Regex("[\\p{L}\\p{N}]+")
     }
 
@@ -236,24 +237,67 @@ class ProComic : HttpSource(), ConfigurableSource {
         val url = response.request.url.toString()
         ProComicDiag.logResponse("SEARCH", response, body)
 
-        val searchResponse = ProComicUtils.json.decodeFromString<ProComicSearchResponse>(body)
         val requestedQuery = response.request.url.queryParameter("search")
             ?.takeUnless { it.equals("a", ignoreCase = true) }
             .orEmpty()
-        val nonNovel = searchResponse.data
-            .filter { it.type != "novel" }
-            .filter { it.matchesSearchQuery(requestedQuery) }
-        val mangas = nonNovel.map { it.toSManga() }
+        val first = parseSearchResponse(body, requestedQuery)
+        val mangas = first.mangas.toMutableList()
+        val seenFingerprints = hashSetOf(searchPageFingerprint(first.response))
+        var effectivePage = first.response.meta?.page ?: 1
+        var reportedTotalPages = first.response.meta?.pages ?: effectivePage
+        var lookaheadCount = 0
 
-        val currentPage = searchResponse.meta?.page ?: 1
-        val totalPages = searchResponse.meta?.pages ?: 1
-        val hasNextPage = currentPage < totalPages
+        // The public endpoint can return a page full of server-side false positives. If local
+        // relevance filtering empties that page, look ahead a small bounded number of pages so
+        // Mihon does not surface a misleading terminal "No results found" after valid matches.
+        while (
+            mangas.isEmpty() &&
+            effectivePage < reportedTotalPages &&
+            lookaheadCount < MAX_SEARCH_LOOKAHEAD_PAGES
+        ) {
+            val requestedNextPage = effectivePage + 1
+            val nextRequest = response.request.newBuilder()
+                .url(response.request.url.newBuilder().setQueryParameter("page", requestedNextPage.toString()).build())
+                .build()
+            client.newCall(nextRequest).execute().use { nextResponse ->
+                val nextBody = readBoundedBody(nextResponse)
+                ProComicDiag.logResponse("SEARCH_LOOKAHEAD", nextResponse, nextBody)
+                val parsed = parseSearchResponse(nextBody, requestedQuery)
+                val fingerprint = searchPageFingerprint(parsed.response)
+                if (!seenFingerprints.add(fingerprint)) {
+                    ProComicDiag.logStage("SEARCH", 98, "lookahead stopped on repeated page fingerprint")
+                    effectivePage = requestedNextPage
+                    return@use
+                }
+                mangas += parsed.mangas
+                effectivePage = parsed.response.meta?.page ?: requestedNextPage
+                reportedTotalPages = maxOf(reportedTotalPages, parsed.response.meta?.pages ?: effectivePage)
+            }
+            lookaheadCount++
+        }
 
+        val hasNextPage = mangas.isNotEmpty() && effectivePage < reportedTotalPages
         ProComicDiag.logStage("SEARCH", 99,
-            "MangasPage: ${mangas.size} items (filtered from ${searchResponse.data.size}), hasNextPage=$hasNextPage (page $currentPage of $totalPages)")
-
-        return MangasPage(mangas, hasNextPage = hasNextPage)
+            "MangasPage: ${mangas.size} items, hasNextPage=$hasNextPage (page $effectivePage of $reportedTotalPages, lookahead=$lookaheadCount)")
+        return MangasPage(mangas.distinctBy { it.url }, hasNextPage = hasNextPage)
     }
+
+    private data class ParsedSearchResponse(
+        val response: ProComicSearchResponse,
+        val mangas: List<SManga>,
+    )
+
+    private fun parseSearchResponse(body: String, query: String): ParsedSearchResponse {
+        val parsed = ProComicUtils.json.decodeFromString<ProComicSearchResponse>(body)
+        val mangas = parsed.data
+            .filter { it.type != "novel" }
+            .filter { it.matchesSearchQuery(query) }
+            .map { it.toSManga() }
+        return ParsedSearchResponse(parsed, mangas)
+    }
+
+    private fun searchPageFingerprint(response: ProComicSearchResponse): String =
+        response.data.joinToString(",") { it.id.toString() }
 
     private fun ProComicSeriesDto.matchesSearchQuery(query: String): Boolean {
         val queryTokens = searchTokens(query)
@@ -494,7 +538,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val body = response.body!!.string()
+        val body = readBoundedBody(response)
         val url = response.request.url.toString()
         ProComicDiag.logResponse("PAGES", response, body)
 

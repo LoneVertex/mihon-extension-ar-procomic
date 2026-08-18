@@ -548,7 +548,7 @@ object ProComicUtils {
         if (appImagesJson != null) {
             if (diag) ProComicDiag.logStage(diagTag, 2, "appImagesJson extracted: len=${appImagesJson.length}")
             try {
-                val decoded = json.decodeFromString<List<ProComicAppImage>>(appImagesJson)
+                val decoded = json.decodeFromString<List<ProComicAppImage>>(normalizeRscJson(appImagesJson))
                 val urls = decoded.mapNotNull { item ->
                     (item.desktop?.takeIf { it.isNotBlank() } ?: item.mobile?.takeIf { it.isNotBlank() })
                         ?.takeIf { it.startsWith("http") }
@@ -587,7 +587,11 @@ object ProComicUtils {
             body.contains("Safe Browsing Required", ignoreCase = true) ||
                 body.contains("Log in and disable Safe Browsing", ignoreCase = true) ->
                 "Reader access requires login or Safe Browsing to be disabled in ProComic settings"
-            !body.contains("appImages") -> "No 'appImages' manifest found in response"
+            body.contains("Premium chapter", ignoreCase = true) ||
+                body.contains("\\\"options\\\":{\\\"coins\\\"", ignoreCase = false) ->
+                "This chapter is premium or locked by the server and has no public image manifest"
+            !body.contains("appImages") && !body.contains("\\\"appImages\\\"", ignoreCase = false) ->
+                "No 'appImages' manifest found in response"
             else -> "Failed to decode valid chapter images from 'appImages' manifest"
         }
         throw Exception("ProComic Reader: $reason (bodyLength=${body.length}, url=$diagUrl)")
@@ -620,18 +624,32 @@ object ProComicUtils {
      * Uses a bracket-counting approach to find the matching closing bracket.
      */
     private fun extractJsonArrayAfterKey(body: String, key: String): String? {
-        val keyPattern = "\"$key\":["
+        val keyPatterns = listOf(
+            "\"$key\":[",
+            "\\\"$key\\\":[",
+        )
         var searchFrom = 0
         repeat(MAX_RSC_CANDIDATES) {
-            val start = body.indexOf(keyPattern, searchFrom)
-            if (start < 0) return null
-            val arrStart = start + keyPattern.length - 1 // position of '['
+            val match = keyPatterns
+                .mapNotNull { pattern ->
+                    body.indexOf(pattern, searchFrom)
+                        .takeIf { it >= 0 }
+                        ?.let { it to pattern }
+                }
+                .minByOrNull { it.first }
+                ?: return null
+            val start = match.first
+            val pattern = match.second
+            val arrStart = start + pattern.length - 1 // position of '['
             val candidate = extractJsonArray(body, arrStart)
             if (candidate != null && candidate.length <= MAX_RSC_CANDIDATE_BYTES) return candidate
-            searchFrom = start + keyPattern.length
+            searchFrom = start + pattern.length
         }
         return null
     }
+
+    private fun normalizeRscJson(value: String): String =
+        value.replace("\\\"", "\"")
 
     /**
      * Starting at [startPos] (which must be '['), walk through the body counting

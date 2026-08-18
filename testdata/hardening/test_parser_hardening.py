@@ -68,7 +68,9 @@ def main() -> None:
 
     assert 'const val MAX_RESPONSE_BYTES = 2_000_000' in source_text
     assert 'const val MAX_CHAPTER_PAGES = 50' in source_text
-    assert 'body.source().readByteArray(MAX_RESPONSE_BYTES.toLong() + 1L)' in source_text
+    assert 'body.source().readByteArray(MAX_RESPONSE_BYTES.toLong() + 1L)' not in source_text
+    assert 'val buffer = Buffer()' in source_text
+    assert 'source.read(buffer' in source_text
     assert 'seenPageFingerprints' in source_text
     assert 'empty page terminates pagination' in source_text
     assert 'repeated page terminates pagination' in source_text

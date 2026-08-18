@@ -15,6 +15,7 @@ import kotlinx.serialization.decodeFromString
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
+import okio.Buffer
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.net.URLEncoder
@@ -64,11 +65,17 @@ class ProComic : HttpSource(), ConfigurableSource {
         if (declaredLength > MAX_RESPONSE_BYTES) {
             throw Exception("ProComic: response exceeds ${MAX_RESPONSE_BYTES} bytes")
         }
-        val bytes = body.source().readByteArray(MAX_RESPONSE_BYTES.toLong() + 1L)
-        if (bytes.size > MAX_RESPONSE_BYTES) {
-            throw Exception("ProComic: response exceeds ${MAX_RESPONSE_BYTES} bytes")
+        val source = body.source()
+        val buffer = Buffer()
+        while (buffer.size <= MAX_RESPONSE_BYTES) {
+            val remaining = MAX_RESPONSE_BYTES.toLong() + 1L - buffer.size
+            val read = source.read(buffer, minOf(remaining, 16_384L))
+            if (read == -1L) break
+            if (buffer.size > MAX_RESPONSE_BYTES) {
+                throw Exception("ProComic: response exceeds ${MAX_RESPONSE_BYTES} bytes")
+            }
         }
-        return bytes.toString(StandardCharsets.UTF_8)
+        return buffer.readByteArray().toString(StandardCharsets.UTF_8)
     }
 
     private fun chapterPageFingerprint(data: ProComicChapterListResponse): String =

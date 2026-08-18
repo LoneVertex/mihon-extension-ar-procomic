@@ -351,12 +351,13 @@ class ProComic : HttpSource(), ConfigurableSource {
         var page = 2
         var hasMore = firstPage.hasMore
         while (hasMore) {
-            val next = client.newCall(
+            val nextData = client.newCall(
                 GET("$baseUrl/api/chapters?contentId=$contentId&page=$page", headers)
-            ).execute()
-            val nextData = ProComicUtils.json.decodeFromString<ProComicChapterListResponse>(
-                readBoundedBody(next)
-            )
+            ).execute().use { next ->
+                ProComicUtils.json.decodeFromString<ProComicChapterListResponse>(
+                    readBoundedBody(next)
+                )
+            }
             val fingerprint = chapterPageFingerprint(nextData)
             ProComicDiag.logStage("CHAPTERS", page,
                 "page=$page: ${nextData.chapters.size} chapters, hasMore=${nextData.hasMore}")
@@ -503,7 +504,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         thumbnail_url = this@toPopularSManga.thumbnail?.takeIf { it.startsWith("http") }
             ?: this@toPopularSManga.coverImageApp?.desktop?.takeIf { it.startsWith("http") }
             ?: this@toPopularSManga.metadata?.coverImage?.takeIf { it.startsWith("http") }
-            ?: this@toPopularSManga.thumbnail?.takeIf { it.startsWith("/") }
+            ?: this@toPopularSManga.thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }
                 ?.let { path ->
                     this@toPopularSManga.cdnPath
                         ?.takeIf { it.matches(Regex("cdn\\d+")) }
@@ -537,7 +538,12 @@ class ProComic : HttpSource(), ConfigurableSource {
         title = this@toSManga.title
         thumbnail_url = this@toSManga.coverImage?.takeIf { it.startsWith("http") }
             ?: this@toSManga.thumbnail?.takeIf { it.startsWith("http") }
-            ?: this@toSManga.thumbnail?.let { "https://app.procomic.net$it" }
+            ?: this@toSManga.thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }
+                ?.let { path ->
+                    this@toSManga.cdnPath
+                        ?.takeIf { it.matches(Regex("cdn\\d+")) }
+                        ?.let { cdn -> "https://$cdn.procomic.net$path" }
+                }
             ?: this@toSManga.coverImage
 
         // Use Arabic description if available, then English, then direct description field

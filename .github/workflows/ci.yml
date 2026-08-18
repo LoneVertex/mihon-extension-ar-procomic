@@ -33,6 +33,8 @@ jobs:
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: procomic-extension-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: procomic-extension-apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
           if-no-files-found: error

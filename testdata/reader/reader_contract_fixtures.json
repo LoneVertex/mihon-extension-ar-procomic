@@ -1,0 +1,5 @@
+{
+  "multi_page_manifest": "<html><script>window.__DATA__={\"appImages\":[{\"desktop\":\"https://app.procomic.pro/chapters/690/50821/p1/page1.avif\",\"mobile\":\"https://app.procomic.pro/chapters/690/50821/p1/page1-mobile.avif\"},{\"desktop\":\"https://app.procomic.pro/chapters/690/50821/p2/page2.avif\",\"mobile\":\"https://app.procomic.pro/chapters/690/50821/p2/page2-mobile.avif\"},{\"desktop\":\"https://app.procomic.pro/chapters/690/50821/p3/page3.avif\",\"mobile\":\"https://app.procomic.pro/chapters/690/50821/p3/page3-mobile.avif\"}]}</script></html>",
+  "safe_browsing_required": "<html><head><title>Safe Browsing Required | ProComic</title><meta name=\"description\" content=\"Log in and disable Safe Browsing from your user settings to read this chapter.\"></head><body>Safe Browsing Required</body></html>",
+  "missing_manifest": "<html><body><div>Loading...</div></body></html>"
+}

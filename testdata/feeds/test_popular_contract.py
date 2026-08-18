@@ -88,6 +88,13 @@ def test_relative_thumbnail_mapping_uses_verified_absolute_contract() -> None:
     assert popular_thumbnail_url(fallback) == "https://cdn2.procomic.net/40/image_series/1758447487254-ra92v1fqd5l.avif"
 
 
+def test_scalar_exclusive_price_is_a_supported_optional_variant() -> None:
+    edge = load("popular_edge_fixtures.json")["exclusive_price_scalar"]
+    content = edge["data"][0]["content"]
+    assert isinstance(content["metadata"]["exclusivePrice"], int)
+    assert content["metadata"]["exclusivePrice"] == 5
+
+
 def test_malformed_payload_is_not_successful_data() -> None:
     try:
         json.loads(load("popular_edge_fixtures.json")["malformed"])
@@ -117,10 +124,11 @@ def main() -> None:
     test_page_controls_are_not_continuation()
     test_duplicate_and_novel_policy()
     test_empty_and_optional_fields()
+    test_scalar_exclusive_price_is_a_supported_optional_variant()
     test_relative_thumbnail_mapping_uses_verified_absolute_contract()
     test_malformed_payload_is_not_successful_data()
     test_source_uses_dedicated_popular_contract()
-    print("popular contract tests: PASS (nested schema, limits, page identity, dedup, novel filter, malformed)")
+    print("popular contract tests: PASS (nested schema, limits, page identity, dedup, novel filter, scalar price, malformed)")
 
 
 if __name__ == "__main__":

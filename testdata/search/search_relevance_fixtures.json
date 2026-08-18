@@ -1,0 +1,17 @@
+{
+  "query": "dragon",
+  "page1": {
+    "meta": {"total": 4, "page": 1, "limit": 3, "pages": 2},
+    "data": [
+      {"id": 1, "title": "Dragon Son-In-Law God", "slug": "dragon-son-in-law-god", "description": "A dragon story", "type": "manhua"},
+      {"id": 2, "title": "The Dragon", "slug": "the-dragon", "description": null, "type": "manga"},
+      {"id": 3, "title": "Unrelated Title", "slug": "unrelated-title", "description": null, "type": "manga"}
+    ]
+  },
+  "page2": {
+    "meta": {"total": 4, "page": 2, "limit": 3, "pages": 2},
+    "data": [
+      {"id": 4, "title": "Another Unrelated Title", "slug": "another-unrelated-title", "description": null, "type": "manhua"}
+    ]
+  }
+}

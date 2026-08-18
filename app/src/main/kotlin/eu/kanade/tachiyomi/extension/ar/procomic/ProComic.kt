@@ -57,6 +57,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         )
         const val MAX_RESPONSE_BYTES = 2_000_000
         const val MAX_CHAPTER_PAGES = 50
+        val SEARCH_TOKEN_REGEX = Regex("[\\p{L}\\p{N}]+")
     }
 
     private fun readBoundedBody(response: Response): String {
@@ -236,7 +237,12 @@ class ProComic : HttpSource(), ConfigurableSource {
         ProComicDiag.logResponse("SEARCH", response, body)
 
         val searchResponse = ProComicUtils.json.decodeFromString<ProComicSearchResponse>(body)
-        val nonNovel = searchResponse.data.filter { it.type != "novel" }
+        val requestedQuery = response.request.url.queryParameter("search")
+            ?.takeUnless { it.equals("a", ignoreCase = true) }
+            .orEmpty()
+        val nonNovel = searchResponse.data
+            .filter { it.type != "novel" }
+            .filter { it.matchesSearchQuery(requestedQuery) }
         val mangas = nonNovel.map { it.toSManga() }
 
         val currentPage = searchResponse.meta?.page ?: 1
@@ -249,12 +255,52 @@ class ProComic : HttpSource(), ConfigurableSource {
         return MangasPage(mangas, hasNextPage = hasNextPage)
     }
 
+    private fun ProComicSeriesDto.matchesSearchQuery(query: String): Boolean {
+        val queryTokens = searchTokens(query)
+        if (queryTokens.isEmpty()) return true
+
+        val searchableText = buildString {
+            append(title).append(' ')
+            append(slug).append(' ')
+            append(description.orEmpty()).append(' ')
+            append(metadata?.descriptions?.ar.orEmpty()).append(' ')
+            append(metadata?.descriptions?.en.orEmpty()).append(' ')
+            metadata?.altTitles.orEmpty().forEach { append(it).append(' ') }
+        }
+        val resultTokens = searchTokens(searchableText)
+        return queryTokens.all { it in resultTokens }
+    }
+
+    private fun searchTokens(value: String): Set<String> =
+        SEARCH_TOKEN_REGEX.findAll(value.lowercase())
+            .map { it.value }
+            .filter { it.length > 1 }
+            .toSet()
+
     // ---- Series Detail ----
     // manga.url remains "/ar/series/{type}/{id}/{slug}" for chapter REST parsing.
     // The live canonical Details route is "/ar/series/{slug}-{id}".
+    private data class RestrictedMangaFallback(
+        val thumbnailUrl: String?,
+        val description: String?,
+        val author: String?,
+        val genre: String?,
+        val status: Int,
+    )
+
     override fun mangaDetailsRequest(manga: SManga): Request {
         val detailsPath = canonicalDetailsPath(manga.url)
+        val fallback = RestrictedMangaFallback(
+            thumbnailUrl = manga.thumbnail_url,
+            description = manga.description,
+            author = manga.author,
+            genre = manga.genre,
+            status = manga.status,
+        )
         return GET("$baseUrl$detailsPath?_rsc=det", rscHeaders())
+            .newBuilder()
+            .tag(RestrictedMangaFallback::class.java, fallback)
+            .build()
     }
 
     private fun canonicalDetailsPath(mangaUrl: String): String {
@@ -274,6 +320,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         val url = response.request.url.toString()
         ProComicDiag.logResponse("DETAIL", response, body)
         val (expectedId, expectedSlug) = detailsIdentity(url)
+        val restrictedFallback = response.request.tag(RestrictedMangaFallback::class.java)
         return when (val result = ProComicUtils.extractSeriesDetail(
             body,
             diagTag = "DETAIL",
@@ -282,18 +329,24 @@ class ProComic : HttpSource(), ConfigurableSource {
             expectedSlug = expectedSlug,
         )) {
             is ProComicDetailsResult.Complete -> result.series.toSManga()
-            is ProComicDetailsResult.Restricted -> result.details.toSManga()
+            is ProComicDetailsResult.Restricted -> result.details.toSManga(restrictedFallback)
             null -> throw Exception("ProComic: could not parse series details from RSC response")
         }
     }
 
-    private fun ProComicRestrictedDetails.toSManga(): SManga = SManga.create().apply {
+    private fun ProComicRestrictedDetails.toSManga(
+        fallback: RestrictedMangaFallback?,
+    ): SManga = SManga.create().apply {
         url = "/ar/series/$type/$id/$slug"
         title = this@toSManga.title
         thumbnail_url = coverImage?.takeIf { it.startsWith("http") }
+            ?: fallback?.thumbnailUrl
         description = description?.takeIf { it.isNotBlank() }
-        genre = type.replaceFirstChar { it.uppercase() }
-        status = SManga.UNKNOWN
+            ?: fallback?.description?.takeIf { it.isNotBlank() }
+        author = fallback?.author?.takeIf { it.isNotBlank() }
+        genre = fallback?.genre?.takeIf { it.isNotBlank() }
+            ?: type.replaceFirstChar { it.uppercase() }
+        status = fallback?.status ?: SManga.UNKNOWN
     }
 
     private fun detailsIdentity(url: String): Pair<Int?, String?> {

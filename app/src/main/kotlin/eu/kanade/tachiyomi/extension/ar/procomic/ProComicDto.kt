@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.ar.procomic
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -10,8 +11,10 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Deserializes a JSON field that can be either:
@@ -43,6 +46,32 @@ private object StringOrListSerializer : KSerializer<String?> {
     }
 
     override fun serialize(encoder: Encoder, value: String?) {
+        delegate.serialize(encoder, value)
+    }
+}
+
+/**
+ * Deserializes the live `exclusivePrice` field, which is normally a language-to-price object
+ * but is currently also returned as a scalar integer for some Popular rows. The scalar is
+ * retained under a synthetic default key because callers only need decoding to remain tolerant.
+ */
+private object IntOrMapSerializer : KSerializer<Map<String, Int>?> {
+    private val delegate = MapSerializer(String.serializer(), Int.serializer()).nullable
+
+    override val descriptor: SerialDescriptor = delegate.descriptor
+
+    override fun deserialize(decoder: Decoder): Map<String, Int>? {
+        val jsonDecoder = decoder as? JsonDecoder ?: return delegate.deserialize(decoder)
+        return when (val element = jsonDecoder.decodeJsonElement()) {
+            is JsonObject -> element.mapNotNull { (key, value) ->
+                value.jsonPrimitive.contentOrNull?.toIntOrNull()?.let { key to it }
+            }.toMap().ifEmpty { null }
+            is JsonPrimitive -> element.contentOrNull?.toIntOrNull()?.let { mapOf("_default" to it) }
+            else -> null
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: Map<String, Int>?) {
         delegate.serialize(encoder, value)
     }
 }
@@ -237,6 +266,7 @@ data class ProComicSeriesMetadata(
     @SerialName("descriptions") val descriptions: ProComicDescriptions? = null,
     val exclusiveLockStrategy: String? = null,
     val exclusiveUniversalConfigs: Map<String, ProComicExclusiveConfig>? = null,
+    @Serializable(with = IntOrMapSerializer::class)
     val exclusivePrice: Map<String, Int>? = null,
 )
 

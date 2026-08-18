@@ -42,5 +42,17 @@
       }, "viewCount": "1"}
     ]
   },
+  "exclusive_price_scalar": {
+    "success": true,
+    "data": [
+      {"content": {
+        "id": 527,
+        "title": "Scalar Exclusive Price",
+        "slug": "scalar-exclusive-price",
+        "type": "manhua",
+        "metadata": {"exclusivePrice": 5}
+      }, "viewCount": "1"}
+    ]
+  },
   "malformed": "{not-json"
 }

@@ -584,6 +584,9 @@ object ProComicUtils {
         // 3. Explicit Failure
         val reason = when {
             body.isBlank() -> "Response body was empty (0 bytes)"
+            body.contains("Safe Browsing Required", ignoreCase = true) ||
+                body.contains("Log in and disable Safe Browsing", ignoreCase = true) ->
+                "Reader access requires login or Safe Browsing to be disabled in ProComic settings"
             !body.contains("appImages") -> "No 'appImages' manifest found in response"
             else -> "Failed to decode valid chapter images from 'appImages' manifest"
         }

@@ -46,6 +46,27 @@ def test_relative_values_require_validated_cdn_path() -> None:
     assert search_thumbnail_url(data[4]) is None
 
 
+def search_matches_query(series: dict, query: str) -> bool:
+    query_tokens = {token.casefold() for token in query.split() if len(token) > 1}
+    if not query_tokens:
+        return True
+    searchable = " ".join(
+        str(series.get(key) or "")
+        for key in ("title", "slug", "description")
+    ).casefold()
+    return all(token in searchable.split() or token in searchable for token in query_tokens)
+
+
+def test_server_false_positives_are_filtered_without_losing_page_metadata() -> None:
+    payload = load("search_relevance_fixtures.json")
+    page1 = payload["page1"]
+    page2 = payload["page2"]
+    assert [item["id"] for item in page1["data"] if search_matches_query(item, payload["query"])] == [1, 2]
+    assert [item["id"] for item in page2["data"] if search_matches_query(item, payload["query"])] == []
+    assert page1["meta"]["page"] == 1 and page1["meta"]["pages"] == 2
+    assert page2["meta"]["page"] == 2 and page2["meta"]["pages"] == 2
+
+
 def test_source_and_dto_match_the_safe_contract() -> None:
     source = SOURCE.read_text()
     dto = DTO.read_text()
@@ -55,12 +76,16 @@ def test_source_and_dto_match_the_safe_contract() -> None:
     assert 'thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }' in mapping
     assert 'Regex("cdn\\\\d+")' in mapping
     assert 'https://app.procomic.net$it' not in mapping
+    assert 'matchesSearchQuery' in source
+    assert 'searchTokens' in source
     assert '@SerialName("cdn_path") val cdnPath: String? = null' in dto
+    assert '@Serializable(with = IntOrMapSerializer::class)' in dto
 
 
 def main() -> None:
     test_absolute_values_have_priority()
     test_relative_values_require_validated_cdn_path()
+    test_server_false_positives_are_filtered_without_losing_page_metadata()
     test_source_and_dto_match_the_safe_contract()
     print("search contract tests: PASS (absolute priority, validated CDN fallback, unsafe rejection)")
 

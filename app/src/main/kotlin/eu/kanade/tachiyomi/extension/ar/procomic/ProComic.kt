@@ -501,8 +501,14 @@ class ProComic : HttpSource(), ConfigurableSource {
         url = "/ar/series/$type/$id/$slug"
         title = this@toPopularSManga.title
         thumbnail_url = this@toPopularSManga.thumbnail?.takeIf { it.startsWith("http") }
-            ?: this@toPopularSManga.thumbnail?.let { "$baseUrl$it" }
+            ?: this@toPopularSManga.coverImageApp?.desktop?.takeIf { it.startsWith("http") }
             ?: this@toPopularSManga.metadata?.coverImage?.takeIf { it.startsWith("http") }
+            ?: this@toPopularSManga.thumbnail?.takeIf { it.startsWith("/") }
+                ?.let { path ->
+                    this@toPopularSManga.cdnPath
+                        ?.takeIf { it.matches(Regex("cdn\\d+")) }
+                        ?.let { cdn -> "https://$cdn.procomic.net$path" }
+                }
         description = this@toPopularSManga.metadata?.descriptions?.ar
             ?: this@toPopularSManga.metadata?.descriptions?.en
             ?: this@toPopularSManga.description

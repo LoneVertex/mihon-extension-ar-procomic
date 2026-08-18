@@ -61,6 +61,33 @@ def test_empty_and_optional_fields() -> None:
     assert "metadata" not in minimal
 
 
+def popular_thumbnail_url(content: dict) -> str | None:
+    thumbnail = content.get("thumbnail")
+    if isinstance(thumbnail, str) and thumbnail.startswith("http"):
+        return thumbnail
+    app_desktop = (content.get("coverImageApp") or {}).get("desktop")
+    if isinstance(app_desktop, str) and app_desktop.startswith("http"):
+        return app_desktop
+    metadata_cover = (content.get("metadata") or {}).get("coverImage")
+    if isinstance(metadata_cover, str) and metadata_cover.startswith("http"):
+        return metadata_cover
+    if isinstance(thumbnail, str) and thumbnail.startswith("/"):
+        cdn = content.get("cdn_path")
+        if isinstance(cdn, str) and cdn.startswith("cdn") and cdn[3:].isdigit():
+            return f"https://{cdn}.procomic.net{thumbnail}"
+    return None
+
+
+def test_relative_thumbnail_mapping_uses_verified_absolute_contract() -> None:
+    edge = load("popular_edge_fixtures.json")
+    content = edge["relative_thumbnail"]["data"][0]["content"]
+    assert popular_thumbnail_url(content) == content["coverImageApp"]["desktop"]
+    assert "https://procomic.net" not in popular_thumbnail_url(content)
+
+    fallback = edge["relative_thumbnail_cdn_fallback"]["data"][0]["content"]
+    assert popular_thumbnail_url(fallback) == "https://cdn2.procomic.net/40/image_series/1758447487254-ra92v1fqd5l.avif"
+
+
 def test_malformed_payload_is_not_successful_data() -> None:
     try:
         json.loads(load("popular_edge_fixtures.json")["malformed"])
@@ -79,6 +106,9 @@ def test_source_uses_dedicated_popular_contract() -> None:
     assert "ProComicPopularResponse" in popular_block
     assert "extractSeriesList(body, \"POPULAR\"" not in popular_block
     assert "hasNextPage = false" in popular_block
+    assert "coverImageApp?.desktop" in source
+    assert "cdnPath" in source
+    assert 'Regex("cdn\\\\d+")' in source
 
 
 def main() -> None:
@@ -87,6 +117,7 @@ def main() -> None:
     test_page_controls_are_not_continuation()
     test_duplicate_and_novel_policy()
     test_empty_and_optional_fields()
+    test_relative_thumbnail_mapping_uses_verified_absolute_contract()
     test_malformed_payload_is_not_successful_data()
     test_source_uses_dedicated_popular_contract()
     print("popular contract tests: PASS (nested schema, limits, page identity, dedup, novel filter, malformed)")

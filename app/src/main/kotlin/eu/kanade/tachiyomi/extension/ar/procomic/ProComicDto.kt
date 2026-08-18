@@ -101,6 +101,12 @@ data class ProComicPopularItem(
 )
 
 @Serializable
+data class ProComicCoverImageApp(
+    val desktop: String? = null,
+    val mobile: String? = null,
+)
+
+@Serializable
 data class ProComicPopularContent(
     val id: Int,
     val title: String,
@@ -109,6 +115,8 @@ data class ProComicPopularContent(
     val type: String,
     val status: String? = null,
     val thumbnail: String? = null,
+    @SerialName("cdn_path") val cdnPath: String? = null,
+    val coverImageApp: ProComicCoverImageApp? = null,
     val metadata: ProComicSeriesMetadata? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,

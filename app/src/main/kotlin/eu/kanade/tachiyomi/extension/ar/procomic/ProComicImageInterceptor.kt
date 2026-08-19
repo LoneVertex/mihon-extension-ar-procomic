@@ -125,7 +125,7 @@ class ProComicImageInterceptor(
                     val bytes = tileResponse.body?.bytes()
                         ?: throw IOException("ProComic Reader: protected tile body is missing")
                     val tile = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        ?: runCatching { avifCoder.decode(bytes) }.getOrNull()
+                        ?: avifCoder?.let { coder -> runCatching { coder.decode(bytes) }.getOrNull() }
                         ?: throw IOException("ProComic Reader: protected tile could not be decoded")
                     try {
                         canvas.drawBitmap(tile, null, destination, paint)
@@ -179,6 +179,11 @@ class ProComicImageInterceptor(
         const val JPEG_QUALITY = 95
         val JSON_MEDIA_TYPE = "application/json".toMediaType()
         val JPEG_MEDIA_TYPE = "image/jpeg".toMediaType()
-        val avifCoder = HeifCoder()
+        // Do not initialize HeifCoder while Mihon is discovering/trusting the extension. Its
+        // companion initializer calls System.loadLibrary("coder"), which can fail on an ABI or
+        // packaging mismatch and make Mihon remove the extension immediately after trust.
+        val avifCoder: HeifCoder? by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+            runCatching { HeifCoder() }.getOrNull()
+        }
     }
 }

@@ -138,6 +138,14 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert "chapter-map-session-key" not in procomic
 
 
+def test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup() -> None:
+    interceptor = (PROCOMIC.parent / "ProComicImageInterceptor.kt").read_text()
+    assert "val avifCoder: HeifCoder? by lazy" in interceptor
+    assert "runCatching { HeifCoder() }.getOrNull()" in interceptor
+    assert "avifCoder?.let" in interceptor
+    assert "val avifCoder = HeifCoder()" not in interceptor
+
+
 def test_premium_response_is_distinguished_from_missing_manifest() -> None:
     fixture = load()["premium_locked"]
     assert "Premium chapter" in fixture
@@ -177,10 +185,11 @@ def main() -> None:
     test_live_guest_limit_is_proven_server_side()
     test_deferred_media_contract_recovers_all_protected_pages()
     test_source_uses_deferred_media_and_protected_tile_reconstruction()
+    test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup()
     test_premium_response_is_distinguished_from_missing_manifest()
     test_safe_browsing_response_is_distinguished_from_missing_manifest()
     test_source_preserves_reader_bounds_and_explicit_access_diagnostic()
-    print("reader contract tests: PASS (public/deferred pages, protected-map geometry, escaped RSC boundaries, access states, bounds)")
+    print("reader contract tests: PASS (public/deferred pages, protected-map geometry, lazy AVIF startup, escaped RSC boundaries, access states, bounds)")
 
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@ def test_server_false_positives_are_filtered_without_losing_page_metadata() -> N
     assert page2["meta"]["page"] == 2 and page2["meta"]["pages"] == 2
 
 
-def test_bounded_lookahead_recovers_later_matches_without_looping() -> None:
+def test_bounded_legacy_fixture_recovers_later_matches_without_looping() -> None:
     payload = load("search_relevance_fixtures.json")["lookahead"]
     pages = payload["pages"]
     first_matches = [item["id"] for item in pages[0]["data"] if search_matches_query(item, "dragon")]
@@ -77,6 +77,27 @@ def test_bounded_lookahead_recovers_later_matches_without_looping() -> None:
     assert empty_matches == []
     assert later_matches == [5]
     assert payload["repeated_page"]["data"] == pages[1]["data"]
+
+
+def test_live_batch_cases_consume_matches_before_returning_terminal_page() -> None:
+    payload = load("search_relevance_fixtures.json")["live_batch_cases"]
+    expected = {"dragon": 11, "skill": 15}
+    for query, case in payload.items():
+        assert case["request_limit"] == 50
+        matching = []
+        seen_ids = set()
+        for page in case["pages"]:
+            page_matches = page["matching_ids"]
+            assert len(page_matches) == len(set(page_matches))
+            for item_id in page_matches:
+                if item_id not in seen_ids:
+                    matching.append(item_id)
+                    seen_ids.add(item_id)
+        assert len(matching) == expected[query]
+        assert matching
+        # The implementation deliberately returns a terminal Mihon page after the bounded batch,
+        # preventing the next Mihon continuation request from surfacing a false empty page.
+        assert case["pages"][-1]["meta"]["page"] == 2
 
 
 def test_source_and_dto_match_the_safe_contract() -> None:
@@ -89,8 +110,10 @@ def test_source_and_dto_match_the_safe_contract() -> None:
     assert 'Regex("cdn\\\\d+")' in mapping
     assert 'https://app.procomic.net$it' not in mapping
     assert 'matchesSearchQuery' in source
-    assert 'MAX_SEARCH_LOOKAHEAD_PAGES' in source
-    assert 'SEARCH_LOOKAHEAD' in source
+    assert 'SEARCH_PAGE_LIMIT = 50' in source
+    assert 'MAX_SEARCH_PAGES_PER_BATCH = 6' in source
+    assert 'SEARCH_BATCH' in source
+    assert 'hasNextPage=false' in source
     assert 'searchPageFingerprint' in source
     assert 'searchTokens' in source
     assert '@SerialName("cdn_path") val cdnPath: String? = null' in dto
@@ -101,9 +124,10 @@ def main() -> None:
     test_absolute_values_have_priority()
     test_relative_values_require_validated_cdn_path()
     test_server_false_positives_are_filtered_without_losing_page_metadata()
-    test_bounded_lookahead_recovers_later_matches_without_looping()
+    test_bounded_legacy_fixture_recovers_later_matches_without_looping()
+    test_live_batch_cases_consume_matches_before_returning_terminal_page()
     test_source_and_dto_match_the_safe_contract()
-    print("search contract tests: PASS (validated thumbnails, relevance filtering, bounded lookahead)")
+    print("search contract tests: PASS (validated thumbnails, relevance filtering, bounded batch consumption)")
 
 
 if __name__ == "__main__":

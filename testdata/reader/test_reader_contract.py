@@ -47,6 +47,48 @@ def test_escaped_rsc_manifest_preserves_order_and_count() -> None:
     assert images[2].endswith('/p3/page3.avif')
 
 
+def extract_escaped_rsc_array(body: str) -> list[dict[str, str]]:
+    marker = '\\\"appImages\\\":['
+    marker_start = body.index(marker)
+    start = marker_start + len(marker) - 1
+    depth = 0
+    in_string = False
+    escaped = False
+    pos = start
+    while pos < len(body):
+        char = body[pos]
+        if not in_string and char == '\\' and pos + 1 < len(body) and body[pos + 1] == '"':
+            pos += 2
+            continue
+        if escaped:
+            escaped = False
+        elif char == '\\' and in_string:
+            escaped = True
+        elif char == '"':
+            in_string = not in_string
+        elif not in_string and char == '[':
+            depth += 1
+        elif not in_string and char == ']':
+            depth -= 1
+            if depth == 0:
+                candidate = body[start:pos + 1].replace('\\"', '"')
+                return json.loads(candidate)
+        pos += 1
+    raise AssertionError('escaped RSC array terminator not found')
+
+
+def test_live_escaped_rsc_array_stops_before_trailing_protection_object() -> None:
+    fixture = load()["live_escaped_rsc_with_trailing_object"]
+    images = extract_escaped_rsc_array(fixture)
+    assert len(images) == 3
+    assert [item["desktop"] for item in images] == [
+        "https://app.procomic.pro/chapters/690/50821/p1/1785188000210-bp3wk0x3m06-4086df2c7bf6-desktop.avif",
+        "https://app.procomic.pro/chapters/690/50821/p2/1785188081002-2mzaao9xdsh-37fd56b92665-desktop.avif",
+        "https://app.procomic.pro/chapters/690/50821/p3/1785188091276-8luu5gddfhl-a55b69f3cd25-desktop.avif",
+    ]
+    assert "protectionV2" not in json.dumps(images)
+
+
 def test_premium_response_is_distinguished_from_missing_manifest() -> None:
     fixture = load()["premium_locked"]
     assert "Premium chapter" in fixture
@@ -70,6 +112,7 @@ def test_source_preserves_reader_bounds_and_explicit_access_diagnostic() -> None
     assert "Safe Browsing Required" in utils
     assert "Log in and disable Safe Browsing" in utils
     assert "normalizeRscJson" in utils
+    assert "Next.js RSC may serialize JSON property quotes" in utils
     assert "Premium chapter" in utils
     assert "https://procomic.pro" in procomic
     assert "pageListParse" in procomic
@@ -80,10 +123,11 @@ def test_source_preserves_reader_bounds_and_explicit_access_diagnostic() -> None
 def main() -> None:
     test_multi_page_manifest_preserves_order_and_count()
     test_escaped_rsc_manifest_preserves_order_and_count()
+    test_live_escaped_rsc_array_stops_before_trailing_protection_object()
     test_premium_response_is_distinguished_from_missing_manifest()
     test_safe_browsing_response_is_distinguished_from_missing_manifest()
     test_source_preserves_reader_bounds_and_explicit_access_diagnostic()
-    print("reader contract tests: PASS (multi-page order, escaped RSC, premium/Safe Browsing states, bounds)")
+    print("reader contract tests: PASS (multi-page order, escaped RSC boundaries, premium/Safe Browsing states, bounds)")
 
 
 if __name__ == "__main__":

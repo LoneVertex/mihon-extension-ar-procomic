@@ -1,34 +1,364 @@
 {
   "query": "dragon",
   "page1": {
-    "meta": {"total": 4, "page": 1, "limit": 3, "pages": 2},
+    "meta": {
+      "total": 4,
+      "page": 1,
+      "limit": 3,
+      "pages": 2
+    },
     "data": [
-      {"id": 1, "title": "Dragon Son-In-Law God", "slug": "dragon-son-in-law-god", "description": "A dragon story", "type": "manhua"},
-      {"id": 2, "title": "The Dragon", "slug": "the-dragon", "description": null, "type": "manga"},
-      {"id": 3, "title": "Unrelated Title", "slug": "unrelated-title", "description": null, "type": "manga"}
+      {
+        "id": 1,
+        "title": "Dragon Son-In-Law God",
+        "slug": "dragon-son-in-law-god",
+        "description": "A dragon story",
+        "type": "manhua"
+      },
+      {
+        "id": 2,
+        "title": "The Dragon",
+        "slug": "the-dragon",
+        "description": null,
+        "type": "manga"
+      },
+      {
+        "id": 3,
+        "title": "Unrelated Title",
+        "slug": "unrelated-title",
+        "description": null,
+        "type": "manga"
+      }
     ]
   },
   "page2": {
-    "meta": {"total": 4, "page": 2, "limit": 3, "pages": 2},
+    "meta": {
+      "total": 4,
+      "page": 2,
+      "limit": 3,
+      "pages": 2
+    },
     "data": [
-      {"id": 4, "title": "Another Unrelated Title", "slug": "another-unrelated-title", "description": null, "type": "manhua"}
+      {
+        "id": 4,
+        "title": "Another Unrelated Title",
+        "slug": "another-unrelated-title",
+        "description": null,
+        "type": "manhua"
+      }
     ]
   },
   "lookahead": {
     "pages": [
-      {"meta": {"total": 6, "page": 1, "limit": 3, "pages": 3}, "data": [
-        {"id": 1, "title": "Dragon Son-In-Law God", "slug": "dragon-son-in-law-god", "description": "A dragon story", "type": "manhua"},
-        {"id": 3, "title": "Unrelated Title", "slug": "unrelated-title", "description": null, "type": "manga"}
-      ]},
-      {"meta": {"total": 6, "page": 2, "limit": 3, "pages": 3}, "data": [
-        {"id": 4, "title": "Another Unrelated Title", "slug": "another-unrelated-title", "description": null, "type": "manhua"}
-      ]},
-      {"meta": {"total": 6, "page": 3, "limit": 3, "pages": 3}, "data": [
-        {"id": 5, "title": "Hidden Dragon in the City", "slug": "hidden-dragon-in-the-city", "description": null, "type": "manhua"}
-      ]}
+      {
+        "meta": {
+          "total": 6,
+          "page": 1,
+          "limit": 3,
+          "pages": 3
+        },
+        "data": [
+          {
+            "id": 1,
+            "title": "Dragon Son-In-Law God",
+            "slug": "dragon-son-in-law-god",
+            "description": "A dragon story",
+            "type": "manhua"
+          },
+          {
+            "id": 3,
+            "title": "Unrelated Title",
+            "slug": "unrelated-title",
+            "description": null,
+            "type": "manga"
+          }
+        ]
+      },
+      {
+        "meta": {
+          "total": 6,
+          "page": 2,
+          "limit": 3,
+          "pages": 3
+        },
+        "data": [
+          {
+            "id": 4,
+            "title": "Another Unrelated Title",
+            "slug": "another-unrelated-title",
+            "description": null,
+            "type": "manhua"
+          }
+        ]
+      },
+      {
+        "meta": {
+          "total": 6,
+          "page": 3,
+          "limit": 3,
+          "pages": 3
+        },
+        "data": [
+          {
+            "id": 5,
+            "title": "Hidden Dragon in the City",
+            "slug": "hidden-dragon-in-the-city",
+            "description": null,
+            "type": "manhua"
+          }
+        ]
+      }
     ],
-    "repeated_page": {"meta": {"total": 6, "page": 3, "limit": 3, "pages": 4}, "data": [
-      {"id": 4, "title": "Another Unrelated Title", "slug": "another-unrelated-title", "description": null, "type": "manhua"}
-    ]}
+    "repeated_page": {
+      "meta": {
+        "total": 6,
+        "page": 3,
+        "limit": 3,
+        "pages": 4
+      },
+      "data": [
+        {
+          "id": 4,
+          "title": "Another Unrelated Title",
+          "slug": "another-unrelated-title",
+          "description": null,
+          "type": "manhua"
+        }
+      ]
+    }
+  },
+  "live_batch_cases": {
+    "dragon": {
+      "request_limit": 50,
+      "pages": [
+        {
+          "meta": {
+            "total": 87,
+            "page": 1,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            286,
+            44,
+            525,
+            422,
+            388,
+            353,
+            246,
+            243,
+            95,
+            692,
+            690,
+            689,
+            688,
+            687,
+            686,
+            678,
+            677,
+            670,
+            659,
+            657,
+            655,
+            647,
+            643,
+            639,
+            635,
+            631,
+            612,
+            606,
+            605,
+            603,
+            600,
+            599,
+            598,
+            597,
+            595,
+            594,
+            593,
+            584,
+            580,
+            564,
+            551,
+            518,
+            509,
+            504,
+            502,
+            498,
+            493,
+            489,
+            477,
+            476
+          ],
+          "matching_ids": [
+            286,
+            44,
+            525,
+            422,
+            388,
+            353,
+            246,
+            243,
+            95
+          ]
+        },
+        {
+          "meta": {
+            "total": 87,
+            "page": 2,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            463,
+            457,
+            441,
+            436,
+            421,
+            407,
+            397,
+            383,
+            380,
+            351,
+            287,
+            285,
+            283,
+            282,
+            279,
+            228,
+            209,
+            198,
+            147,
+            124,
+            109,
+            107,
+            100,
+            80,
+            76,
+            59,
+            58,
+            57,
+            56,
+            54,
+            50,
+            49,
+            47,
+            45,
+            41,
+            40,
+            33
+          ],
+          "matching_ids": [
+            124,
+            57
+          ]
+        }
+      ]
+    },
+    "skill": {
+      "request_limit": 50,
+      "pages": [
+        {
+          "meta": {
+            "total": 62,
+            "page": 1,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            686,
+            637,
+            533,
+            511,
+            496,
+            469,
+            464,
+            399,
+            395,
+            383,
+            323,
+            215,
+            195,
+            153,
+            146,
+            118,
+            489,
+            690,
+            689,
+            676,
+            659,
+            653,
+            647,
+            639,
+            612,
+            606,
+            600,
+            595,
+            594,
+            592,
+            584,
+            580,
+            565,
+            520,
+            518,
+            509,
+            506,
+            502,
+            493,
+            476,
+            475,
+            465,
+            374,
+            310,
+            296,
+            287,
+            285,
+            279,
+            202,
+            180
+          ],
+          "matching_ids": [
+            686,
+            637,
+            533,
+            496,
+            469,
+            464,
+            399,
+            395,
+            383,
+            323,
+            215,
+            153,
+            118,
+            489,
+            465
+          ]
+        },
+        {
+          "meta": {
+            "total": 62,
+            "page": 2,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            147,
+            124,
+            117,
+            107,
+            79,
+            73,
+            56,
+            50,
+            49,
+            44,
+            41,
+            40
+          ],
+          "matching_ids": []
+        }
+      ]
+    }
   }
 }

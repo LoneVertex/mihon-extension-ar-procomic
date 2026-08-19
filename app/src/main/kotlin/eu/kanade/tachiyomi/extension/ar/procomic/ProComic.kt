@@ -57,7 +57,8 @@ class ProComic : HttpSource(), ConfigurableSource {
         )
         const val MAX_RESPONSE_BYTES = 2_000_000
         const val MAX_CHAPTER_PAGES = 50
-        const val MAX_SEARCH_LOOKAHEAD_PAGES = 3
+        const val SEARCH_PAGE_LIMIT = 50
+        const val MAX_SEARCH_PAGES_PER_BATCH = 6
         val SEARCH_TOKEN_REGEX = Regex("[\\p{L}\\p{N}]+")
     }
 
@@ -211,7 +212,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = buildString {
             append(baseUrl)
-            append("/api/public/series/search?status=approved&limit=18&page=$page&sort=latest")
+            append("/api/public/series/search?status=approved&limit=$SEARCH_PAGE_LIMIT&page=$page&sort=latest")
 
             val effectiveQuery = query.trim().ifBlank { "a" }
             append("&search=")
@@ -240,46 +241,46 @@ class ProComic : HttpSource(), ConfigurableSource {
         val requestedQuery = response.request.url.queryParameter("search")
             ?.takeUnless { it.equals("a", ignoreCase = true) }
             .orEmpty()
-        val first = parseSearchResponse(body, requestedQuery)
-        val mangas = first.mangas.toMutableList()
-        val seenFingerprints = hashSetOf(searchPageFingerprint(first.response))
-        var effectivePage = first.response.meta?.page ?: 1
-        var reportedTotalPages = first.response.meta?.pages ?: effectivePage
-        var lookaheadCount = 0
+        var parsed = parseSearchResponse(body, requestedQuery)
+        val mangas = parsed.mangas.toMutableList()
+        val seenFingerprints = hashSetOf(searchPageFingerprint(parsed.response))
+        var currentPage = parsed.response.meta?.page
+            ?: response.request.url.queryParameter("page")?.toIntOrNull()
+            ?: 1
+        var pagesFetched = 1
+        var exhausted = parsed.response.data.isEmpty() || parsed.response.data.size < SEARCH_PAGE_LIMIT
 
-        // The public endpoint can return a page full of server-side false positives. If local
-        // relevance filtering empties that page, look ahead a small bounded number of pages so
-        // Mihon does not surface a misleading terminal "No results found" after valid matches.
-        while (
-            mangas.isEmpty() &&
-            effectivePage < reportedTotalPages &&
-            lookaheadCount < MAX_SEARCH_LOOKAHEAD_PAGES
-        ) {
-            val requestedNextPage = effectivePage + 1
+        // The endpoint’s page metadata drifts while the dataset changes, and local relevance
+        // filtering can make an otherwise non-empty server page empty. Consume a bounded batch
+        // inside this parse call so Mihon never receives an empty continuation page after valid
+        // results. Stop on a short/empty page or repeated body; never follow an unbounded cursor.
+        while (!exhausted && pagesFetched < MAX_SEARCH_PAGES_PER_BATCH) {
+            val nextPage = currentPage + 1
             val nextRequest = response.request.newBuilder()
-                .url(response.request.url.newBuilder().setQueryParameter("page", requestedNextPage.toString()).build())
+                .url(response.request.url.newBuilder().setQueryParameter("page", nextPage.toString()).build())
                 .build()
-            client.newCall(nextRequest).execute().use { nextResponse ->
+            val nextParsed = client.newCall(nextRequest).execute().use { nextResponse ->
                 val nextBody = readBoundedBody(nextResponse)
-                ProComicDiag.logResponse("SEARCH_LOOKAHEAD", nextResponse, nextBody)
-                val parsed = parseSearchResponse(nextBody, requestedQuery)
-                val fingerprint = searchPageFingerprint(parsed.response)
-                if (!seenFingerprints.add(fingerprint)) {
-                    ProComicDiag.logStage("SEARCH", 98, "lookahead stopped on repeated page fingerprint")
-                    effectivePage = requestedNextPage
-                    return@use
-                }
-                mangas += parsed.mangas
-                effectivePage = parsed.response.meta?.page ?: requestedNextPage
-                reportedTotalPages = maxOf(reportedTotalPages, parsed.response.meta?.pages ?: effectivePage)
+                ProComicDiag.logResponse("SEARCH_BATCH", nextResponse, nextBody)
+                parseSearchResponse(nextBody, requestedQuery)
             }
-            lookaheadCount++
+            val fingerprint = searchPageFingerprint(nextParsed.response)
+            if (!seenFingerprints.add(fingerprint)) {
+                ProComicDiag.logStage("SEARCH", 98, "batch stopped on repeated page fingerprint")
+                exhausted = true
+                break
+            }
+            mangas += nextParsed.mangas
+            parsed = nextParsed
+            currentPage = nextParsed.response.meta?.page ?: nextPage
+            pagesFetched++
+            exhausted = nextParsed.response.data.isEmpty() || nextParsed.response.data.size < SEARCH_PAGE_LIMIT
         }
 
-        val hasNextPage = mangas.isNotEmpty() && effectivePage < reportedTotalPages
+        val uniqueMangas = mangas.distinctBy { it.url }
         ProComicDiag.logStage("SEARCH", 99,
-            "MangasPage: ${mangas.size} items, hasNextPage=$hasNextPage (page $effectivePage of $reportedTotalPages, lookahead=$lookaheadCount)")
-        return MangasPage(mangas.distinctBy { it.url }, hasNextPage = hasNextPage)
+            "MangasPage: ${uniqueMangas.size} items, hasNextPage=false (batchPages=$pagesFetched, exhausted=$exhausted)")
+        return MangasPage(uniqueMangas, hasNextPage = false)
     }
 
     private data class ParsedSearchResponse(

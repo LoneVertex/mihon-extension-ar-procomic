@@ -668,6 +668,13 @@ object ProComicUtils {
 
         while (pos < body.length && pos - startPos <= MAX_RSC_CANDIDATE_BYTES) {
             val c = body[pos]
+            // Next.js RSC may serialize JSON property quotes as backslash-quote outside a
+            // normal JSON string. Treat that pair as literal data so it cannot toggle the
+            // scanner’s string state and cause the array boundary to overrun into `protectionV2`.
+            if (!inString && c == '\\' && pos + 1 < body.length && body[pos + 1] == '"') {
+                pos += 2
+                continue
+            }
             when {
                 escaped -> escaped = false
                 c == '\\' && inString -> escaped = true
@@ -697,9 +704,12 @@ object ProComicUtils {
 
         while (pos < body.length && pos - startPos <= MAX_RSC_CANDIDATE_BYTES) {
             val c = body[pos]
-            if (escaped) {
-                escaped = false
-            } else when {
+            if (!inString && c == '\\' && pos + 1 < body.length && body[pos + 1] == '"') {
+                pos += 2
+                continue
+            }
+            when {
+                escaped -> escaped = false
                 c == '\\' && inString -> escaped = true
                 c == '"' -> inString = !inString
                 !inString && c == '{' -> depth++

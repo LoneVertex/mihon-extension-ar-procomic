@@ -89,6 +89,15 @@ def test_live_escaped_rsc_array_stops_before_trailing_protection_object() -> Non
     assert "protectionV2" not in json.dumps(images)
 
 
+def test_live_guest_limit_is_proven_server_side() -> None:
+    case = load()["live_guest_limit_case"]
+    assert case["appImages_count"] == 3
+    assert case["publicImageCount"] == 3
+    assert case["page_4_probe_status"] == 404
+    assert len(case["page_urls"]) == case["publicImageCount"]
+    assert all(url.startswith("https://app.procomic.pro/chapters/690/50821/") for url in case["page_urls"])
+
+
 def test_premium_response_is_distinguished_from_missing_manifest() -> None:
     fixture = load()["premium_locked"]
     assert "Premium chapter" in fixture
@@ -113,6 +122,7 @@ def test_source_preserves_reader_bounds_and_explicit_access_diagnostic() -> None
     assert "Log in and disable Safe Browsing" in utils
     assert "normalizeRscJson" in utils
     assert "Next.js RSC may serialize JSON property quotes" in utils
+    assert "publicImageCount" in utils
     assert "Premium chapter" in utils
     assert "https://procomic.pro" in procomic
     assert "pageListParse" in procomic
@@ -124,6 +134,7 @@ def main() -> None:
     test_multi_page_manifest_preserves_order_and_count()
     test_escaped_rsc_manifest_preserves_order_and_count()
     test_live_escaped_rsc_array_stops_before_trailing_protection_object()
+    test_live_guest_limit_is_proven_server_side()
     test_premium_response_is_distinguished_from_missing_manifest()
     test_safe_browsing_response_is_distinguished_from_missing_manifest()
     test_source_preserves_reader_bounds_and_explicit_access_diagnostic()

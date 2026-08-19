@@ -205,7 +205,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     //
     // EVIDENCE: Stage 6 browser network investigation confirmed that procomic.net uses
     // a dedicated server-side search REST endpoint:
-    // GET /api/public/series/search?status=approved&limit=18&page={page}&sort=latest&search={query}
+    // GET /api/public/series/search?status=approved&limit=50&page={page}&sort=latest&search={query}
     //
     // Type filter is supported server-side via &type={manga|manhwa|manhua}.
     //
@@ -304,15 +304,17 @@ class ProComic : HttpSource(), ConfigurableSource {
         val queryTokens = searchTokens(query)
         if (queryTokens.isEmpty()) return true
 
-        val searchableText = buildString {
+        // Search only title-like fields. Descriptions are narrative text and caused unrelated
+        // series to appear when a query word occurred only inside a synopsis (for example,
+        // `dragon` in a series whose displayed title did not contain that word). Alternate and
+        // original titles remain valid title aliases; descriptions do not qualify a result.
+        val titleLikeText = buildString {
             append(title).append(' ')
             append(slug).append(' ')
-            append(description.orEmpty()).append(' ')
-            append(metadata?.descriptions?.ar.orEmpty()).append(' ')
-            append(metadata?.descriptions?.en.orEmpty()).append(' ')
+            append(metadata?.originalTitle.orEmpty()).append(' ')
             metadata?.altTitles.orEmpty().forEach { append(it).append(' ') }
         }
-        val resultTokens = searchTokens(searchableText)
+        val resultTokens = searchTokens(titleLikeText)
         return queryTokens.all { it in resultTokens }
     }
 

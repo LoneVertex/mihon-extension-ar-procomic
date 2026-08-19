@@ -73,4 +73,8 @@ dependencies {
 
     // Jsoup (provided by Tachiyomi app at runtime, needed for interface compliance)
     compileOnly("org.jsoup:jsoup:1.16.2")
+
+    // Bundled native AVIF decoder for protected Reader tiles; Android BitmapFactory is not
+    // available for AVIF on every supported minSdk device. The library supports API 24+.
+    implementation("com.github.awxkee:avif-coder:2.1.3@aar")
 }

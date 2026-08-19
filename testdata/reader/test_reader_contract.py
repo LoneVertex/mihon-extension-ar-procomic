@@ -12,7 +12,7 @@ UTILS = ROOT / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/Pr
 PROCOMIC = ROOT / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/ProComic.kt"
 
 
-def load() -> dict[str, str]:
+def load() -> dict:
     return json.loads((FIXTURES / "reader_contract_fixtures.json").read_text())
 
 
@@ -98,6 +98,46 @@ def test_live_guest_limit_is_proven_server_side() -> None:
     assert all(url.startswith("https://app.procomic.pro/chapters/690/50821/") for url in case["page_urls"])
 
 
+def test_deferred_media_contract_recovers_all_protected_pages() -> None:
+    case = load()["deferred_media_contract"]
+    assert case["publicImageCount"] == 3
+    assert case["deferred_images_count"] == 0
+    assert case["map_count"] == 7
+    assert case["page_indices"] == list(range(3, 10))
+    assert case["tile_counts"] == case["rect_counts"]
+    assert case["proxy_plan_status"] == 200
+    assert case["tile_probe_status"] == 200
+    assert case["tile_content_type"] == "image/avif"
+    assert set(case["tile_hosts"]) == {
+        "img1.procomic.pro",
+        "img2.procomic.pro",
+        "img3.procomic.pro",
+        "img4.procomic.pro",
+    }
+
+
+def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
+    procomic = PROCOMIC.read_text()
+    interceptor = (PROCOMIC.parent / "ProComicImageInterceptor.kt").read_text()
+    dto = (PROCOMIC.parent / "ProComicDto.kt").read_text()
+    utils = UTILS.read_text()
+    assert "chapter-deferred-media" in procomic
+    assert "chapter-map-proxy-plan" in interceptor
+    assert "ProComicDeferredMediaResponse" in dto
+    assert "ProComicProtectedMap" in dto
+    assert "ProComicImageInterceptor" in procomic
+    assert "procomic-protected-page-v1" in utils
+    assert "isAllowedProtectedTileUrl" in utils
+    assert "Bitmap.createBitmap" in interceptor
+    assert "Canvas" in interceptor
+    assert "img1.procomic.pro" in utils
+    assert "android.webkit.WebView" not in procomic
+    assert "android.webkit.WebView" not in interceptor
+    assert "Cookie" not in procomic
+    assert "x-turnstile-token" not in procomic
+    assert "chapter-map-session-key" not in procomic
+
+
 def test_premium_response_is_distinguished_from_missing_manifest() -> None:
     fixture = load()["premium_locked"]
     assert "Premium chapter" in fixture
@@ -135,10 +175,12 @@ def main() -> None:
     test_escaped_rsc_manifest_preserves_order_and_count()
     test_live_escaped_rsc_array_stops_before_trailing_protection_object()
     test_live_guest_limit_is_proven_server_side()
+    test_deferred_media_contract_recovers_all_protected_pages()
+    test_source_uses_deferred_media_and_protected_tile_reconstruction()
     test_premium_response_is_distinguished_from_missing_manifest()
     test_safe_browsing_response_is_distinguished_from_missing_manifest()
     test_source_preserves_reader_bounds_and_explicit_access_diagnostic()
-    print("reader contract tests: PASS (multi-page order, escaped RSC boundaries, premium/Safe Browsing states, bounds)")
+    print("reader contract tests: PASS (public/deferred pages, protected-map geometry, escaped RSC boundaries, access states, bounds)")
 
 
 if __name__ == "__main__":

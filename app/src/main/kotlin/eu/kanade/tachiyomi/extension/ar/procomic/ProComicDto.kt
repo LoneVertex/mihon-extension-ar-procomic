@@ -376,4 +376,96 @@ data class ProComicChapterMetadata(
 data class ProComicProtection(
     @SerialName("publicImageCount") val publicImageCount: Int,
     val version: Int = 0,
+    val deferredMedia: ProComicDeferredMedia? = null,
+)
+
+@Serializable
+data class ProComicDeferredMedia(
+    val token: String? = null,
+    val triggerAfterImageIndex: Int? = null,
+    val splitIndex: Int? = null,
+    val requireTurnstile: Boolean = false,
+    val turnstileMode: String? = null,
+)
+
+@Serializable
+data class ProComicDeferredMediaResponse(
+    val success: Boolean? = null,
+    val data: ProComicDeferredMediaData? = null,
+)
+
+@Serializable
+data class ProComicDeferredMediaData(
+    val chapterId: Int? = null,
+    val images: List<String> = emptyList(),
+    val maps: List<ProComicProtectedMapToken> = emptyList(),
+    val source: String? = null,
+    val splitIndex: Int? = null,
+)
+
+@Serializable
+data class ProComicProtectedMapToken(
+    val token: String,
+    val method: String = "browser_session",
+)
+
+@Serializable
+data class ProComicProtectedPagePayload(
+    val kind: String = "procomic-protected-page-v1",
+    val chapterId: Int,
+    val token: String,
+    val method: String = "browser_session",
+    val cdnPath: String,
+    val pageIndex: Int,
+)
+
+@Serializable
+data class ProComicMapProxyRequest(
+    val token: String,
+    val method: String,
+    val cdnPath: String,
+    val pageIndex: Int,
+)
+
+@Serializable
+data class ProComicMapProxyResponse(
+    val success: Boolean? = null,
+    val data: ProComicMapProxyData? = null,
+)
+
+@Serializable
+data class ProComicMapProxyData(
+    val map: ProComicProtectedMap? = null,
+    val viewerWatermark: ProComicViewerWatermark? = null,
+)
+
+@Serializable
+data class ProComicProtectedMap(
+    val dim: List<Int> = emptyList(),
+    val mode: String = "grid_1x1",
+    val order: List<Int> = emptyList(),
+    val pieces: List<String> = emptyList(),
+    val rects: List<ProComicMapRect> = emptyList(),
+)
+
+@Serializable
+data class ProComicMapRect(
+    val left: Int = 0,
+    val top: Int = 0,
+    val width: Int = 1,
+    val height: Int = 1,
+)
+
+@Serializable
+data class ProComicViewerWatermark(
+    val payload: String? = null,
+    val pageIndex: Int? = null,
+    val marks: List<ProComicWatermarkMark> = emptyList(),
+)
+
+@Serializable
+data class ProComicWatermarkMark(
+    val xPct: Double = 0.0,
+    val yPct: Double = 0.0,
+    val rotate: Double = 0.0,
 )

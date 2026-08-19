@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
 import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.Buffer
@@ -59,6 +60,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         const val MAX_CHAPTER_PAGES = 50
         const val SEARCH_PAGE_LIMIT = 50
         const val MAX_SEARCH_PAGES_PER_BATCH = 6
+        const val READER_BASE_URL = "https://procomic.pro"
         val SEARCH_TOKEN_REGEX = Regex("[\\p{L}\\p{N}]+")
     }
 
@@ -87,6 +89,10 @@ class ProComic : HttpSource(), ConfigurableSource {
     // Initialized when Mihon builds the source preference screen. Until then, preserve the
     // historical behavior of showing every normalized chapter.
     private var sourcePreferences: SharedPreferences? = null
+
+    override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor(ProComicImageInterceptor(network.client))
+        .build()
 
     override val name = "ProComic"
     override val baseUrl = "https://procomic.net"
@@ -545,13 +551,92 @@ class ProComic : HttpSource(), ConfigurableSource {
         val url = response.request.url.toString()
         ProComicDiag.logResponse("PAGES", response, body)
 
-        val images = ProComicUtils.extractPageImages(body, "PAGES", url)
-        ProComicDiag.logStage("PAGES", 99, "images found: ${images.size}")
-
-        return images.mapIndexed { index, imageUrl ->
+        val publicImages = ProComicUtils.extractPageImages(body, "PAGES", url)
+        val pages = publicImages.mapIndexed { index, imageUrl ->
             Page(index, imageUrl = imageUrl)
+        }.toMutableList()
+        val protection = ProComicUtils.extractReaderProtection(body, "PAGES", url)
+        val deferred = protection?.deferredMedia
+        val deferredToken = deferred?.token
+        val deferredSplitIndex = deferred?.splitIndex
+        val chapterId = Regex("-(\\d+)$").find(response.request.url.pathSegments.lastOrNull().orEmpty())
+            ?.groupValues?.getOrNull(1)?.toIntOrNull()
+
+        if (deferredToken.isNullOrBlank() || deferredSplitIndex == null || chapterId == null) {
+            ProComicDiag.logStage(
+                "PAGES",
+                99,
+                "public images=${pages.size}, deferred media unavailable; protection=${protection?.version ?: 0}",
+            )
+            return pages
+        }
+        if (deferred.requireTurnstile || deferred.turnstileMode != null) {
+            ProComicDiag.logStage(
+                "PAGES",
+                98,
+                "deferred media requires server security verification; public images=${pages.size}",
+            )
+            return pages
+        }
+
+        val deferredData = fetchDeferredMedia(
+            chapterId = chapterId,
+            token = deferredToken,
+            splitIndex = deferredSplitIndex,
+            referer = url,
+        )
+        val directDeferred = deferredData.images.filter { ProComicUtils.isAllowedPageImageUrl(it) }
+        if (directDeferred.isNotEmpty()) {
+            pages += directDeferred.mapIndexed { index, imageUrl ->
+                Page(pages.size + index, imageUrl = imageUrl)
+            }
+        }
+
+        val mapStartIndex = deferredData.splitIndex ?: deferred.splitIndex
+        deferredData.maps.forEachIndexed { index, mapToken ->
+            pages += Page(
+                pages.size,
+                imageUrl = ProComicUtils.encodeProtectedPageUrl(
+                    ProComicProtectedPagePayload(
+                        chapterId = chapterId,
+                        token = mapToken.token,
+                        method = mapToken.method,
+                        cdnPath = ProComicUtils.extractReaderCdnPath(body) ?: "cdn2",
+                        pageIndex = mapStartIndex + index,
+                    ),
+                ),
+            )
+        }
+        ProComicDiag.logStage(
+            "PAGES",
+            99,
+            "public=${publicImages.size}, deferredImages=${directDeferred.size}, protectedMaps=${deferredData.maps.size}, total=${pages.size}",
+        )
+        return pages
+    }
+
+    private fun fetchDeferredMedia(
+        chapterId: Int,
+        token: String,
+        splitIndex: Int,
+        referer: String,
+    ): ProComicDeferredMediaData {
+        val request = GET(
+            "$READER_BASE_URL/chapter-deferred-media/$chapterId?token=${URLEncoder.encode(token, "UTF-8")}&split=$splitIndex",
+            headersBuilder()
+                .set("Accept", "application/json")
+                .set("Referer", referer)
+                .build(),
+        )
+        return client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw Exception("ProComic Reader: deferred media request failed (${response.code})")
+            }
+            ProComicUtils.json.decodeFromString<ProComicDeferredMediaResponse>(readBoundedBody(response)).data
+                ?: throw Exception("ProComic Reader: deferred media response has no data")
         }
     }
+
 
     // ---- Image URL ----
     // Images are directly embedded in pageListParse, so this is unused.
@@ -563,7 +648,9 @@ class ProComic : HttpSource(), ConfigurableSource {
     override fun imageRequest(page: Page): Request {
         // headersBuilder() no longer contains RSC headers, so no removeAll() needed.
         val imageUrl = page.imageUrl ?: throw Exception("ProComic Reader: image URL is missing")
-        if (!ProComicUtils.isAllowedPageImageUrl(imageUrl)) {
+        val allowed = ProComicUtils.isAllowedPageImageUrl(imageUrl) ||
+            ProComicUtils.isProtectedPageImageUrl(imageUrl)
+        if (!allowed) {
             ProComicDiag.logStage("PAGES", 98, "rejected unrecognized image host")
             throw Exception("ProComic Reader: unrecognized image host")
         }

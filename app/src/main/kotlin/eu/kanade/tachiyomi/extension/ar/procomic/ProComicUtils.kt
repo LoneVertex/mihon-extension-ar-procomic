@@ -1,10 +1,13 @@
 package eu.kanade.tachiyomi.extension.ar.procomic
 
+import android.util.Base64
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.net.URI
+import java.nio.charset.StandardCharsets
 
 /**
  * RSC (React Server Components) wire-format parser for procomic.pro.
@@ -33,7 +36,14 @@ object ProComicUtils {
     private const val MAX_RSC_CANDIDATES = 8
     private const val MAX_RSC_CANDIDATE_BYTES = 1_000_000
     private val allowedPageImageHosts = setOf("app.procomic.pro")
+    private val allowedProtectedTileHosts = setOf(
+        "img1.procomic.pro",
+        "img2.procomic.pro",
+        "img3.procomic.pro",
+        "img4.procomic.pro",
+    )
     private val allowedPageImageExtensions = setOf("avif", "webp", "jpg", "jpeg", "png")
+    private const val PROTECTED_PAGE_FRAGMENT_PREFIX = "procomic-protected-page-v1:"
 
     /**
      * Reader evidence confirms successful public page downloads only on
@@ -51,6 +61,59 @@ object ProComicUtils {
             path.startsWith("/chapters/") &&
             allowedPageImageExtensions.any { path.lowercase().endsWith(".$it") }
     }.getOrDefault(false)
+
+    fun isAllowedProtectedTileUrl(url: String): Boolean = runCatching {
+        val parsed = URI(url)
+        val path = parsed.path ?: return@runCatching false
+        parsed.scheme.equals("https", ignoreCase = true) &&
+            parsed.host?.lowercase() in allowedProtectedTileHosts &&
+            parsed.query == null &&
+            parsed.fragment == null &&
+            path.startsWith("/i/") &&
+            path.length > "/i/".length
+    }.getOrDefault(false)
+
+    fun isProtectedPageImageUrl(url: String): Boolean =
+        url.startsWith("https://procomic.pro/__protected_page__#") &&
+            url.substringAfter('#').startsWith(PROTECTED_PAGE_FRAGMENT_PREFIX)
+
+    fun encodeProtectedPageUrl(payload: ProComicProtectedPagePayload): String {
+        val encoded = Base64.encodeToString(
+            json.encodeToString(payload).toByteArray(StandardCharsets.UTF_8),
+            Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING,
+        )
+        return "https://procomic.pro/__protected_page__#$PROTECTED_PAGE_FRAGMENT_PREFIX$encoded"
+    }
+
+    fun decodeProtectedPagePayload(fragment: String): ProComicProtectedPagePayload? {
+        if (!fragment.startsWith(PROTECTED_PAGE_FRAGMENT_PREFIX)) return null
+        val encoded = fragment.removePrefix(PROTECTED_PAGE_FRAGMENT_PREFIX)
+        return runCatching {
+            val bytes = Base64.decode(encoded, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+            json.decodeFromString<ProComicProtectedPagePayload>(bytes.toString(StandardCharsets.UTF_8))
+        }.getOrNull()
+    }
+
+    fun extractReaderProtection(
+        body: String,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): ProComicProtection? {
+        val protectionJson = extractJsonObjectAfterKey(body, "protectionV2") ?: return null
+        return runCatching {
+            json.decodeFromString<ProComicProtection>(normalizeRscJson(protectionJson))
+        }.onFailure {
+            if (diagTag.isNotEmpty()) {
+                ProComicDiag.logException(diagTag, "decode protectionV2", diagUrl, it)
+            }
+        }.getOrNull()
+    }
+
+    fun extractReaderCdnPath(body: String): String? {
+        val match = Regex("""cdnPath[^A-Za-z0-9]+(cdn\d+)""")
+            .find(body.replace("\\\"", "\""))
+        return match?.groupValues?.getOrNull(1)
+    }
 
     // ---- Series List Extraction ----
 
@@ -604,11 +667,22 @@ object ProComicUtils {
      * The canonical Details response embeds the DTO under `"series"`.
      */
     private fun extractJsonObjectAfterKey(body: String, key: String): String? {
-        val keyPattern = "\"$key\":"
+        val keyPatterns = listOf(
+            "\"$key\":",
+            "\\\"$key\\\":" ,
+        )
         var searchFrom = 0
         repeat(MAX_RSC_CANDIDATES) {
-            val keyIndex = body.indexOf(keyPattern, searchFrom)
-            if (keyIndex < 0) return null
+            val match = keyPatterns
+                .mapNotNull { pattern ->
+                    body.indexOf(pattern, searchFrom)
+                        .takeIf { it >= 0 }
+                        ?.let { it to pattern }
+                }
+                .minByOrNull { it.first }
+                ?: return null
+            val keyIndex = match.first
+            val keyPattern = match.second
             val valueStart = skipJsonWhitespace(body, keyIndex + keyPattern.length)
             if (valueStart < body.length && body[valueStart] == '{') {
                 val candidate = extractJsonObject(body, valueStart)

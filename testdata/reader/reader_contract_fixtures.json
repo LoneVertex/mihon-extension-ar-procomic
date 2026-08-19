@@ -16,5 +16,26 @@
       "https://app.procomic.pro/chapters/690/50821/p2/1785188081002-2mzaao9xdsh-37fd56b92665-desktop.avif",
       "https://app.procomic.pro/chapters/690/50821/p3/1785188091276-8luu5gddfhl-a55b69f3cd25-desktop.avif"
     ]
+  },
+  "deferred_media_contract": {
+    "chapter_id": 50821,
+    "publicImageCount": 3,
+    "deferred_token": "<redacted-capability-token>",
+    "triggerAfterImageIndex": 1,
+    "splitIndex": 3,
+    "requireTurnstile": false,
+    "cdnPath": "cdn2",
+    "deferred_images_count": 0,
+    "map_count": 7,
+    "map_methods": ["browser_session", "browser_session", "browser_session", "browser_session", "browser_session", "browser_session", "browser_session"],
+    "page_indices": [3, 4, 5, 6, 7, 8, 9],
+    "modes": ["grid_4x2", "grid_2x4", "grid_3x2", "grid_3x2", "grid_2x5", "grid_3x2", "grid_3x2"],
+    "dimensions": [[760, 1912], [760, 5000], [760, 1144], [760, 3840], [760, 4123], [760, 760], [1672, 941]],
+    "tile_counts": [8, 8, 6, 6, 10, 6, 6],
+    "rect_counts": [8, 8, 6, 6, 10, 6, 6],
+    "tile_hosts": ["img1.procomic.pro", "img2.procomic.pro", "img3.procomic.pro", "img4.procomic.pro"],
+    "proxy_plan_status": 200,
+    "tile_probe_status": 200,
+    "tile_content_type": "image/avif"
   }
 }

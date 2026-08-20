@@ -158,6 +158,11 @@ def test_source_and_dto_match_the_safe_contract() -> None:
     assert '@SerialName("cdn_path") val cdnPath: String? = null' in dto
     assert '@Serializable(with = IntOrMapSerializer::class)' in dto
 
+    filter_start = source.index("override fun getFilterList()")
+    filter_block = source[filter_start:source.index("// ---- DTO", filter_start)]
+    assert "TypeFilter()" in filter_block
+    assert "GenreFilter()" not in filter_block
+
 
 def main() -> None:
     test_absolute_values_have_priority()

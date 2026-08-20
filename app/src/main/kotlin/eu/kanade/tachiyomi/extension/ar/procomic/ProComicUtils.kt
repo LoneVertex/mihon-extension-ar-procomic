@@ -109,6 +109,31 @@ object ProComicUtils {
         }.getOrNull()
     }
 
+    /**
+     * Extract the current Reader's sibling `deferredMedia` prop.
+     *
+     * The live Reader payload serializes `deferredMedia` beside `protectionV2`, not inside it.
+     * Keep this separate from [extractReaderProtection] so the parser follows the current RSC
+     * component boundary while older nested-deferred payloads remain supported by the caller.
+     */
+    fun extractReaderDeferredMedia(
+        body: String,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): ProComicDeferredMedia? {
+        val deferredJson = extractJsonObjectAfterKey(body, "deferredMedia") ?: return null
+        return runCatching {
+            json.decodeFromString<ProComicDeferredMedia>(normalizeRscJson(deferredJson))
+        }.onFailure {
+            if (diagTag.isNotEmpty()) {
+                ProComicDiag.logException(diagTag, "decode sibling deferredMedia", diagUrl, it)
+            }
+        }.getOrNull()?.takeIf { deferred ->
+            deferred.token?.isNotBlank() == true &&
+                (deferred.splitIndex == null || deferred.splitIndex >= 0)
+        }
+    }
+
     fun extractReaderCdnPath(body: String): String? {
         val match = Regex("""cdnPath[^A-Za-z0-9]+(cdn\d+)""")
             .find(body.replace("\\\"", "\""))

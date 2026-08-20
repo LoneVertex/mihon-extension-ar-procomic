@@ -89,6 +89,36 @@ def test_live_escaped_rsc_array_stops_before_trailing_protection_object() -> Non
     assert "protectionV2" not in json.dumps(images)
 
 
+def extract_escaped_rsc_object(body: str, key: str) -> dict:
+    marker = f'\\\"{key}\\\":{{'
+    marker_start = body.index(marker)
+    start = marker_start + len(marker) - 1
+    depth = 0
+    in_string = False
+    escaped = False
+    pos = start
+    while pos < len(body):
+        char = body[pos]
+        if not in_string and char == '\\' and pos + 1 < len(body) and body[pos + 1] == '"':
+            pos += 2
+            continue
+        if escaped:
+            escaped = False
+        elif char == '\\' and in_string:
+            escaped = True
+        elif char == '"':
+            in_string = not in_string
+        elif not in_string and char == '{':
+            depth += 1
+        elif not in_string and char == '}':
+            depth -= 1
+            if depth == 0:
+                candidate = body[start:pos + 1].replace('\\"', '"')
+                return json.loads(candidate)
+        pos += 1
+    raise AssertionError(f'escaped RSC object terminator not found for {key}')
+
+
 def test_live_guest_limit_is_proven_server_side() -> None:
     case = load()["live_guest_limit_case"]
     assert case["appImages_count"] == 3
@@ -116,12 +146,40 @@ def test_deferred_media_contract_recovers_all_protected_pages() -> None:
     }
 
 
+def test_current_reader_sibling_deferred_media_recovers_ten_logical_pages() -> None:
+    fixture = load()["sibling_deferred_media_rsc"]
+    normalized = fixture.replace('\\"', '"')
+    images = extract_escaped_rsc_array(fixture)
+    protection = extract_escaped_rsc_object(fixture, "protectionV2")
+    deferred = extract_escaped_rsc_object(fixture, "deferredMedia")
+    assert len(images) == 3
+    assert protection["publicImageCount"] == 3
+    assert "deferredMedia" not in protection
+    assert deferred["token"] == "redacted-capability-token"
+    assert deferred["splitIndex"] == 3
+    assert deferred["requireTurnstile"] is False
+    assert len(images) + load()["deferred_media_contract"]["map_count"] == 10
+
+
+def test_legacy_nested_deferred_media_remains_supported_and_malformed_sibling_is_rejected() -> None:
+    legacy_fixture = load()["legacy_nested_deferred_media_rsc"]
+    malformed_fixture = load()["malformed_sibling_deferred_media_rsc"]
+    legacy = extract_escaped_rsc_object(legacy_fixture, "protectionV2")
+    malformed = extract_escaped_rsc_object(malformed_fixture, "deferredMedia")
+    assert legacy["deferredMedia"]["token"] == "legacy-token"
+    assert malformed.get("token") is None
+
+
 def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     procomic = PROCOMIC.read_text()
     interceptor = (PROCOMIC.parent / "ProComicImageInterceptor.kt").read_text()
     dto = (PROCOMIC.parent / "ProComicDto.kt").read_text()
     utils = UTILS.read_text()
     assert "chapter-deferred-media" in procomic
+    assert "extractReaderDeferredMedia(body" in procomic
+    assert "?: protection?.deferredMedia" in procomic
+    assert "MAX_READER_DEFERRED_MAPS" in procomic
+    assert "extractReaderDeferredMedia" in utils
     assert "chapter-map-proxy-plan" in interceptor
     assert "ProComicDeferredMediaResponse" in dto
     assert "ProComicProtectedMap" in dto
@@ -183,6 +241,8 @@ def main() -> None:
     test_escaped_rsc_manifest_preserves_order_and_count()
     test_live_escaped_rsc_array_stops_before_trailing_protection_object()
     test_live_guest_limit_is_proven_server_side()
+    test_current_reader_sibling_deferred_media_recovers_ten_logical_pages()
+    test_legacy_nested_deferred_media_remains_supported_and_malformed_sibling_is_rejected()
     test_deferred_media_contract_recovers_all_protected_pages()
     test_source_uses_deferred_media_and_protected_tile_reconstruction()
     test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup()

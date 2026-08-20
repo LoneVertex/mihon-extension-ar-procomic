@@ -37,9 +37,9 @@ import java.net.URLEncoder
  *   data containing embedded JSON fragments. No browser-only DOM scraping is used by the parser.
  *
  * Known limitations:
- *   - Chapter pages are limited to publicImageCount (currently 3) for guest users.
- *     This is enforced server-side by cdn2.procomic.pro (nginx 403 for any additional pages).
- *     A login flow would be required to access full chapters — out of scope for this version.
+ *   - Reader responses expose a public image prefix and may defer additional pages through the
+ *     site's public web deferred-media/proxy-plan flow. Server-side security-gated chapters remain
+ *     unavailable without the site's own allowed verification path; no login or bypass is used.
  *   - Novel-type content (light novels) is excluded — Tachiyomi cannot render prose text.
  *   - Search and sort query parameters were confirmed during recon but may shift if the site
  *     updates its routing. Monitor for HTTP 404 or empty RSC responses.
@@ -58,6 +58,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         )
         const val MAX_RESPONSE_BYTES = 2_000_000
         const val MAX_CHAPTER_PAGES = 50
+        const val MAX_READER_DEFERRED_MAPS = 50
         const val SEARCH_PAGE_LIMIT = 50
         const val MAX_SEARCH_PAGES_PER_BATCH = 6
         const val READER_BASE_URL = "https://procomic.pro"
@@ -556,7 +557,10 @@ class ProComic : HttpSource(), ConfigurableSource {
             Page(index, imageUrl = imageUrl)
         }.toMutableList()
         val protection = ProComicUtils.extractReaderProtection(body, "PAGES", url)
-        val deferred = protection?.deferredMedia
+        // Current Reader RSC emits deferredMedia as a sibling of protectionV2. Keep the nested
+        // fallback for older captures/variants while preferring the current sibling contract.
+        val deferred = ProComicUtils.extractReaderDeferredMedia(body, "PAGES", url)
+            ?: protection?.deferredMedia
         val deferredToken = deferred?.token
         val deferredSplitIndex = deferred?.splitIndex
         val chapterId = Regex("-(\\d+)$").find(response.request.url.pathSegments.lastOrNull().orEmpty())
@@ -585,7 +589,10 @@ class ProComic : HttpSource(), ConfigurableSource {
             splitIndex = deferredSplitIndex,
             referer = url,
         )
-        val directDeferred = deferredData.images.filter { ProComicUtils.isAllowedPageImageUrl(it) }
+        val directDeferred = deferredData.images
+            .filter { ProComicUtils.isAllowedPageImageUrl(it) }
+            .filterNot(publicImages::contains)
+            .distinct()
         if (directDeferred.isNotEmpty()) {
             pages += directDeferred.mapIndexed { index, imageUrl ->
                 Page(pages.size + index, imageUrl = imageUrl)
@@ -593,7 +600,15 @@ class ProComic : HttpSource(), ConfigurableSource {
         }
 
         val mapStartIndex = deferredData.splitIndex ?: deferred.splitIndex
-        deferredData.maps.forEachIndexed { index, mapToken ->
+        val protectedMaps = deferredData.maps.take(MAX_READER_DEFERRED_MAPS)
+        if (protectedMaps.size != deferredData.maps.size) {
+            ProComicDiag.logStage(
+                "PAGES",
+                97,
+                "deferred map count exceeded bound=${MAX_READER_DEFERRED_MAPS}; truncated=${deferredData.maps.size - protectedMaps.size}",
+            )
+        }
+        protectedMaps.forEachIndexed { index, mapToken ->
             pages += Page(
                 pages.size,
                 imageUrl = ProComicUtils.encodeProtectedPageUrl(
@@ -662,9 +677,10 @@ class ProComic : HttpSource(), ConfigurableSource {
     }
 
     // ---- Filters ----
+    // The current Search endpoint honors type but ignores the tested genre parameter.
+    // Do not advertise a filter that cannot change the server result set.
     override fun getFilterList() = FilterList(
         TypeFilter(),
-        GenreFilter(),
     )
 
     // ---- DTO → Model conversion helpers ----

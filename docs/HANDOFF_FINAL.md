@@ -1,4 +1,4 @@
-> **HISTORICAL / SUPERSEDED:** This handoff describes an earlier repository state. For current branch, PR, build, and validation information, use [`README.md`](../README.md), [`HANDOFF.md`](HANDOFF.md), [`VALIDATION.md`](VALIDATION.md), and [`BRANCH_TOPOLOGY.md`](BRANCH_TOPOLOGY.md).
+> **HISTORICAL / SUPERSEDED:** This handoff describes an earlier repository state. Its branch, version, APK-size, and validation claims are not current evidence. For current branch, PR, build, and validation information, use [`README.md`](../README.md), [`HANDOFF.md`](HANDOFF.md), [`VALIDATION.md`](VALIDATION.md), and [`BRANCH_TOPOLOGY.md`](BRANCH_TOPOLOGY.md).
 
 # PROCOMIC EXTENSION — FINAL ENGINEERING HANDOFF TO MANUS AI
 

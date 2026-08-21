@@ -6,17 +6,17 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Latest audited branch HEAD:** [`1285213d3d162471756109187e61a79627cd5708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/1285213d3d162471756109187e61a79627cd5708)
+**Latest source-remediation HEAD:** [`affbcf3784412746d4e8ea5c8609924e1aa20e11`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/affbcf3784412746d4e8ea5c8609924e1aa20e11)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
 
-**Runtime and release status:** The software and CI gates pass, and reported manual Android testing informed the final fixes. An exhaustive device matrix, authenticated account validation, paid access, merge, tag, and GitHub Release are not claimed or performed by this document synchronization.
+**Runtime and release status:** The lifecycle-status and protected-Reader fixes pass the 12-suite local gate, clean builds, and source-remediation CI. The live public contract probe returns valid deferred maps and AVIF tiles. Direct Android-device rendering, authenticated account validation, paid access, merge, tag, and GitHub Release are not claimed or performed here.
 
 ## Purpose and Scope
 
 This document is the current engineering reference for the Arabic ProComic Mihon extension. It describes the implementation present at the current branch HEAD. Deep probes, raw captures, and investigation history remain retained audit artifacts; they are evidence, not alternate implementation instructions.
 
-The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The Android build uses compile/target SDK 35, min SDK 26, and `com.github.awxkee:avif-coder:2.1.3@aar` for the final native AVIF fallback.
+The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The Android build uses compile/target SDK 35, min SDK 26, and `com.github.awxkee:avif-coder:2.1.3@aar` for the final native AVIF fallback. The universal native decoder is the reason the release APK is approximately 21.46 MB rather than the kilobyte scale of pure-Kotlin extensions.
 
 ## System Architecture
 
@@ -24,7 +24,7 @@ The extension uses normal OkHttp requests with a bounded RSC boundary parser for
 
 | Layer | Responsibility | Current implementation |
 |---|---|---|
-| `ProComic.kt` | Mihon source lifecycle, requests, parsing, mappers, preference filtering, Search batching, Reader page-list assembly, and image requests | `HttpSource` plus `ConfigurableSource` |
+| `ProComic.kt` | Mihon source lifecycle, requests, parsing, lifecycle-status mappers, preference filtering, Search batching, Reader page-list assembly, and image requests | `HttpSource` plus `ConfigurableSource` |
 | `ProComicDto.kt` | JSON DTOs and gate/media metadata models | Kotlin serialization DTOs with optional server fields |
 | `ProComicUtils.kt` | RSC/JSON boundary extraction, Reader manifest extraction, chapter normalization, gate classification, protected-page payload parsing, and page-image parsing | Bounded string-aware scans with sibling `deferredMedia` support |
 | `ProComicImageInterceptor.kt` | Protected-page proxy-plan retrieval, tile downloading, decoding, geometry validation, reconstruction, and JPEG response synthesis | OkHttp interceptor with bounded tile/composite resources and lazy native fallback |
@@ -95,9 +95,9 @@ The decoder chain is:
 
 1. `BitmapFactory.decodeByteArray`;
 2. Android `ImageDecoder` with software allocation on API 28 and later; and
-3. lazily initialized `HeifCoder`, requesting `PreferredColorConfig.RGBA_8888`.
+3. lazily initialized `HeifCoder`, first requesting `PreferredColorConfig.RGBA_8888` and then retrying with the library’s default color configuration when the explicit preference fails.
 
-The chapter-131 hardening added the `ImageDecoder` fallback, explicit RGBA output, an eight-million-byte per-tile bound, a 32-tile bound, and a 40-million-pixel composite bound. `HeifCoder` is initialized lazily because eager `System.loadLibrary("coder")` during Mihon extension discovery can cause the extension to disappear during trust transitions when native packaging or ABI loading is not yet ready.
+The chapter-131 hardening added the `ImageDecoder` fallback, explicit RGBA output, an eight-million-byte per-tile bound, a one-million-byte protected-map response bound, a 32-tile bound, and a 40-million-pixel composite bound. `HeifCoder` is initialized lazily because eager `System.loadLibrary("coder")` during Mihon extension discovery can cause the extension to disappear during trust transitions when native packaging or ABI loading is not yet ready.
 
 The Gradle packaging block sets `useLegacyPackaging=true`, extracting bundled native libraries at install time across the shipped ABIs. The manifest does not use the removed `extractNativeLibs` attribute. Audited page and tile requests remain restricted to evidence-derived HTTPS hosts and paths; arbitrary image-host allowlists are not used.
 
@@ -109,7 +109,7 @@ The module uses compile/target SDK 35, min SDK 26, `versionCode=2`, and `version
 
 ## Validation Strategy
 
-The deterministic gate runs every `testdata/test_*.py` suite and `git diff --check`. The current suite inventory is:
+The deterministic gate runs every `testdata/test_*.py` suite and `git diff --check`. The current suite inventory is 12 suites:
 
 | Suite | Coverage |
 |---|---|
@@ -124,6 +124,7 @@ The deterministic gate runs every `testdata/test_*.py` suite and `git diff --che
 | `testdata/search/test_search_contract.py` | Search limit, batching, relevance, ranking, filtering, and duplicates |
 | `testdata/reader/test_reader_contract.py` | Deferred media, protected map reconstruction, chapter-131 hardening, decoder fallback, native packaging, and trust transition |
 | `testdata/icon/test_icon_contract.py` | Official favicon provenance and Android density resources |
+| `testdata/status/test_status_mapping.py` | Arabic/English lifecycle mapping, access-field separation, and conflicts |
 
 The CI workflow uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. These versions were applied as a focused remediation after the previous workflow emitted Node 20/action deprecation and Gradle cache warnings; both post-remediation CI runs passed.
 
@@ -135,7 +136,7 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 ./gradlew clean :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 ```
 
-Successful implementation CI runs are recorded as [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341). The external manual evidence that informed the final fixes is distinct from a claim of exhaustive device coverage.
+Source-remediation CI runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) passed on `affbcf3`. Earlier implementation CI runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The external manual evidence that informed the final fixes is distinct from a claim of exhaustive device coverage.
 
 ## Known Limitations and Safety Boundaries
 

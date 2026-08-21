@@ -6,7 +6,7 @@ ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available fr
 
 ## Current Repository State
 
-The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds) is commit [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd). The latest audited branch HEAD is [`1285213d3d162471756109187e61a79627cd5708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/1285213d3d162471756109187e61a79627cd5708), containing the documentation synchronization and a focused CI action-version remediation. It is reviewed through stacked [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), targeting [`fix/full-remediation`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/full-remediation), above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10), which targets `main`. Both PRs remain open; no merge, tag, or GitHub Release is implied by this documentation.
+The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds) is commit [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd). The latest source-remediation HEAD is [`affbcf3784412746d4e8ea5c8609924e1aa20e11`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/affbcf3784412746d4e8ea5c8609924e1aa20e11), containing the lifecycle-status mapping, bounded protected-response reads, and native decoder fallback. It is reviewed through stacked [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), targeting [`fix/full-remediation`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/full-remediation), above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10), which targets `main`. Both PRs remain open; no merge, tag, or GitHub Release is implied by this documentation.
 
 | Property | Value |
 |---|---|
@@ -17,10 +17,10 @@ The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.c
 | Version | `versionCode=2`, `versionName=1.1` |
 | Implementation branch | `fix/runtime-eof-search-feeds` |
 | Implementation baseline | `8f88ec9fe839cbbca9076cd0c866f287a7b684dd` |
-| Latest audited branch HEAD | `1285213d3d162471756109187e61a79627cd5708` |
+| Latest source-remediation HEAD | `affbcf3784412746d4e8ea5c8609924e1aa20e11` |
 | Latest review PR | [#11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), stacked above [#10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) |
 | Default branch | `main` remains unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
-| Runtime status | Reported manual Android testing informed the final fixes; deterministic suites and CI pass. An exhaustive device matrix and authenticated/premium validation are outside the recorded evidence. |
+| Runtime status | Lifecycle-status and protected-reader fixes are implemented and pass local/CI gates. Direct Android-device rendering remains not verified in this sandbox; authenticated/premium behavior remains outside scope. |
 
 ## Current Architecture
 
@@ -34,13 +34,14 @@ The extension uses normal OkHttp requests through Mihon’s `HttpSource` API. Pu
 | Details | The source’s internal manga URL is converted to the live canonical `/ar/series/{slug}-{id}` RSC route. Complete and restricted response shapes are handled separately. |
 | Chapters | `GET /api/chapters?contentId={seriesId}&_u=...`, followed by authoritative `hasMore` pagination, approval filtering, Arabic preference, English fallback, deduplication, and deterministic descending ordering. |
 | Reader | The canonical chapter route is requested as raw HTTP. Public manifests commonly expose three direct pages; sibling `deferredMedia` is fetched from the chapter-deferred-media contract, direct deferred images are appended, and protected-page placeholders are resolved through the chapter-map proxy-plan contract, tile reconstruction, and JPEG synthesis. Observed chapters can therefore expose the remaining protected pages rather than stopping at three. |
+| Lifecycle status | The site’s top-level `progress` field is mapped to Mihon `ONGOING`, `COMPLETED`, `ON_HIATUS`, or `CANCELLED`; `status=approved` and `metadata.viewStatus=public/exclusive` are not treated as publication lifecycle values. |
 | Icon | The launcher resources use the official ProComic favicon from `https://procomic.net/favicon.svg`, rasterized across the required Android density resources. |
 
 ## Reader and Protected Pages
 
-A protected Reader page is not fabricated. Mihon receives a page placeholder containing the site’s own short-lived map capability. At image-request time, the interceptor requests a fresh proxy plan for that chapter, validates the returned geometry and evidence-derived tile URLs, downloads bounded AVIF pieces, reconstructs the page into a normal bitmap, and returns a JPEG response to Mihon. The decoder chain is `BitmapFactory`, then Android `ImageDecoder` where available, then the lazily initialized AVIF decoder with `PreferredColorConfig.RGBA_8888`.
+A protected Reader page is not fabricated. Mihon receives a page placeholder containing the site’s own short-lived map capability. At image-request time, the interceptor requests a fresh proxy plan for that chapter, validates the returned geometry and evidence-derived tile URLs, downloads bounded AVIF pieces, reconstructs the page into a normal bitmap, and returns a JPEG response to Mihon. Map responses and tile bodies are read with explicit byte bounds. The decoder chain is `BitmapFactory`, then Android `ImageDecoder` where available, then the lazily initialized AVIF decoder with `PreferredColorConfig.RGBA_8888` followed by the library’s default-color decode as a compatibility fallback.
 
-The chapter-131 regression hardened tile decoding with an `ImageDecoder` fallback, explicit RGBA output, per-tile byte limits, tile-count and composite-pixel bounds, and diagnostic metadata that never records raw response bodies or sensitive headers. Native AVIF loading is lazy so Mihon can complete extension discovery and trust transitions without eagerly loading the native library. Gradle uses `useLegacyPackaging=true` so the bundled native libraries are extracted at install time.
+The chapter-131 regression hardened tile decoding with an `ImageDecoder` fallback, explicit RGBA output, per-tile and map-response byte limits, tile-count and composite-pixel bounds, and diagnostic metadata that never records raw response bodies or sensitive headers. Native AVIF loading is lazy so Mihon can complete extension discovery and trust transitions without eagerly loading the native library. Gradle uses `useLegacyPackaging=true` so the bundled native libraries are extracted at install time.
 
 ## Chapter and Gate Rules
 
@@ -50,9 +51,11 @@ The persistent preference `show_paid_chapters` defaults to `true`. When disabled
 
 ## Validation Status
 
-The deterministic software gate passes all 11 repository test suites, `git diff --check`, protected-path checks, and debug/release CI builds. The workflow now uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; the focused update passed both push run [32465464645](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32465464645) and PR run [32465468659](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32465468659). Earlier implementation evidence remains in runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+The deterministic software gate passes all 12 repository test suites, `git diff --check`, protected-path checks, and debug/release CI builds. The workflow now uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; the source-remediation commit passed push run [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and PR run [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824). Earlier implementation evidence remains in runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
-Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, and the trust-transition/native-loading failure; the corresponding fixes are now covered by deterministic fixtures and CI assertions. This does not claim that every Android device, authenticated account, or premium chapter has been exhaustively validated.
+Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, trust-transition/native-loading failure, and `Unknown` publication status. The corresponding fixes are covered by deterministic fixtures and CI assertions. Live public probing confirmed the deferred-media/proxy-plan contract returns seven protected maps and valid AVIF tiles for the captured chapter; direct Android-device rendering is still not verified here.
+
+The release APK is approximately 21.46 MB and the debug APK approximately 23.28 MB because `avif-coder` bundles native AVIF/HEIF libraries for four ABIs. This is materially larger than pure-Kotlin extensions, but it is expected for a universal native-decoder APK. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 ## Known Limitations
 

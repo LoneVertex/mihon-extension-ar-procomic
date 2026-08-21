@@ -1,4 +1,4 @@
-> **AUDIT ARTIFACT / HISTORICAL:** This report preserves dated reconnaissance evidence from 2026-07-26. Some endpoint, CDN, and architecture claims were later superseded. Consult [`docs/PROCOMIC_SYSTEM.md`](../PROCOMIC_SYSTEM.md) for the current system.
+> **HISTORICAL / EVIDENCE-ONLY:** This report preserves dated reconnaissance evidence from 2026-07-26. Some endpoint, CDN, and architecture claims were later superseded; it is not current implementation guidance. Use [`docs/PROCOMIC_SYSTEM.md`](../PROCOMIC_SYSTEM.md), [`docs/VALIDATION.md`](../VALIDATION.md), and [`README.md`](../../README.md) for the current extension state.
 
 # ProComic.pro Recon Report — Stage 3C Evidence
 

@@ -1,10 +1,20 @@
 # ProComic Branch and Commit Topology
 
 **Status:** CURRENT
+
 **Repository:** [LoneVertex/mihon-extension-ar-procomic](https://github.com/LoneVertex/mihon-extension-ar-procomic)
+
 **Default branch:** `main`
-**Authoritative PR:** [#10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10)
-**Authoritative implementation branch:** [`fix/full-remediation`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/full-remediation)
+
+**Authoritative remote implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
+
+**Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
+
+The documentation synchronization adds one non-source commit after this implementation baseline. The 26-commit count below refers only to the implementation/review stack.
+
+**Local checkout note:** The verified local checkout uses branch `procomic-ready-to-test`, which tracks `origin/fix/runtime-eof-search-feeds`. Documentation pushes use an explicit `HEAD:fix/runtime-eof-search-feeds` refspec.
+
+**Default branch baseline:** `main` remains unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73`.
 
 ## Current Topology
 
@@ -14,35 +24,85 @@ main  76c8ed49ee81d066d30cebe6e412040db2d43a73
   | 81de09d3  chore(version): bump extension to 1.1
   | 7f8fe084  fix(reader): align page loading with canonical ProComic chapter route
   | bd18af03  fix(details): handle canonical ProComic series route
-  | 438828b  fix(chapters): normalize language and chapter ordering
+  | 438828b0  fix(chapters): normalize language and chapter ordering
   | 363c606  fix(details): handle restricted series RSC payloads
   | 9465f803  fix(diagnostics): redact runtime request and response logging
   | cdfa605  fix(chapters): unify legacy and REST chapter normalization
   | 2458256  fix(feeds): use verified Popular API contract
-  | 1fd9e7c  fix(feeds): use verified Latest API contract
-  | 666d1f0  feat(chapters): add persistent show-paid preference
-  | e5ef4d0  hardening(parser): bound RSC candidates and image hosts
-  |
-  └── fix/full-remediation → PR #10 → main
+  | 1fd9e7c8  fix(feeds): use verified Latest API contract
+  | 666d1f0a  feat(chapters): add persistent show-paid preference
+  | e5ef4d01  hardening(parser): bound RSC candidates and image hosts
+  | 4265b49  docs: synchronize repository and system documentation
+  | 1ce41bb  docs: finalize repository hygiene and release documentation
+  |                         ← fix/full-remediation / PR #10 → main
+  | 3888b28  fix(runtime): prevent EOF on search and feed responses
+  | 3438b0e  fix(search): harden thumbnail fallback and chapter pagination lifecycle
+  | 88500ea  ci: validate focused fix branches
+  | 477dc12  ci: publish debug and release APKs
+  | 463de71  fix: handle feed variants and restricted reader states
+  | 99b2272  fix(search): fix search continuation and escaped reader manifests
+  | 89cf1ff  fix: RSC bracket scanner and Search batch consumption
+  | b225a90  fix: Search relevance and update official ProComic icon
+  | 8cd4ffc  feat: deferred-media Reader flow with proxy-plan tile reconstruction
+  | 5145460  fix: defer AVIF native loading until protected tile decoding
+  | 6bbdc05  fix: sibling deferred media parsing and stale genre filter
+  | 8f88ec9  fix: harden protected tile decoding and rank Search results
+  |                         ← fix/runtime-eof-search-feeds / PR #11 → fix/full-remediation
 ```
 
-## Exact Remediation Commits
+The implementation stack is 26 commits ahead of `main`. The history remains unsquashed: the first 13 commits form the `fix/full-remediation` review stack, and the later 13 commits form the `fix/runtime-eof-search-feeds` stack. The documentation-only synchronization commit is intentionally excluded from this implementation count and does not change source behavior.
 
-| Order | SHA | Message |
-|---:|---|---|
-| 1 | `9465f80385bbc60082a79f2823f941f529e2a916` | `fix(diagnostics): redact runtime request and response logging` |
-| 2 | `cdfa605cf7e0527a3c2f8a7c4f75d5cb0a25a5ae` | `fix(chapters): unify legacy and REST chapter normalization` |
-| 3 | `2458256961a6c62b631def9c909d66846c498abf` | `fix(feeds): use verified Popular API contract` |
-| 4 | `1fd9e7c808e53014455560635345e6112ecb83f7` | `fix(feeds): use verified Latest API contract` |
-| 5 | `666d1f0a8fe51f30cf62525c8ed54f145ab854c5` | `feat(chapters): add persistent show-paid preference` |
-| 6 | `e5ef4d0175dab33433767582c7900e20061b1ab3` | `hardening(parser): bound RSC candidates and image hosts` |
+## Exact Stack Summary
 
-The six remediation commits remain unsquashed and are followed by no application commits. The final branch also contains the previously validated baseline commits shown in the topology above.
+| Stack position | Commit | Message summary | Review stack |
+|---:|---|---|---|
+| 1 | `81de09d` | `chore(version): bump extension to 1.1` | PR #10 base stack |
+| 2 | `7f8fe084` | `fix(reader): align page loading with canonical ProComic chapter route` | PR #10 base stack |
+| 3 | `bd18af03` | `fix(details): handle canonical ProComic series route` | PR #10 base stack |
+| 4 | `438828b0` | `fix(chapters): normalize language and chapter ordering` | PR #10 base stack |
+| 5 | `363c606` | `fix(details): handle restricted series RSC payloads` | PR #10 base stack |
+| 6 | `9465f803` | `fix(diagnostics): redact runtime request and response logging` | PR #10 base stack |
+| 7 | `cdfa605` | `fix(chapters): unify legacy and REST chapter normalization` | PR #10 base stack |
+| 8 | `2458256` | `fix(feeds): use verified Popular API contract` | PR #10 base stack |
+| 9 | `1fd9e7c` | `fix(feeds): use verified Latest API contract` | PR #10 base stack |
+| 10 | `666d1f0` | `feat(chapters): add persistent show-paid preference` | PR #10 base stack |
+| 11 | `e5ef4d0` | `hardening(parser): bound RSC candidates and image hosts` | PR #10 base stack |
+| 12 | `4265b49` | `docs: synchronize repository and system documentation` | PR #10 base stack |
+| 13 | `1ce41bb` | `docs: finalize repository hygiene and release documentation` | PR #10 base stack |
+| 14 | `3888b28` | `fix(runtime): prevent EOF on search and feed responses` | PR #11 stack |
+| 15 | `3438b0e` | `fix(search): harden thumbnail fallback and chapter pagination lifecycle` | PR #11 stack |
+| 16 | `88500ea` | `ci: validate focused fix branches` | PR #11 stack |
+| 17 | `477dc12` | `ci: publish debug and release APKs` | PR #11 stack |
+| 18 | `463de71` | `fix: handle feed variants and restricted reader states` | PR #11 stack |
+| 19 | `99b2272` | `fix(search): fix search continuation and escaped reader manifests` | PR #11 stack |
+| 20 | `89cf1ff` | `fix: RSC bracket scanner and Search batch consumption` | PR #11 stack |
+| 21 | `b225a90` | `fix: Search relevance and update official ProComic icon` | PR #11 stack |
+| 22 | `8cd4ffc` | `feat: deferred-media Reader flow with proxy-plan tile reconstruction` | PR #11 stack |
+| 23 | `5145460` | `fix: defer AVIF native loading until protected tile decoding` | PR #11 stack |
+| 24 | `6bbdc05` | `fix: sibling deferred media parsing and stale genre filter` | PR #11 stack |
+| 25 | `8f88ec9` | `fix: harden protected tile decoding and rank Search results` | PR #11 stack |
 
-## Retained Remote Branches
+The current implementation baseline is `8f88ec9fe839cbbca9076cd0c866f287a7b684dd`. The documentation synchronization is a separate non-implementation commit on the same PR #11 branch; it is not part of the 26-commit implementation stack and does not alter its source behavior.
 
-`main` and `fix/full-remediation` are retained. The nine Dependabot branches are retained because each has unique dependency or GitHub Actions work associated with an open Dependabot PR. No intermediate application branches remain remotely after evidence-backed cleanup; their commits remain preserved in the final branch history.
+## Pull Requests and Remote Branches
+
+| Item | State and relationship |
+|---|---|
+| PR #10 | Open; `fix/full-remediation` → `main`; must not be merged without explicit approval |
+| PR #11 | Open; `fix/runtime-eof-search-feeds` → `fix/full-remediation`; must not be merged without explicit approval |
+| `main` | Default branch; protected by process; unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
+| `fix/full-remediation` | Open PR #10 head at `1ce41bb6ab4968dfa7f1862572171333a9129f38` before the documentation sync |
+| `fix/runtime-eof-search-feeds` | Open PR #11 branch; implementation baseline `8f88ec9fe839cbbca9076cd0c866f287a7b684dd`, followed by the documentation-only synchronization commit |
+| Local `procomic-ready-to-test` | Clean checkout tracking `origin/fix/runtime-eof-search-feeds` |
+
+## Dependabot Pull Requests
+
+Dependabot PRs #1–#9 are open and target `main`. They remain available for a separate compatibility review; none is merged, closed, or retargeted by this documentation synchronization.
+
+## Tags and Releases
+
+The repository currently has no Git tags and no GitHub Releases. Creating a version tag or publishing a release is a separate approval-gated operation. CI APK artifacts and their checksums are recorded in `docs/VALIDATION.md` and the external synchronization evidence bundle, not treated as a GitHub Release.
 
 ## Review and Release Path
 
-The only authoritative implementation review path is PR #10 from `fix/full-remediation` into `main`. It is not merged automatically during release preparation. The software gate passed, but the final external Android/Mihon validation session remains pending.
+The intended review order is PR #11 into `fix/full-remediation`, followed by PR #10 into `main`, only if each operation is explicitly approved. The documentation sync pushes only to `fix/runtime-eof-search-feeds`; it does not merge, close, delete, retarget, force-push, tag, release, or modify `main`.

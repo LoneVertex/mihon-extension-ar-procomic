@@ -4,7 +4,9 @@
 
 **Authoritative implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
 
-**HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
+**Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
+
+**Latest audited branch HEAD:** [`1285213d3d162471756109187e61a79627cd5708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/1285213d3d162471756109187e61a79627cd5708)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
 
@@ -122,6 +124,8 @@ The deterministic gate runs every `testdata/test_*.py` suite and `git diff --che
 | `testdata/search/test_search_contract.py` | Search limit, batching, relevance, ranking, filtering, and duplicates |
 | `testdata/reader/test_reader_contract.py` | Deferred media, protected map reconstruction, chapter-131 hardening, decoder fallback, native packaging, and trust transition |
 | `testdata/icon/test_icon_contract.py` | Official favicon provenance and Android density resources |
+
+The CI workflow uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. These versions were applied as a focused remediation after the previous workflow emitted Node 20/action deprecation and Gradle cache warnings; both post-remediation CI runs passed.
 
 The Android software build uses:
 

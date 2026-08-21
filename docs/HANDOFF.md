@@ -6,7 +6,9 @@
 
 **Authoritative implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
 
-**Implementation HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
+**Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
+
+**Latest audited branch HEAD:** [`1285213d3d162471756109187e61a79627cd5708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/1285213d3d162471756109187e61a79627cd5708)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) into `fix/full-remediation`, stacked above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) into `main`
 
@@ -43,7 +45,7 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 | Debug CI artifact | `ProComic-v1.1-debug-8f88ec9-ci.apk` |
 | Debug SHA-256 | `bf2276e7152637ac9020f617eabf78e181f7c606b75a0fe4c0f2b17be9fdb83e` |
 
-Successful implementation CI runs are [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341). The current artifact copies and checksum file are retained in the external synchronization evidence bundle.
+Successful post-remediation CI runs are [32465464645](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32465464645) and [32465468659](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32465468659). Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current artifact copies and checksum file are retained in the external synchronization evidence bundle.
 
 ## Completed Implementation Fixes
 
@@ -60,6 +62,7 @@ The current branch includes the following completed and tested work:
 9. Chapter-131 tile decoding has an `ImageDecoder` fallback, explicit `PreferredColorConfig.RGBA_8888`, and a per-tile byte bound in addition to tile/composite bounds.
 10. AVIF native loading is lazy to avoid extension disappearance during Mihon trust/discovery transitions.
 11. Gradle uses `useLegacyPackaging=true` for install-time native-library extraction.
+12. CI action versions were updated to `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; both post-remediation CI runs passed.
 
 No authentication, login, session/cookie bypass, payment bypass, WebView, browser automation, or fabricated premium page behavior was added.
 

@@ -6,7 +6,7 @@ ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available fr
 
 ## Current Repository State
 
-The current implementation is on [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds) at commit [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd). It is reviewed through stacked [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), targeting [`fix/full-remediation`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/full-remediation), above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10), which targets `main`. Both PRs remain open; no merge, tag, or GitHub Release is implied by this documentation.
+The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds) is commit [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd). The latest audited branch HEAD is [`1285213d3d162471756109187e61a79627cd5708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/1285213d3d162471756109187e61a79627cd5708), containing the documentation synchronization and a focused CI action-version remediation. It is reviewed through stacked [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), targeting [`fix/full-remediation`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/full-remediation), above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10), which targets `main`. Both PRs remain open; no merge, tag, or GitHub Release is implied by this documentation.
 
 | Property | Value |
 |---|---|
@@ -16,7 +16,8 @@ The current implementation is on [`fix/runtime-eof-search-feeds`](https://github
 | Base domain | `https://procomic.net` |
 | Version | `versionCode=2`, `versionName=1.1` |
 | Implementation branch | `fix/runtime-eof-search-feeds` |
-| Implementation HEAD | `8f88ec9fe839cbbca9076cd0c866f287a7b684dd` |
+| Implementation baseline | `8f88ec9fe839cbbca9076cd0c866f287a7b684dd` |
+| Latest audited branch HEAD | `1285213d3d162471756109187e61a79627cd5708` |
 | Latest review PR | [#11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), stacked above [#10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) |
 | Default branch | `main` remains unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
 | Runtime status | Reported manual Android testing informed the final fixes; deterministic suites and CI pass. An exhaustive device matrix and authenticated/premium validation are outside the recorded evidence. |
@@ -49,7 +50,7 @@ The persistent preference `show_paid_chapters` defaults to `true`. When disabled
 
 ## Validation Status
 
-The deterministic software gate passes all 11 repository test suites, `git diff --check`, protected-path checks, and debug/release CI builds. The final implementation CI evidence includes successful runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+The deterministic software gate passes all 11 repository test suites, `git diff --check`, protected-path checks, and debug/release CI builds. The workflow now uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; the focused update passed both push run [32465464645](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32465464645) and PR run [32465468659](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32465468659). Earlier implementation evidence remains in runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, and the trust-transition/native-loading failure; the corresponding fixes are now covered by deterministic fixtures and CI assertions. This does not claim that every Android device, authenticated account, or premium chapter has been exhaustively validated.
 

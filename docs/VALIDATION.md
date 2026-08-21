@@ -4,7 +4,9 @@
 
 **Implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
 
-**Implementation HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
+**Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
+
+**Latest audited branch HEAD:** [`1285213d3d162471756109187e61a79627cd5708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/1285213d3d162471756109187e61a79627cd5708)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
 
@@ -33,6 +35,7 @@ The final deterministic gate passed all 11 suites, `git diff --check`, protected
 | Protected-path checks | PASS | Final software gate |
 | Debug APK build | PASS | CI and local gate evidence |
 | Release APK build | PASS | CI and local gate evidence |
+| CI action modernization | PASS | Action-only remediation commit `1285213d`; both current workflow runs passed |
 
 The deterministic test command is:
 
@@ -53,14 +56,14 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 
 ## CI Evidence
 
-The successful implementation CI runs are:
+The successful CI runs for the current audited branch are:
 
-| Run | Purpose | Result |
-|---:|---|---|
-| [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) | Pull-request validation | PASS |
-| [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) | Branch push validation | PASS |
+| Run | Purpose | Commit | Result |
+|---:|---|---|---|
+| [32465464645](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32465464645) | Branch push validation | `1285213d` | PASS |
+| [32465468659](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32465468659) | Pull-request validation | `1285213d` | PASS |
 
-A later documentation-only commit may trigger another workflow run. That run will be reported separately and will not replace the implementation evidence above.
+Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current CI workflow uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; the action-only remediation was validated by both current runs.
 
 ## APK Identity
 

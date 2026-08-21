@@ -1,4 +1,4 @@
-> **HISTORICAL / SUPERSEDED:** This handoff describes an earlier repository state. Its branch, version, APK-size, and validation claims are not current evidence. For current branch, PR, build, and validation information, use [`README.md`](../README.md), [`HANDOFF.md`](HANDOFF.md), [`VALIDATION.md`](VALIDATION.md), and [`BRANCH_TOPOLOGY.md`](BRANCH_TOPOLOGY.md).
+> **HISTORICAL / SUPERSEDED:** This handoff describes an earlier repository state and is not evidence for the current audit head [`f3f4290`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087). Its branch, version, 119 KB APK-size, WebView, and validation claims are obsolete; the current deterministic gate also installs test-only `Pillow==12.3.0`. For current branch, PR, build, and validation information, use [`README.md`](../README.md), [`HANDOFF.md`](HANDOFF.md), [`VALIDATION.md`](VALIDATION.md), and [`BRANCH_TOPOLOGY.md`](BRANCH_TOPOLOGY.md).
 
 # PROCOMIC EXTENSION — FINAL ENGINEERING HANDOFF TO MANUS AI
 

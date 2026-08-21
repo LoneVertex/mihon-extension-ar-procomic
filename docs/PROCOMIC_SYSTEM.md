@@ -6,11 +6,11 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Latest source-remediation HEAD:** [`affbcf3784412746d4e8ea5c8609924e1aa20e11`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/affbcf3784412746d4e8ea5c8609924e1aa20e11)
+**Latest audit-remediation HEAD:** [`f3f4290d13f1bf204b0278e25a01235a77ba0087`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
 
-**Runtime and release status:** The lifecycle-status and protected-Reader fixes pass the 12-suite local gate, clean builds, and source-remediation CI. The live public contract probe returns valid deferred maps and AVIF tiles. Direct Android-device rendering, authenticated account validation, paid access, merge, tag, and GitHub Release are not claimed or performed here.
+**Runtime and release status:** The lifecycle-status and protected-Reader fixes pass the 12-suite local gate, clean builds, and corrected audit-remediation CI. The live public contract probe returns valid deferred maps and AVIF tiles. Direct Android-device rendering, authenticated account validation, paid access, merge, tag, and GitHub Release are not claimed or performed here. The release build remains debug-keystore signed for sideload/testing.
 
 ## Purpose and Scope
 
@@ -29,7 +29,7 @@ The extension uses normal OkHttp requests with a bounded RSC boundary parser for
 | `ProComicUtils.kt` | RSC/JSON boundary extraction, Reader manifest extraction, chapter normalization, gate classification, protected-page payload parsing, and page-image parsing | Bounded string-aware scans with sibling `deferredMedia` support |
 | `ProComicImageInterceptor.kt` | Protected-page proxy-plan retrieval, tile downloading, decoding, geometry validation, reconstruction, and JPEG response synthesis | OkHttp interceptor with bounded tile/composite resources and lazy native fallback |
 | `ProComicDiag.kt` | Safe runtime diagnostics | Metadata-only logging with redacted URLs and no raw body/header values |
-| `testdata/` | Deterministic contract fixtures and regression tests | Dependency-free Python suites |
+| `testdata/` | Deterministic contract fixtures and regression tests | Python suites; CI installs pinned `Pillow==12.3.0` for the icon contract |
 
 ## Website Contract Map
 
@@ -126,7 +126,7 @@ The deterministic gate runs every `testdata/test_*.py` suite and `git diff --che
 | `testdata/icon/test_icon_contract.py` | Official favicon provenance and Android density resources |
 | `testdata/status/test_status_mapping.py` | Arabic/English lifecycle mapping, access-field separation, and conflicts |
 
-The CI workflow uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. These versions were applied as a focused remediation after the previous workflow emitted Node 20/action deprecation and Gradle cache warnings; both post-remediation CI runs passed.
+The CI workflow sets `permissions: contents: read`, installs test-only `Pillow==12.3.0` from `requirements-test.txt`, and uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. These changes were applied as focused remediations after the previous workflow emitted Node 20/action deprecation and Gradle cache warnings and after the first suite-enabled run exposed the missing Pillow dependency. Runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed; the preceding missing-dependency failures are recorded in `docs/VALIDATION.md`.
 
 The Android software build uses:
 
@@ -136,7 +136,7 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 ./gradlew clean :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 ```
 
-Source-remediation CI runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) passed on `affbcf3`. Earlier implementation CI runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The external manual evidence that informed the final fixes is distinct from a claim of exhaustive device coverage.
+Audit-remediation CI runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed on `f3f4290`. Source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) passed on `affbcf3`. Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The external manual evidence that informed the final fixes is distinct from a claim of exhaustive device coverage.
 
 ## Known Limitations and Safety Boundaries
 

@@ -10,9 +10,9 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Latest source-remediation HEAD:** [`affbcf3784412746d4e8ea5c8609924e1aa20e11`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/affbcf3784412746d4e8ea5c8609924e1aa20e11)
+**Latest audit-remediation HEAD:** [`f3f4290d13f1bf204b0278e25a01235a77ba0087`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087)
 
-The documentation synchronization and CI action remediation are historical non-source commits after the implementation baseline. The 26-commit count below refers only to the original implementation/review stack; the current source-remediation commit `affbcf3` is a focused follow-up source/test commit after that stack.
+The documentation synchronization, CI action remediation, comment cleanup, and test-dependency follow-up are focused commits after the implementation baseline. The 26-commit count below refers only to the original implementation/review stack; the current audit-remediation commits `0bda7ea` and `f3f4290` are follow-ups after that stack.
 
 **Local checkout note:** The verified local checkout uses branch `procomic-ready-to-test`, which tracks `origin/fix/runtime-eof-search-feeds`. Documentation pushes use an explicit `HEAD:fix/runtime-eof-search-feeds` refspec.
 
@@ -51,10 +51,12 @@ main  76c8ed49ee81d066d30cebe6e412040db2d43a73
   | 8f88ec9  fix: harden protected tile decoding and rank Search results
   | 1285213d  ci: modernize action versions and synchronize audit documentation
   | affbcf3   fix(procomic): map lifecycle status and harden protected tile decoding
+  | 0bda7ea   ci: run contract tests with least-privilege workflow
+  | f3f4290   ci: install pinned icon test dependency
   |                         ← fix/runtime-eof-search-feeds / PR #11 → fix/full-remediation
 ```
 
-The historical implementation stack is 26 commits ahead of `main`. The history remains unsquashed: the first 13 commits form the `fix/full-remediation` review stack, and the later 13 commits form the `fix/runtime-eof-search-feeds` stack. The documentation-only synchronization and CI remediation commits are intentionally excluded from that count; the current `affbcf3` source/test remediation is a focused follow-up after the historical stack.
+The historical implementation stack is 26 commits ahead of `main`. The history remains unsquashed: the first 13 commits form the `fix/full-remediation` review stack, and the later 13 commits form the `fix/runtime-eof-search-feeds` stack. The documentation, CI, comment, and test-dependency follow-ups are intentionally excluded from that historical count; the current audit head is `f3f4290`.
 
 ## Exact Stack Summary
 
@@ -86,7 +88,7 @@ The historical implementation stack is 26 commits ahead of `main`. The history r
 | 24 | `6bbdc05` | `fix: sibling deferred media parsing and stale genre filter` | PR #11 stack |
 | 25 | `8f88ec9` | `fix: harden protected tile decoding and rank Search results` | PR #11 stack |
 
-The original implementation baseline is `8f88ec9fe839cbbca9076cd0c866f287a7b684dd`. The documentation synchronization (`ceafa8f`) and CI action remediation (`1285213d`) are historical non-implementation commits; the current focused source/test remediation is `affbcf3`. The 26-commit historical stack remains unchanged and unsquashed.
+The original implementation baseline is `8f88ec9fe839cbbca9076cd0c866f287a7b684dd`. The documentation synchronization (`ceafa8f`), CI action remediation (`1285213d`), source remediation (`affbcf3`), comment/CI coverage remediation (`0bda7ea`), and pinned test-dependency follow-up (`f3f4290`) are focused commits after the historical stack. The 26-commit historical stack remains unchanged and unsquashed.
 
 ## Pull Requests and Remote Branches
 
@@ -96,7 +98,7 @@ The original implementation baseline is `8f88ec9fe839cbbca9076cd0c866f287a7b684d
 | PR #11 | Open; `fix/runtime-eof-search-feeds` → `fix/full-remediation`; must not be merged without explicit approval |
 | `main` | Default branch; protected by process; unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
 | `fix/full-remediation` | Open PR #10 head at `1ce41bb6ab4968dfa7f1862572171333a9129f38` before the documentation sync |
-| `fix/runtime-eof-search-feeds` | Open PR #11 branch; historical implementation baseline `8f88ec9fe839cbbca9076cd0c866f287a7b684dd`, followed by documentation/CI commits and current source-remediation commit `affbcf3` |
+| `fix/runtime-eof-search-feeds` | Open PR #11 branch; historical implementation baseline `8f88ec9fe839cbbca9076cd0c866f287a7b684dd`, followed by documentation, CI, source, comment, and test-dependency commits; current head `f3f4290` |
 | Local `procomic-ready-to-test` | Clean checkout tracking `origin/fix/runtime-eof-search-feeds` |
 
 ## Dependabot Pull Requests

@@ -6,7 +6,7 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Latest source-remediation HEAD:** [`affbcf3784412746d4e8ea5c8609924e1aa20e11`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/affbcf3784412746d4e8ea5c8609924e1aa20e11)
+**Latest audit-remediation HEAD:** [`f3f4290d13f1bf204b0278e25a01235a77ba0087`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
 
@@ -16,7 +16,7 @@
 
 ## Software Gate
 
-The source-remediation gate passed all 12 suites, `git diff --check`, protected-path checks, and clean debug/release builds. The current implementation stack remains 26 commits ahead of unchanged `main`; the remediation commit is a separate focused source/test commit after the stack, and the stacked PRs remain open.
+The audit-remediation gate passed all 12 suites, `git diff --check`, protected-path checks, and clean debug/release builds. The historical implementation stack remains 26 commits ahead of unchanged `main`; the current audit commits are focused follow-ups after that stack, and the stacked PRs remain open.
 
 | Gate | Result | Evidence |
 |---|---|---|
@@ -37,6 +37,7 @@ The source-remediation gate passed all 12 suites, `git diff --check`, protected-
 | Debug APK build | PASS | CI and local gate evidence |
 | Release APK build | PASS | CI and local gate evidence |
 | Protected Reader fallback and bounded response reads | PASS | Source-remediation commit `affbcf3`; Reader regression and local/CI builds passed |
+| CI contract-suite coverage and permissions | PASS | Audit commit `0bda7ea`; corrected by pinned Pillow follow-up `f3f4290` |
 | CI action modernization | PASS | Earlier action-only remediation commit `1285213d`; both current workflow runs passed |
 
 The deterministic test command is:
@@ -56,23 +57,29 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 ./gradlew clean :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 ```
 
+CI installs the test-only dependency from `requirements-test.txt` (`Pillow==12.3.0`) before running the deterministic suites. This dependency is not bundled into the Android APK.
+
 ## CI Evidence
 
-The successful CI runs for the current source-remediation commit are:
+The current audit-remediation CI history is:
 
 | Run | Purpose | Commit | Result |
 |---:|---|---|---|
-| [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) | Branch push validation | `affbcf3` | PASS |
-| [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) | Pull-request validation | `affbcf3` | PASS |
+| [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) | First workflow run after adding suite coverage | `0bda7ea` | FAIL — GitHub runner lacked Pillow for the icon contract |
+| [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639) | Pull-request reproduction of the same failure | `0bda7ea` | FAIL — same missing test dependency |
+| [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) | Corrected branch push validation | `f3f4290` | PASS |
+| [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) | Corrected pull-request validation | `f3f4290` | PASS |
+| [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) | Source-remediation branch push | `affbcf3` | PASS |
+| [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) | Source-remediation pull request | `affbcf3` | PASS |
 
-Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current CI workflow uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; the action-only remediation was validated by both current runs.
+The corrected runs execute the pinned Pillow install, all 12 deterministic suites, `git diff --check`, and debug/release APK builds. The workflow uses `permissions: contents: read`, `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence.
 
 ## APK Identity
 
 The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The build uses compile/target SDK 35, min SDK 26, AVIF Coder 2.1.3, and `useLegacyPackaging=true` for install-time native-library extraction. The universal native decoder payload is the primary reason the APK is much larger than pure-Kotlin extensions.
 
 | Variant | Current local APK | Package | Version | Size | SHA-256 |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|
 | Debug | `app/build/outputs/apk/debug/app-debug.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 23,278,712 bytes | `22072281eeed34b46c913ee9bff68fb48e282e6cfc665c75e671ef2d6647ed76` |
 | Release | `app/build/outputs/apk/release/app-release.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 21,464,829 bytes | `01030b6005785f8fffcd51b661c22cdf67e4dd5a7d481585a0f677486927810e` |
 
@@ -105,7 +112,7 @@ The Reader validation evidence must distinguish the chapter route, Mihon Reader 
 
 ## Current Limitations
 
-Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The source-remediation software gate is PASS; direct Android-device rendering and authenticated/premium behavior remain PARTIAL/NOT VERIFIED limitations relevant to any future release decision. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence.
+Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; direct Android-device rendering and authenticated/premium behavior remain PARTIAL/NOT VERIFIED limitations relevant to any future release decision. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release build also uses the debug keystore for sideload/testing; a production release requires maintainer-owned signing credentials and explicit release authorization.
 
 ## Approval-Gated Follow-ups
 

@@ -8,11 +8,11 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Latest source-remediation HEAD:** [`affbcf3784412746d4e8ea5c8609924e1aa20e11`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/affbcf3784412746d4e8ea5c8609924e1aa20e11)
+**Latest audit-remediation HEAD:** [`f3f4290d13f1bf204b0278e25a01235a77ba0087`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) into `fix/full-remediation`, stacked above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) into `main`
 
-**Software status:** PASS. All 12 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and source-remediation CI builds pass. Direct Android-device rendering remains not verified in this sandbox.
+**Software status:** PASS. All 12 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and corrected audit-remediation CI builds pass. Direct Android-device rendering remains not verified in this sandbox.
 
 **Release status:** No tag or GitHub Release exists. PR merges and release publication remain approval-gated and were not performed by this documentation synchronization.
 
@@ -46,8 +46,9 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 | Debug local SHA-256 | `22072281eeed34b46c913ee9bff68fb48e282e6cfc665c75e671ef2d6647ed76` |
 | Size rationale | Universal `avif-coder` native libraries across four ABIs; no ABI split applied without Mihon distribution evidence |
 | Reproducibility note | Debug hash was stable across repeated clean builds; release hash varied while size/metadata remained identical, so the recorded release hash identifies this exact local artifact only |
+| Release signing | Debug keystore for sideload/testing; production publication requires maintainer-owned signing credentials |
 
-Source-remediation CI runs are [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824). Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current artifact copies and checksum file are retained in the external synchronization evidence bundle.
+The first suite-enabled workflow runs failed because the GitHub runner lacked Pillow: [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) and [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639). After adding pinned `Pillow==12.3.0` in `requirements-test.txt`, corrected push/PR runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed. The workflow also sets `permissions: contents: read`. Source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) and earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current artifact copies and checksum file are retained in the external synchronization evidence bundle.
 
 ## Completed Implementation Fixes
 
@@ -66,7 +67,7 @@ The current branch includes the following completed and tested work:
 11. Gradle uses `useLegacyPackaging=true` for install-time native-library extraction.
 12. Lifecycle status maps top-level `progress` values such as `مستمر` and `مكتمل`; approval/access values are not used as publication status.
 13. Protected map responses and tile bodies use explicit byte bounds; the native decoder retries with its default color configuration after an explicit RGBA failure.
-14. CI action versions were updated to `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; both post-remediation CI runs passed.
+14. CI action versions were updated to `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; workflow permissions are limited to `contents: read`; deterministic suites run after installing pinned `Pillow==12.3.0`; corrected post-remediation CI runs passed.
 
 No authentication, login, session/cookie bypass, payment bypass, WebView, browser automation, or fabricated premium page behavior was added.
 
@@ -75,6 +76,7 @@ No authentication, login, session/cookie bypass, payment bypass, WebView, browse
 Run the complete deterministic gate:
 
 ```bash
+python3 -m pip install --disable-pip-version-check --no-input -r requirements-test.txt
 for test in $(find testdata -type f -name 'test_*.py' | sort); do
   python3 "$test" || exit 1
 done

@@ -284,7 +284,7 @@ class ProComic : HttpSource(), ConfigurableSource {
             exhausted = nextParsed.response.data.isEmpty() || nextParsed.response.data.size < SEARCH_PAGE_LIMIT
         }
 
-        val uniqueMangas = mangas.distinctBy { it.url }
+        val uniqueMangas = mangas.distinctBy { it.searchIdentity() }
         ProComicDiag.logStage("SEARCH", 99,
             "MangasPage: ${uniqueMangas.size} items, hasNextPage=false (batchPages=$pagesFetched, exhausted=$exhausted)")
         return MangasPage(uniqueMangas, hasNextPage = false)
@@ -300,6 +300,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         val mangas = parsed.data
             .filter { it.type != "novel" }
             .filter { it.matchesSearchQuery(query) }
+            .sortedByDescending { it.searchMatchQuality(query) }
             .map { it.toSManga() }
         return ParsedSearchResponse(parsed, mangas)
     }
@@ -307,22 +308,33 @@ class ProComic : HttpSource(), ConfigurableSource {
     private fun searchPageFingerprint(response: ProComicSearchResponse): String =
         response.data.joinToString(",") { it.id.toString() }
 
-    private fun ProComicSeriesDto.matchesSearchQuery(query: String): Boolean {
-        val queryTokens = searchTokens(query)
-        if (queryTokens.isEmpty()) return true
+    private fun ProComicSeriesDto.matchesSearchQuery(query: String): Boolean =
+        searchMatchQuality(query) > 0
 
-        // Search only title-like fields. Descriptions are narrative text and caused unrelated
-        // series to appear when a query word occurred only inside a synopsis (for example,
-        // `dragon` in a series whose displayed title did not contain that word). Alternate and
-        // original titles remain valid title aliases; descriptions do not qualify a result.
-        val titleLikeText = buildString {
-            append(title).append(' ')
-            append(slug).append(' ')
-            append(metadata?.originalTitle.orEmpty()).append(' ')
-            metadata?.altTitles.orEmpty().forEach { append(it).append(' ') }
+    /**
+     * Rank visible-title matches above original-title/alias matches, and aliases above slug-only
+     * matches. Descriptions are deliberately excluded because they are narrative text, not a
+     * searchable identity field.
+     */
+    private fun ProComicSeriesDto.searchMatchQuality(query: String): Int {
+        val queryTokens = searchTokens(query)
+        if (queryTokens.isEmpty()) return 1
+
+        val titleMatches = queryTokens.all { it in searchTokens(title) }
+        if (titleMatches) return 3
+
+        val originalTitleMatches = queryTokens.all { it in searchTokens(metadata?.originalTitle.orEmpty()) }
+        val aliasMatches = metadata?.altTitles.orEmpty().any { alias ->
+            queryTokens.all { it in searchTokens(alias) }
         }
-        val resultTokens = searchTokens(titleLikeText)
-        return queryTokens.all { it in resultTokens }
+        if (originalTitleMatches || aliasMatches) return 2
+
+        return if (queryTokens.all { it in searchTokens(slug) }) 1 else 0
+    }
+
+    private fun SManga.searchIdentity(): String {
+        val slug = url.trim('/').split('/').lastOrNull().orEmpty()
+        return "${title.trim().lowercase()}|${slug.lowercase()}"
     }
 
     private fun searchTokens(value: String): Set<String> =

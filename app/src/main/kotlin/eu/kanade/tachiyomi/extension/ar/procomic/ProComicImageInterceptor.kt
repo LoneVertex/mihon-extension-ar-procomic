@@ -3,9 +3,12 @@ package eu.kanade.tachiyomi.extension.ar.procomic
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.ImageDecoder
 import android.graphics.Paint
 import android.graphics.Rect
+import android.os.Build
 import com.radzivon.bartoshyk.avif.coder.HeifCoder
+import com.radzivon.bartoshyk.avif.coder.PreferredColorConfig
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -18,6 +21,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import java.io.IOException
+import java.nio.ByteBuffer
 
 /**
  * Reconstructs one protected ProComic Reader page from the site's deferred map contract.
@@ -36,7 +40,7 @@ class ProComicImageInterceptor(
         val payload = ProComicUtils.decodeProtectedPagePayload(fragment)
             ?: return chain.proceed(request)
         val map = fetchMap(request, payload)
-        return reconstruct(request, map)
+        return reconstruct(request, map, payload.pageIndex)
     }
 
     private fun fetchMap(
@@ -71,6 +75,7 @@ class ProComicImageInterceptor(
     private fun reconstruct(
         pageRequest: Request,
         map: ProComicProtectedMap,
+        pageIndex: Int,
     ): Response {
         val width = map.dim.getOrNull(0)?.coerceAtLeast(1)
             ?: throw IOException("ProComic Reader: protected map width is missing")
@@ -124,9 +129,16 @@ class ProComicImageInterceptor(
                     }
                     val bytes = tileResponse.body?.bytes()
                         ?: throw IOException("ProComic Reader: protected tile body is missing")
-                    val tile = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        ?: avifCoder?.let { coder -> runCatching { coder.decode(bytes) }.getOrNull() }
-                        ?: throw IOException("ProComic Reader: protected tile could not be decoded")
+                    if (bytes.size > MAX_TILE_BYTES) {
+                        throw IOException("ProComic Reader: protected tile exceeds size bound")
+                    }
+                    val tile = decodeTile(
+                        bytes = bytes,
+                        pageIndex = pageIndex,
+                        outputIndex = outputIndex,
+                        sourceIndex = sourceIndex,
+                        contentType = tileResponse.header("Content-Type"),
+                    )
                     try {
                         canvas.drawBitmap(tile, null, destination, paint)
                     } finally {
@@ -147,6 +159,52 @@ class ProComicImageInterceptor(
         } finally {
             result.recycle()
         }
+    }
+
+    private fun decodeTile(
+        bytes: ByteArray,
+        pageIndex: Int,
+        outputIndex: Int,
+        sourceIndex: Int,
+        contentType: String?,
+    ): Bitmap {
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { return it }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            runCatching {
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(ByteBuffer.wrap(bytes))) { decoder, _, _ ->
+                    decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                    decoder.isMutableRequired = false
+                }
+            }.getOrNull()?.let { return it }
+        }
+
+        avifCoder?.let { coder ->
+            runCatching {
+                coder.decode(bytes, PreferredColorConfig.RGBA_8888)
+            }.onFailure {
+                ProComicDiag.logStage(
+                    "PAGES",
+                    96,
+                    "native tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
+                        "bytes=${bytes.size} contentType=${contentType ?: "(absent)"} " +
+                        "errorType=${it.javaClass.simpleName}",
+                )
+            }.getOrNull()?.let { return it }
+        } ?: ProComicDiag.logStage(
+            "PAGES",
+            96,
+            "native AVIF decoder unavailable page=$pageIndex tile=$outputIndex source=$sourceIndex " +
+                "bytes=${bytes.size} contentType=${contentType ?: "(absent)"}",
+        )
+
+        ProComicDiag.logStage(
+            "PAGES",
+            96,
+            "protected tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
+                "bytes=${bytes.size} contentType=${contentType ?: "(absent)"}",
+        )
+        throw IOException("ProComic Reader: protected tile could not be decoded")
     }
 
     private fun fallbackRectangles(
@@ -175,6 +233,7 @@ class ProComicImageInterceptor(
     private companion object {
         const val READER_BASE_URL = "https://procomic.pro"
         const val MAX_TILES = 32
+        const val MAX_TILE_BYTES = 8_000_000
         const val MAX_COMPOSITE_PIXELS = 40_000_000L
         const val JPEG_QUALITY = 95
         val JSON_MEDIA_TYPE = "application/json".toMediaType()

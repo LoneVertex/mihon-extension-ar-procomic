@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "testdata" / "reader"
 UTILS = ROOT / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/ProComicUtils.kt"
 PROCOMIC = ROOT / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/ProComic.kt"
+BUILD = ROOT / "app/build.gradle.kts"
+MANIFEST = ROOT / "app/src/main/AndroidManifest.xml"
 
 
 def load() -> dict:
@@ -128,6 +130,30 @@ def test_live_guest_limit_is_proven_server_side() -> None:
     assert all(url.startswith("https://app.procomic.pro/chapters/690/50821/") for url in case["page_urls"])
 
 
+def test_chapter_131_page_4_tiles_are_valid_avif_and_geometry_is_complete() -> None:
+    case = load()["chapter_131_tile_decode_contract"]
+    page = case["page_4"]
+    assert case["series_id"] == 56
+    assert case["chapter_id"] == 50318
+    assert case["publicImageCount"] == 3
+    assert case["deferred_media_status"] == 200
+    assert case["map_count"] == 17
+    assert case["page_indices"] == list(range(3, 20))
+    assert page["dim"] == [800, 5000]
+    assert page["mode"] == "grid_4x2"
+    assert page["piece_count"] == page["rect_count"] == 8
+    assert page["tile_statuses"] == [200] * 8
+    assert page["tile_content_type"] == "image/avif"
+    assert page["tile_dimensions"] == [[200, 2500]] * 8
+    assert page["tile_decode_probe"] == "pillow_avif_ok"
+    assert set(case["all_tile_hosts"]) == {
+        "img1.procomic.pro",
+        "img2.procomic.pro",
+        "img3.procomic.pro",
+        "img4.procomic.pro",
+    }
+
+
 def test_deferred_media_contract_recovers_all_protected_pages() -> None:
     case = load()["deferred_media_contract"]
     assert case["publicImageCount"] == 3
@@ -188,6 +214,11 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert "isAllowedProtectedTileUrl" in utils
     assert "Bitmap.createBitmap" in interceptor
     assert "Canvas" in interceptor
+    assert "ImageDecoder" in interceptor
+    assert "PreferredColorConfig.RGBA_8888" in interceptor
+    assert "MAX_TILE_BYTES" in interceptor
+    assert "useLegacyPackaging = true" in BUILD.read_text()
+    assert "extractNativeLibs" not in MANIFEST.read_text()
     assert "img1.procomic.pro" in utils
     assert "android.webkit.WebView" not in procomic
     assert "android.webkit.WebView" not in interceptor
@@ -243,6 +274,7 @@ def main() -> None:
     test_live_guest_limit_is_proven_server_side()
     test_current_reader_sibling_deferred_media_recovers_ten_logical_pages()
     test_legacy_nested_deferred_media_remains_supported_and_malformed_sibling_is_rejected()
+    test_chapter_131_page_4_tiles_are_valid_avif_and_geometry_is_complete()
     test_deferred_media_contract_recovers_all_protected_pages()
     test_source_uses_deferred_media_and_protected_tile_reconstruction()
     test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup()

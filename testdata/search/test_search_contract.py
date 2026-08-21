@@ -117,6 +117,39 @@ def test_live_search_pages_are_bounded_and_terminal_after_aggregation() -> None:
         assert len(observed_ids) == len(set(observed_ids)) or case["query"] in {"dragon", "skill"}
 
 
+def search_quality(row: dict, query: str) -> int:
+    import re
+
+    def tokens(value: str) -> set[str]:
+        return {item.casefold() for item in re.findall(r"[\w]+", value, flags=re.UNICODE) if len(item) > 1}
+
+    query_tokens = tokens(query)
+    if not query_tokens:
+        return 1
+    if query_tokens.issubset(tokens(str(row.get("title") or ""))):
+        return 3
+    metadata = row.get("metadata") or {}
+    if query_tokens.issubset(tokens(str(metadata.get("originalTitle") or ""))):
+        return 2
+    aliases = metadata.get("altTitles") or []
+    if any(query_tokens.issubset(tokens(str(alias))) for alias in aliases):
+        return 2
+    return 1 if query_tokens.issubset(tokens(str(row.get("slug") or ""))) else 0
+
+
+def test_visible_title_matches_rank_above_alias_and_slug_matches() -> None:
+    payload = load("search_relevance_fixtures.json")["ranking_cases"]
+    rows = [row for row in payload["rows"] if search_quality(row, payload["query"]) > 0]
+    ranked = [row["id"] for row in sorted(rows, key=lambda row: search_quality(row, payload["query"]), reverse=True)]
+    assert ranked == payload["expected_quality_order"]
+
+
+def test_duplicate_series_fixture_retains_manhua_after_novel_filter() -> None:
+    payload = load("search_relevance_fixtures.json")["duplicate_series_cases"]
+    visible = [row for row in payload["rows"] if row["type"] != "novel"]
+    assert [row["id"] for row in visible] == payload["expected_ids_after_novel_filter"]
+
+
 def test_live_type_filters_are_server_honored() -> None:
     cases = load("search_relevance_fixtures.json")["live_filter_cases"]
     for type_name, case in cases.items():
@@ -149,6 +182,9 @@ def test_source_and_dto_match_the_safe_contract() -> None:
     assert "hasNextPage=false" in source
     assert "searchPageFingerprint" in source
     assert "searchTokens" in source
+    assert "searchMatchQuality" in source
+    assert "searchIdentity" in source
+    assert "distinctBy { it.searchIdentity() }" in source
     assert "response.request.newBuilder()" in source
     assert "setQueryParameter(\"page\", nextPage.toString())" in source
     assert "metadata?.originalTitle" in matcher
@@ -172,6 +208,8 @@ def main() -> None:
     test_live_title_policy_excludes_description_only_false_positives()
     test_live_search_pages_are_bounded_and_terminal_after_aggregation()
     test_live_type_filters_are_server_honored()
+    test_visible_title_matches_rank_above_alias_and_slug_matches()
+    test_duplicate_series_fixture_retains_manhua_after_novel_filter()
     test_source_and_dto_match_the_safe_contract()
     print("search contract tests: PASS (validated thumbnails, title-like relevance, live false positives, and bounded batch consumption)")
 

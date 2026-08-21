@@ -127,6 +127,52 @@
       ]
     }
   },
+  "ranking_cases": {
+    "query": "dragon",
+    "rows": [
+      {
+        "id": 10,
+        "title": "Dragon Legend",
+        "slug": "dragon-legend",
+        "metadata": {"altTitles": ["Lегенда"]},
+        "type": "manhua"
+      },
+      {
+        "id": 11,
+        "title": "Visible Title Without Query",
+        "slug": "visible-title-without-query",
+        "metadata": {"altTitles": ["Dragon Saga"]},
+        "type": "manhua"
+      },
+      {
+        "id": 12,
+        "title": "Another Dragon Story",
+        "slug": "another-dragon-story",
+        "metadata": {"altTitles": []},
+        "type": "manga"
+      }
+    ],
+    "expected_quality_order": [10, 12, 11]
+  },
+  "duplicate_series_cases": {
+    "rows": [
+      {
+        "id": 659,
+        "title": "I, the Demon Lord, Am Being Targeted by My Female Disciples!",
+        "slug": "i-the-demon-lord-am-being-targeted-by-my-female-disciples",
+        "type": "novel",
+        "metadata": {"volumes": 0}
+      },
+      {
+        "id": 56,
+        "title": "I, the Demon Lord, Am Being Targeted by My Female Disciples!",
+        "slug": "i-the-demon-lord-am-being-targeted-by-my-female-disciples",
+        "type": "manhua",
+        "metadata": {"volumes": 12}
+      }
+    ],
+    "expected_ids_after_novel_filter": [56]
+  },
   "live_batch_cases": {
     "dragon": {
       "request_limit": 50,

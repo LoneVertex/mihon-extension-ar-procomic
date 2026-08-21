@@ -11,8 +11,7 @@
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="Tachiyomi: ProComic"
-        android:allowBackup="false"
-        android:extractNativeLibs="false">
+        android:allowBackup="false">
         <meta-data
             android:name="tachiyomi.extension.class"
             android:value=".ProComic" />

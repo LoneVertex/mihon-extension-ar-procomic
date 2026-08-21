@@ -40,5 +40,25 @@
     "proxy_plan_status": 200,
     "tile_probe_status": 200,
     "tile_content_type": "image/avif"
+  },
+  "chapter_131_tile_decode_contract": {
+    "series_id": 56,
+    "chapter_id": 50318,
+    "publicImageCount": 3,
+    "deferred_media_status": 200,
+    "map_count": 17,
+    "page_indices": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+    "page_4": {
+      "dim": [800, 5000],
+      "mode": "grid_4x2",
+      "piece_count": 8,
+      "rect_count": 8,
+      "tile_statuses": [200, 200, 200, 200, 200, 200, 200, 200],
+      "tile_content_type": "image/avif",
+      "tile_dimensions": [[200, 2500], [200, 2500], [200, 2500], [200, 2500], [200, 2500], [200, 2500], [200, 2500], [200, 2500]],
+      "tile_decode_probe": "pillow_avif_ok"
+    },
+    "all_tile_hosts": ["img1.procomic.pro", "img2.procomic.pro", "img3.procomic.pro", "img4.procomic.pro"],
+    "all_proxy_statuses": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]
   }
 }

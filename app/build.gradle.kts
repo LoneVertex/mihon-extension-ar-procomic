@@ -53,6 +53,14 @@ android {
             manifest.srcFile("src/main/AndroidManifest.xml")
         }
     }
+
+    // Extract bundled AVIF native libraries at install time. This avoids device-specific
+    // direct-from-APK linker failures while preserving all four shipped ABIs.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 dependencies {

@@ -113,6 +113,21 @@ class ProComic : HttpSource(), ConfigurableSource {
     private fun shouldShowPaidChapters(): Boolean =
         sourcePreferences?.getBoolean(PREF_SHOW_PAID_CHAPTERS, true) ?: true
 
+    /** Map only publication-lifecycle values; access visibility is not a lifecycle status. */
+    private fun mapPublicationStatus(progress: String?, lifecycleStatus: String?): Int {
+        return sequenceOf(progress, lifecycleStatus)
+            .mapNotNull { value ->
+                when (value?.trim()?.lowercase()) {
+                    "ongoing", "مستمر" -> SManga.ONGOING
+                    "completed", "complete", "finished", "مكتمل" -> SManga.COMPLETED
+                    "hiatus", "on hiatus", "متوقف مؤقتا", "متوقف مؤقتًا" -> SManga.ON_HIATUS
+                    "dropped", "cancelled", "canceled", "متوقف" -> SManga.CANCELLED
+                    else -> null
+                }
+            }
+            .firstOrNull() ?: SManga.UNKNOWN
+    }
+
     // Mobile Chrome UA is required — plain curl UA gets same response, but this
     // matches what a real Tachiyomi+WebView session would present.
     private val mobileUserAgent =
@@ -704,13 +719,10 @@ class ProComic : HttpSource(), ConfigurableSource {
         genre = this@toLatestSManga.type
             .takeIf { it.isNotBlank() }
             ?.replaceFirstChar { it.uppercase() }
-        status = when (this@toLatestSManga.status?.lowercase()) {
-            "ongoing", "مستمر" -> SManga.ONGOING
-            "completed", "مكتمل" -> SManga.COMPLETED
-            "dropped", "متوقف" -> SManga.CANCELLED
-            "hiatus", "متوقف مؤقتا", "متوقف مؤقتًا" -> SManga.ON_HIATUS
-            else -> SManga.UNKNOWN
-        }
+        status = mapPublicationStatus(
+            progress = null,
+            lifecycleStatus = this@toLatestSManga.status,
+        )
     }
 
     private fun ProComicPopularContent.toPopularSManga(): SManga = SManga.create().apply {
@@ -738,13 +750,10 @@ class ProComic : HttpSource(), ConfigurableSource {
             this@toPopularSManga.metadata?.author,
             this@toPopularSManga.metadata?.artist,
         ).distinct().joinToString(", ").ifBlank { null }
-        status = when (this@toPopularSManga.metadata?.viewStatus?.lowercase()) {
-            "exclusive" -> SManga.ONGOING
-            "completed" -> SManga.COMPLETED
-            "dropped" -> SManga.CANCELLED
-            "hiatus" -> SManga.ON_HIATUS
-            else -> SManga.UNKNOWN
-        }
+        status = mapPublicationStatus(
+            progress = this@toPopularSManga.progress,
+            lifecycleStatus = this@toPopularSManga.status,
+        )
     }
 
     private fun ProComicSeriesDto.toSManga(): SManga = SManga.create().apply {
@@ -781,16 +790,12 @@ class ProComic : HttpSource(), ConfigurableSource {
             this@toSManga.metadata?.artist,
         ).distinct().joinToString(", ").ifBlank { null }
 
-        // Status: the site's 'status' field is 'approved' for all active series.
-        // Real ongoing/completed status is in metadata.viewStatus ('exclusive', 'free', etc.)
-        // Map based on viewStatus until a confirmed mapping is available.
-        status = when (this@toSManga.metadata?.viewStatus?.lowercase()) {
-            "exclusive" -> SManga.ONGOING   // Exclusive = actively being published
-            "completed" -> SManga.COMPLETED
-            "dropped" -> SManga.CANCELLED
-            "hiatus" -> SManga.ON_HIATUS
-            else -> SManga.UNKNOWN
-        }
+        // The top-level progress field carries publication lifecycle; top-level status is
+        // approval/access metadata and is used only as a fallback for known lifecycle values.
+        status = mapPublicationStatus(
+            progress = this@toSManga.progress,
+            lifecycleStatus = this@toSManga.status,
+        )
     }
 
     private fun ProComicNormalizedChapter.toSChapter(mangaUrl: String): SChapter = SChapter.create().apply {

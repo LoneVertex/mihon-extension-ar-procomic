@@ -217,6 +217,10 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert "ImageDecoder" in interceptor
     assert "PreferredColorConfig.RGBA_8888" in interceptor
     assert "MAX_TILE_BYTES" in interceptor
+    assert "MAX_MAP_RESPONSE_BYTES" in interceptor
+    assert "readBoundedBytes(tileResponse, MAX_TILE_BYTES)" in interceptor
+    assert "readBoundedText(response, MAX_MAP_RESPONSE_BYTES)" in interceptor
+    assert "coder.decode(bytes)" in interceptor
     assert "useLegacyPackaging = true" in BUILD.read_text()
     assert "extractNativeLibs" not in MANIFEST.read_text()
     assert "img1.procomic.pro" in utils
@@ -232,6 +236,8 @@ def test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup() -> None
     assert "val avifCoder: HeifCoder? by lazy" in interceptor
     assert "runCatching { HeifCoder() }.getOrNull()" in interceptor
     assert "avifCoder?.let" in interceptor
+    assert "coder.decode(bytes, PreferredColorConfig.RGBA_8888)" in interceptor
+    assert "coder.decode(bytes)" in interceptor
     assert "val avifCoder = HeifCoder()" not in interceptor
 
 

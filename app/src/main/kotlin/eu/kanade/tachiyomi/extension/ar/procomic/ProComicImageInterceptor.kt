@@ -22,6 +22,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 
 /**
  * Reconstructs one protected ProComic Reader page from the site's deferred map contract.
@@ -67,7 +68,7 @@ class ProComicImageInterceptor(
                 throw IOException("ProComic Reader: protected map request failed (${response.code})")
             }
             ProComicUtils.json.decodeFromString<ProComicMapProxyResponse>(
-                response.body?.string() ?: throw IOException("ProComic Reader: protected map body is missing"),
+                readBoundedText(response, MAX_MAP_RESPONSE_BYTES),
             ).data?.map ?: throw IOException("ProComic Reader: protected map response has no map")
         }
     }
@@ -127,11 +128,7 @@ class ProComicImageInterceptor(
                     if (responseBuilder == null) {
                         responseBuilder = tileResponse.newBuilder().request(pageRequest)
                     }
-                    val bytes = tileResponse.body?.bytes()
-                        ?: throw IOException("ProComic Reader: protected tile body is missing")
-                    if (bytes.size > MAX_TILE_BYTES) {
-                        throw IOException("ProComic Reader: protected tile exceeds size bound")
-                    }
+                    val bytes = readBoundedBytes(tileResponse, MAX_TILE_BYTES)
                     val tile = decodeTile(
                         bytes = bytes,
                         pageIndex = pageIndex,
@@ -186,7 +183,21 @@ class ProComicImageInterceptor(
                 ProComicDiag.logStage(
                     "PAGES",
                     96,
-                    "native tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
+                    "native RGBA tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
+                        "bytes=${bytes.size} contentType=${contentType ?: "(absent)"} " +
+                        "errorType=${it.javaClass.simpleName}",
+                )
+            }.getOrNull()?.let { return it }
+
+            // Some device/library combinations reject the explicit RGBA preference even though
+            // the same valid AVIF is decodable through the library's default color configuration.
+            runCatching {
+                coder.decode(bytes)
+            }.onFailure {
+                ProComicDiag.logStage(
+                    "PAGES",
+                    96,
+                    "native default tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
                         "bytes=${bytes.size} contentType=${contentType ?: "(absent)"} " +
                         "errorType=${it.javaClass.simpleName}",
                 )
@@ -230,8 +241,30 @@ class ProComicImageInterceptor(
         }
     }
 
+    private fun readBoundedText(response: Response, maxBytes: Int): String =
+        readBoundedBytes(response, maxBytes).toString(StandardCharsets.UTF_8)
+
+    private fun readBoundedBytes(response: Response, maxBytes: Int): ByteArray {
+        val body = response.body ?: throw IOException("ProComic Reader: response body is missing")
+        if (body.contentLength() > maxBytes) {
+            throw IOException("ProComic Reader: response exceeds $maxBytes bytes")
+        }
+        val source = body.source()
+        val buffer = Buffer()
+        while (buffer.size <= maxBytes) {
+            val remaining = maxBytes.toLong() + 1L - buffer.size
+            val read = source.read(buffer, minOf(remaining, 16_384L))
+            if (read == -1L) break
+            if (buffer.size > maxBytes) {
+                throw IOException("ProComic Reader: response exceeds $maxBytes bytes")
+            }
+        }
+        return buffer.readByteArray()
+    }
+
     private companion object {
         const val READER_BASE_URL = "https://procomic.pro"
+        const val MAX_MAP_RESPONSE_BYTES = 1_000_000
         const val MAX_TILES = 32
         const val MAX_TILE_BYTES = 8_000_000
         const val MAX_COMPOSITE_PIXELS = 40_000_000L

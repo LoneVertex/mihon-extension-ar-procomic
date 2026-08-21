@@ -27,6 +27,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Install test dependencies
+        run: python3 -m pip install --disable-pip-version-check --no-input -r requirements-test.txt
+
       - name: Run deterministic contract tests
         run: |
           for test in $(find testdata -type f -name 'test_*.py' | sort); do

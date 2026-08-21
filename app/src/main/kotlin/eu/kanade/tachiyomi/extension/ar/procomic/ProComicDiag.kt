@@ -5,10 +5,10 @@ import okhttp3.Response
 import java.security.MessageDigest
 
 /**
- * INSTRUMENTATION-ONLY — remove before publishing to keiyoushi repo.
+ * Production-safe runtime diagnostic helper for the ProComic parse pipeline.
  *
- * Runtime diagnostic helper for the ProComic parse pipeline. Diagnostics are deliberately
- * metadata-only: request/response header values and raw response bodies are never logged.
+ * Diagnostics are deliberately metadata-only: request/response header values and raw response
+ * bodies are never logged. Keep this redaction boundary intact when adding diagnostics.
  */
 object ProComicDiag {
 

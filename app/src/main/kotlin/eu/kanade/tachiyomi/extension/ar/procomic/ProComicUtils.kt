@@ -10,7 +10,9 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 
 /**
- * RSC (React Server Components) wire-format parser for procomic.pro.
+ * RSC (React Server Components) wire-format parser for the canonical procomic.net site.
+ * The Reader retains evidence-derived procomic.pro media endpoints where the live contract
+ * requires them.
  *
  * Architecture confirmed by Stage 3C+5 live recon (2026-07-26/27):
  *

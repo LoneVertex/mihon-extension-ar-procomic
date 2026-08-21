@@ -32,7 +32,8 @@ import java.net.URLEncoder
  *
  * Architecture: HttpSource with mixed RSC (React Server Components) and public JSON API
  *   contracts. Search, Chapters, Popular, and Latest use verified public JSON endpoints; Details
- *   uses canonical RSC; Reader uses raw HTML with an embedded page-image manifest.
+ *   uses canonical RSC; Reader uses raw chapter responses plus deferred-media/protected-map
+ *   contracts and reconstructs protected tiles through the image interceptor.
  *   RSC requests use the RSC: 1 header and ?_rsc= query parameter and return text/x-component
  *   data containing embedded JSON fragments. No browser-only DOM scraping is used by the parser.
  *
@@ -128,20 +129,20 @@ class ProComic : HttpSource(), ConfigurableSource {
             .firstOrNull() ?: SManga.UNKNOWN
     }
 
-    // Mobile Chrome UA is required — plain curl UA gets same response, but this
-    // matches what a real Tachiyomi+WebView session would present.
+    // Mobile Chrome UA is required by the current public site contract; plain curl also works,
+    // but this matches the client profile used by Mihon requests.
     private val mobileUserAgent =
         "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 " +
         "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 
     /**
-     * Base headers for ALL requests — including WebView navigation.
-     * RSC-specific headers are intentionally excluded here so that WebView
-     * receives a normal text/html response instead of the RSC wire format.
+     * Base headers for normal HTML, JSON, and image requests.
+     * RSC-specific headers are intentionally excluded here so ordinary requests receive
+     * the normal site representation instead of the RSC wire format.
      *
      * EVIDENCE (Probe P05, 2026-08-01): Without RSC:1, server returns
      * text/html (282651B). With RSC:1, server returns text/x-component (169177B).
-     * User screenshot confirmed WebView displayed raw RSC: '1:"$Sreact.fragment"'.
+     * The site returns the RSC wire format only when the RSC request headers are present.
      */
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", mobileUserAgent)
@@ -149,7 +150,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         .add("Referer", baseUrl)
 
     /**
-     * Headers for RSC data requests ONLY — never used for WebView navigation.
+     * Headers for RSC data requests only; normal page and image requests use [headersBuilder].
      *
      * RSC:1 is the sole required header to trigger text/x-component responses.
      * Next-Router-State-Tree is included for spec conformance but confirmed

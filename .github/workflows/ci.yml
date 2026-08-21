@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master, 'fix/**']
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build & Validate APK
@@ -23,6 +26,13 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+
+      - name: Run deterministic contract tests
+        run: |
+          for test in $(find testdata -type f -name 'test_*.py' | sort); do
+            python3 "$test" || exit 1
+          done
+          git diff --check
 
       - name: Build Debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace

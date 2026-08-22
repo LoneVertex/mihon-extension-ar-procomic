@@ -7,8 +7,7 @@ import android.graphics.ImageDecoder
 import android.graphics.Paint
 import android.graphics.Rect
 import android.os.Build
-import com.radzivon.bartoshyk.avif.coder.HeifCoder
-import com.radzivon.bartoshyk.avif.coder.PreferredColorConfig
+import org.aomedia.avif.android.AvifDecoder
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -183,36 +182,23 @@ class ProComicImageInterceptor(
             }.getOrNull()?.let { return it }
         }
 
-        avifCoder?.let { coder ->
-            runCatching {
-                coder.decode(bytes, PreferredColorConfig.RGBA_8888)
-            }.onFailure {
+        runCatching { decodeWithAomedia(bytes) }
+            .onFailure {
                 ProComicDiag.logStage(
                     "PAGES",
                     96,
-                    "native RGBA tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
+                    "AOMedia AVIF tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
                         "bytes=${bytes.size} contentType=${contentType ?: "(absent)"} " +
                         "errorType=${it.javaClass.simpleName}",
                 )
-            }.getOrNull()?.let { return it }
+            }
+            .getOrNull()
+            ?.let { return it }
 
-            // Some device/library combinations reject the explicit RGBA preference even though
-            // the same valid AVIF is decodable through the library's default color configuration.
-            runCatching {
-                coder.decode(bytes)
-            }.onFailure {
-                ProComicDiag.logStage(
-                    "PAGES",
-                    96,
-                    "native default tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
-                        "bytes=${bytes.size} contentType=${contentType ?: "(absent)"} " +
-                        "errorType=${it.javaClass.simpleName}",
-                )
-            }.getOrNull()?.let { return it }
-        } ?: ProComicDiag.logStage(
+        ProComicDiag.logStage(
             "PAGES",
             96,
-            "native AVIF decoder unavailable page=$pageIndex tile=$outputIndex source=$sourceIndex " +
+            "AOMedia AVIF decoder returned no bitmap page=$pageIndex tile=$outputIndex source=$sourceIndex " +
                 "bytes=${bytes.size} contentType=${contentType ?: "(absent)"}",
         )
 
@@ -223,6 +209,27 @@ class ProComicImageInterceptor(
                 "bytes=${bytes.size} contentType=${contentType ?: "(absent)"}",
         )
         throw IOException("ProComic Reader: protected tile could not be decoded")
+    }
+
+    private fun decodeWithAomedia(bytes: ByteArray): Bitmap? {
+        if (bytes.isEmpty()) return null
+        val source = ByteBuffer.allocateDirect(bytes.size)
+        source.put(bytes)
+        source.flip()
+        val info = AvifDecoder.Info()
+        if (!AvifDecoder.getInfo(source, bytes.size, info)) return null
+        val width = info.width
+        val height = info.height
+        if (width <= 0 || height <= 0 || width.toLong() * height.toLong() > MAX_TILE_PIXELS) return null
+        val config = if (info.depth > 8) Bitmap.Config.RGBA_F16 else Bitmap.Config.ARGB_8888
+        val bitmap = Bitmap.createBitmap(width, height, config)
+        source.rewind()
+        return if (AvifDecoder.decode(source, bytes.size, bitmap)) {
+            bitmap
+        } else {
+            bitmap.recycle()
+            null
+        }
     }
 
     private fun logUnexpectedTileMetadata(
@@ -305,23 +312,10 @@ class ProComicImageInterceptor(
         const val MAX_MAP_RESPONSE_BYTES = 1_000_000
         const val MAX_TILES = 32
         const val MAX_TILE_BYTES = 8_000_000
+        const val MAX_TILE_PIXELS = 8_000_000L
         const val MAX_COMPOSITE_PIXELS = 40_000_000L
         const val JPEG_QUALITY = 95
         val JSON_MEDIA_TYPE = "application/json".toMediaType()
         val JPEG_MEDIA_TYPE = "image/jpeg".toMediaType()
-        // Do not initialize HeifCoder while Mihon is discovering/trusting the extension. Its
-        // companion initializer calls System.loadLibrary("coder"), which can fail on an ABI or
-        // packaging mismatch and make Mihon remove the extension immediately after trust.
-        val avifCoder: HeifCoder? by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-            runCatching { HeifCoder() }
-                .onFailure {
-                    ProComicDiag.logStage(
-                        "PAGES",
-                        96,
-                        "native AVIF decoder initialization failed errorType=${it.javaClass.simpleName}",
-                    )
-                }
-                .getOrNull()
-        }
     }
 }

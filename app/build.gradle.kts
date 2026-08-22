@@ -17,15 +17,16 @@ kotlin {
 }
 
 android {
-    // avif-coder 2.2.1 declares minCompileSdk 36; target remains 35 to preserve runtime behavior.
-    compileSdk = 36
+    // The AOMedia AVIF decoder supports the protected tile formats on the existing runtime floor.
+    compileSdk = 35
     namespace = "eu.kanade.tachiyomi.extension.ar.procomic"
 
     defaultConfig {
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1"
+        // Incremented so Mihon/Android cannot retain the previously installed failing APK.
+        versionCode = 3
+        versionName = "1.2"
 
         applicationId = "eu.kanade.tachiyomi.extension.ar.procomic"
 
@@ -84,8 +85,7 @@ dependencies {
     // 1.23.1 includes the published security fix for malformed raw-text element handling.
     compileOnly("org.jsoup:jsoup:1.23.1")
 
-    // Bundled native AVIF decoder for protected Reader tiles; Android BitmapFactory is not
-    // available for AVIF on every supported minSdk device. The old JitPack 2.1.3 publication is
-    // obsolete; use the stable Maven Central publication with the same API and four ABIs.
-    implementation("io.github.awxkee:avif-coder:2.2.1")
+    // Official AOMedia AVIF decoder for protected Reader tiles. It explicitly supports still AVIF
+    // across 8/10/12-bit and YUV 420/422/444/monochrome variants and ships all four ABIs.
+    implementation("org.aomedia.avif.android:avif:1.3.0.841110fd")
 }

@@ -18,7 +18,7 @@
 
 This document is the current engineering reference for the Arabic ProComic Mihon extension. It describes the implementation present at the current branch HEAD. Deep probes, raw captures, and investigation history remain retained audit artifacts; they are evidence, not alternate implementation instructions.
 
-The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The Android build uses compileSdk 36, targetSdk 35, min SDK 26, and stable Maven Central `io.github.awxkee:avif-coder:2.2.1` for the final native AVIF fallback. The universal native decoder is the reason the release APK is approximately 22.83 MB rather than the kilobyte scale of pure-Kotlin extensions.
+The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=3` and `versionName=1.2`. The Android build uses compileSdk 35, targetSdk 35, min SDK 26, and the official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd` decoder for protected AVIF tiles. The compact universal native decoder is the reason the release APK is approximately 2.09 MB rather than pure-Kotlin size.
 
 ## System Architecture
 
@@ -29,7 +29,7 @@ The extension uses normal OkHttp requests with a bounded RSC boundary parser for
 | `ProComic.kt` | Mihon source lifecycle, requests, parsing, lifecycle-status mappers, preference filtering, Search batching, Reader page-list assembly, and image requests | `HttpSource` plus `ConfigurableSource` |
 | `ProComicDto.kt` | JSON DTOs and gate/media metadata models | Kotlin serialization DTOs with optional server fields |
 | `ProComicUtils.kt` | RSC/JSON boundary extraction, Reader manifest extraction, chapter normalization, gate classification, protected-page payload parsing, and page-image parsing | Bounded string-aware scans with sibling `deferredMedia` support |
-| `ProComicImageInterceptor.kt` | Protected-page proxy-plan retrieval, tile downloading, decoding, geometry validation, reconstruction, and JPEG response synthesis | OkHttp interceptor with bounded tile/composite resources and lazy native fallback |
+| `ProComicImageInterceptor.kt` | Protected-page proxy-plan retrieval, tile downloading, decoding, geometry validation, reconstruction, and JPEG response synthesis | OkHttp interceptor with bounded tile/composite resources and platform/AOMedia decoder fallback |
 | `ProComicDiag.kt` | Safe runtime diagnostics | Metadata-only logging with redacted URLs and no raw body/header values |
 | `testdata/` | Deterministic contract fixtures and regression tests | Python suites; CI installs pinned `Pillow==12.3.0` for the icon contract |
 
@@ -97,9 +97,9 @@ The decoder chain is:
 
 1. `BitmapFactory.decodeByteArray`;
 2. Android `ImageDecoder` with software allocation on API 28 and later; and
-3. lazily initialized `HeifCoder`, first requesting `PreferredColorConfig.RGBA_8888` and then retrying with the library’s default color configuration when the explicit preference fails.
+3. the official AOMedia `AvifDecoder` through a direct bounded `ByteBuffer`, after validating AVIF metadata and decoded dimensions. Eight-bit tiles use `ARGB_8888`; deeper tiles use `RGBA_F16`.
 
-The chapter-131 hardening added the `ImageDecoder` fallback, explicit RGBA output, an eight-million-byte per-tile bound, a one-million-byte protected-map response bound, a 32-tile bound, and a 40-million-pixel composite bound. `HeifCoder` is initialized lazily because eager `System.loadLibrary("coder")` during Mihon extension discovery can cause the extension to disappear during trust transitions when native packaging or ABI loading is not yet ready.
+The generic hardening adds an eight-million-byte per-tile bound, an eight-million-pixel per-tile bound, a one-million-byte protected-map response bound, a 32-tile bound, and a 40-million-pixel composite bound. The AOMedia call is contained in a failure boundary and emits only redacted stage metadata, so native loading or decode errors cannot make extension discovery fail.
 
 The Gradle packaging block sets `useLegacyPackaging=true`, extracting bundled native libraries at install time across the shipped ABIs. The manifest does not use the removed `extractNativeLibs` attribute. Audited page and tile requests remain restricted to evidence-derived HTTPS hosts and paths; arbitrary image-host allowlists are not used.
 
@@ -107,11 +107,11 @@ The Gradle packaging block sets `useLegacyPackaging=true`, extracting bundled na
 
 The launcher icon is the official ProComic website favicon, sourced from `https://procomic.net/favicon.svg` and rasterized into the required Android density resources. The deterministic icon contract verifies the provenance, launcher reference, resource set, and density hashes.
 
-The module uses compileSdk 36, targetSdk 35, min SDK 26, `versionCode=2`, and `versionName=1.1`. The AVIF native dependency is `io.github.awxkee:avif-coder:2.2.1`, and compile-only Jsoup is `org.jsoup:jsoup:1.23.1`; native libraries are packaged with `useLegacyPackaging=true`. The AVIF dependency’s declared compile requirement is why only compileSdk was raised.
+The module uses compileSdk 35, targetSdk 35, min SDK 26, `versionCode=3`, and `versionName=1.2`. The AVIF native dependency is `org.aomedia.avif.android:avif:1.3.0.841110fd`, and compile-only Jsoup is `org.jsoup:jsoup:1.23.1`; native libraries are packaged with `useLegacyPackaging=true`. The AOMedia artifact ships one 16KB-aligned `libavif_android.so` per supported ABI and has no additional native NEEDED libraries.
 
 ## Validation Strategy
 
-The deterministic gate runs every `testdata/test_*.py` suite and `git diff --check`. The current suite inventory is 12 suites:
+The deterministic gate runs every `testdata/test_*.py` suite and `git diff --check`. The current Reader fixture set includes exact series 387 / chapter 19273, covering two protected maps, nine valid YUV444 AVIF tiles, and the AOMedia fallback path. The current suite inventory is 12 suites:
 
 | Suite | Coverage |
 |---|---|

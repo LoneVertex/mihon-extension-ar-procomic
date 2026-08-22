@@ -82,12 +82,12 @@ The corrected runs execute the pinned Pillow install, all 12 deterministic suite
 
 ## APK Identity
 
-The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The build uses compileSdk 36, targetSdk 35, min SDK 26, stable `io.github.awxkee:avif-coder:2.2.1`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 36 because the decoder AAR declares `minCompileSdk=36`. The universal native decoder payload is the primary reason the APK is much larger than pure-Kotlin extensions.
+The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=3` and `versionName=1.2`. The build uses compileSdk 35, targetSdk 35, min SDK 26, official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 35. The compact universal native decoder payload is the primary reason the APK remains larger than a pure-Kotlin extension.
 
 | Variant | Current local APK | Package | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
-| Debug | `app/build/outputs/apk/debug/app-debug.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 25,631,098 bytes | `2427a1a1c516b8fb2b067fbb16a9a4e26d5fc972ad6a201061c199d915cb5d8e` |
-| Release | `app/build/outputs/apk/release/app-release.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 22,830,495 bytes | `c559559cdda1d1aa200349ff32c63862f67787fd419724a15aa4a6e98af15b66` |
+| Debug | `app/build/outputs/apk/debug/app-debug.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=3`, `versionName=1.2` | 2,262,682 bytes | `1aa6f094686301c9ce19c9e53b26dabd89d63d5a78cbcc153677d4d58f8d7121` |
+| Release | `app/build/outputs/apk/release/app-release.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=3`, `versionName=1.2` | 2,088,095 bytes | `3b686227464774ff29cbf56234566d4e8e5c218c698d06c1154b9ee5691d3b63` |
 
 The standard local output paths are `app/build/outputs/apk/debug/app-debug.apk` and `app/build/outputs/apk/release/app-release.apk`. The CI artifact copies and checksum file are retained in the external synchronization evidence bundle, not committed into this source repository. The debug hash was stable across the repeated clean gate; the release hash varied between two clean local builds while size and metadata remained identical, so the latest local hash above is evidence for that exact build only, not a reproducibility certificate.
 
@@ -103,14 +103,14 @@ The current deterministic fixtures cover the final reported failure sequence:
 | Search ranking was weak | Visible-title matches rank above original-title/alias and slug-only matches |
 | Novel/manhua duplicate rows appeared | Stable search identity collapse removes duplicates |
 | Reader stopped at three public pages | Sibling `deferredMedia` retrieval and protected-page placeholders extend the page list through the site’s own media contracts |
-| Chapter 131 protected tiles failed | `ImageDecoder` fallback, explicit RGBA output, default-color native fallback, bounded map/tile reads, and protected-map geometry checks |
-| Exact series 109 / chapter 5650 protected tiles failed on Android 16 arm64 | Stable AVIF Coder 2.2.1 replaces the obsolete JitPack 2.1.3 artifact; native initialization and tile metadata/signature stages now emit redacted diagnostics; exact fixture proves 3 maps and 17 valid AVIF tiles |
+| Chapter 131 protected tiles failed | `ImageDecoder` fallback, bounded map/tile reads, protected-map geometry checks, and the official AOMedia AVIF fallback |
+| Exact series 387 / chapter 19273 protected tiles failed on Android 16 arm64 | Official AOMedia 1.3.0.841110fd replaces the awxkee decoder path; the generic fallback validates AVIF metadata, supports YUV444 tiles, selects a safe bitmap configuration, bounds tile pixels, and emits redacted decode-stage diagnostics; exact fixture proves 2 maps and 9 valid AVIF tiles |
 | Jsoup security advisory affecting the previous compile-only version | `org.jsoup:jsoup` is pinned to 1.23.1, the advisory’s fixed version; it is compile-only and is not bundled into the APK |
 | Trusting the extension caused it to disappear | Native AVIF decoder initialization is lazy; native libraries use `useLegacyPackaging=true` |
 | Extension icon was incorrect | Official `procomic.net/favicon.svg` is rasterized across the Android density resources |
 | Shared response reads could fail at EOF | Bounded at-most body reads distinguish truncated/empty/oversize responses |
 
-Reported manual Android testing informed these fixes. Live public probing confirmed the exact series-109/chapter-5650 deferred-media/proxy-plan route returns three protected maps and 17 valid AVIF tiles, while the sandbox has no connected Android device or emulator. The software remediation and APK build are verified, but direct Mihon rendering on the user’s Android 16 arm64 device remains **NOT VERIFIED** until the new APK is installed and tested. The repository does not claim that every Android version, device, authenticated session, premium chapter, or server-side access state has been exhaustively tested.
+Reported manual Android testing informed these fixes. Live public probing confirmed the exact series-387/chapter-19273 deferred-media/proxy-plan route returns two protected maps and nine valid AVIF tiles with YUV444 characteristics, while the sandbox has no connected Android device or emulator. The software remediation and APK build are verified, but direct Mihon rendering on the user’s Android 16 arm64 device remains **NOT VERIFIED** until version 1.2 is installed and tested. The repository does not claim that every Android version, device, authenticated session, premium chapter, or server-side access state has been exhaustively tested.
 
 ## Runtime and Security Boundaries
 

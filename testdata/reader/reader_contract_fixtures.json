@@ -81,5 +81,35 @@
     "tile_host_counts": {"img1.procomic.pro": 5, "img2.procomic.pro": 4, "img3.procomic.pro": 4, "img4.procomic.pro": 4},
     "maps_failed": 0,
     "tiles_failed": 0
+  },
+  "exact_chapter_5_tile_decode_contract": {
+    "title": "After Confessing My Love to the Beautiful Sect Leader, I Become Invincible?",
+    "series_id": 387,
+    "chapter_id": 19273,
+    "chapter_label": "5",
+    "language": "AR",
+    "deferred_media_status": 200,
+    "public_image_count": 2,
+    "map_count": 2,
+    "page_indices": [3, 4],
+    "maps": [
+      {"dim": [768, 8000], "mode": "vertical_5", "piece_count": 5, "rect_count": 5, "tile_dimensions": [[154, 8000], [154, 8000], [154, 8000], [153, 8000], [153, 8000]]},
+      {"dim": [768, 362], "mode": "grid_2x2", "piece_count": 4, "rect_count": 4, "tile_dimensions": [[384, 181], [384, 181], [384, 181], [384, 181]]}
+    ],
+    "total_tile_count": 9,
+    "tile_status": 200,
+    "tile_content_type": "image/avif",
+    "tile_body_signature": "avif/isobmff",
+    "tile_decode_probe": "pillow_avif_ok",
+    "tile_codec": "av1",
+    "tile_pixel_format": "yuv444p",
+    "tile_color_primaries": "bt709",
+    "tile_color_range": "pc",
+    "tile_transfer": "iec61966-2-1",
+    "tile_hosts": ["img1.procomic.pro", "img2.procomic.pro", "img3.procomic.pro", "img4.procomic.pro"],
+    "tile_bytes_range": [302, 54158],
+    "aomedia_decoder_required": true,
+    "maps_failed": 0,
+    "tiles_failed": 0
   }
 }

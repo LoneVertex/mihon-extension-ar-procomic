@@ -37,21 +37,21 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 | Item | Value |
 |---|---|
 | Package | `eu.kanade.tachiyomi.extension.ar.procomic` |
-| `versionCode` / `versionName` | `2` / `1.1` |
-| Compile/target SDK | `36` / `35` |
+| `versionCode` / `versionName` | `3` / `1.2` |
+| Compile/target SDK | `35` / `35` |
 | Minimum SDK | `26` |
-| AVIF dependency | `io.github.awxkee:avif-coder:2.2.1` |
+| AVIF dependency | `org.aomedia.avif.android:avif:1.3.0.841110fd` |
 | Jsoup compile-only dependency | `org.jsoup:jsoup:1.23.1` |
 | Native packaging | `useLegacyPackaging=true` |
-| Release local APK | `app/build/outputs/apk/release/app-release.apk`, 22,830,495 bytes |
-| Release local SHA-256 | `c559559cdda1d1aa200349ff32c63862f67787fd419724a15aa4a6e98af15b66` |
-| Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, 25,631,098 bytes |
-| Debug local SHA-256 | `2427a1a1c516b8fb2b067fbb16a9a4e26d5fc972ad6a201061c199d915cb5d8e` |
-| Size rationale | Universal `avif-coder` native libraries across four ABIs; no ABI split applied without Mihon distribution evidence |
+| Release local APK | `app/build/outputs/apk/release/app-release.apk`, 2,088,095 bytes |
+| Release local SHA-256 | `3b686227464774ff29cbf56234566d4e8e5c218c698d06c1154b9ee5691d3b63` |
+| Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, 2,262,682 bytes |
+| Debug local SHA-256 | `1aa6f094686301c9ce19c9e53b26dabd89d63d5a78cbcc153677d4d58f8d7121` |
+| Size rationale | Official AOMedia AVIF native library across four ABIs; no ABI split applied without Mihon distribution evidence |
 | Reproducibility note | Debug hash was stable across repeated clean builds; release hash varied while size/metadata remained identical, so the recorded release hash identifies this exact local artifact only |
 | Release signing | Debug keystore for sideload/testing; production publication requires maintainer-owned signing credentials |
 
-The current workflow explicitly installs Android API 36 before building because the stable AVIF decoder declares `minCompileSdk=36`. The first suite-enabled workflow runs failed because the GitHub runner lacked Pillow: [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) and [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639). After adding pinned `Pillow==12.3.0` in `requirements-test.txt`, corrected push/PR runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed. The workflow also sets `permissions: contents: read`. Source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) and earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current artifact copies and checksum file are retained in the external synchronization evidence bundle.
+The current workflow explicitly installs Android API 35 before building because the final extension compileSdk is 35. The first suite-enabled workflow runs failed because the GitHub runner lacked Pillow: [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) and [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639). After adding pinned `Pillow==12.3.0` in `requirements-test.txt`, corrected push/PR runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed. The workflow also sets `permissions: contents: read`. Source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) and earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current artifact copies and checksum file are retained in the external synchronization evidence bundle. The new APK version is intentionally 3/1.2 so Mihon and Android cannot retain the previously installed failing version.
 
 ## Completed Implementation Fixes
 
@@ -65,11 +65,11 @@ The current branch includes the following completed and tested work:
 6. Reader parsing extracts live sibling `deferredMedia` with a nested legacy fallback.
 7. Reader assembly combines public images, direct deferred images, and protected-page placeholders through the site’s own deferred-media contract.
 8. Protected pages request a fresh proxy plan, validate geometry and bounds, download signed tiles, reconstruct a page, and return a JPEG response to Mihon.
-9. Chapter-131 tile decoding has an `ImageDecoder` fallback, explicit `PreferredColorConfig.RGBA_8888`, and a per-tile byte bound in addition to tile/composite bounds.
-10. AVIF native loading is lazy to avoid extension disappearance during Mihon trust/discovery transitions.
+9. Chapter-131 and generic protected-tile decoding use platform fallbacks plus the official AOMedia AVIF decoder through a direct bounded buffer; 8-bit tiles use ARGB_8888 and deeper tiles use RGBA_F16.
+10. AOMedia native loading and decoding failures are contained and emitted only as redacted stage metadata, so extension discovery remains nonfatal.
 11. Gradle uses `useLegacyPackaging=true` for install-time native-library extraction.
 12. Lifecycle status maps top-level `progress` values such as `مستمر` and `مكتمل`; approval/access values are not used as publication status.
-13. Protected map responses and tile bodies use explicit byte bounds; the native decoder retries with its default color configuration after an explicit RGBA failure.
+13. Protected map responses and tile bodies use explicit byte bounds; the AOMedia decoder validates tile metadata and dimensions before allocating a bounded bitmap.
 14. CI action versions were updated to `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; workflow permissions are limited to `contents: read`; deterministic suites run after installing pinned `Pillow==12.3.0`; corrected post-remediation CI runs passed.
 
 No authentication, login, session/cookie bypass, payment bypass, WebView, browser automation, or fabricated premium page behavior was added.

@@ -181,6 +181,41 @@ def test_exact_chapter_1_contract_has_valid_protected_tiles() -> None:
     assert case["maps_failed"] == case["tiles_failed"] == 0
 
 
+def test_exact_chapter_5_contract_covers_yuv444_and_all_protected_tiles() -> None:
+    case = load()["exact_chapter_5_tile_decode_contract"]
+    assert case["series_id"] == 387
+    assert case["chapter_id"] == 19273
+    assert case["chapter_label"] == "5"
+    assert case["language"] == "AR"
+    assert case["deferred_media_status"] == 200
+    assert case["public_image_count"] == 2
+    assert case["map_count"] == 2
+    assert case["page_indices"] == [3, 4]
+    assert [item["dim"] for item in case["maps"]] == [[768, 8000], [768, 362]]
+    assert [item["mode"] for item in case["maps"]] == ["vertical_5", "grid_2x2"]
+    assert [item["piece_count"] for item in case["maps"]] == [5, 4]
+    assert [item["piece_count"] for item in case["maps"]] == [item["rect_count"] for item in case["maps"]]
+    assert case["total_tile_count"] == 9
+    assert case["tile_status"] == 200
+    assert case["tile_content_type"] == "image/avif"
+    assert case["tile_body_signature"] == "avif/isobmff"
+    assert case["tile_decode_probe"] == "pillow_avif_ok"
+    assert case["tile_codec"] == "av1"
+    assert case["tile_pixel_format"] == "yuv444p"
+    assert case["tile_color_primaries"] == "bt709"
+    assert case["tile_color_range"] == "pc"
+    assert case["tile_transfer"] == "iec61966-2-1"
+    assert set(case["tile_hosts"]) == {
+        "img1.procomic.pro",
+        "img2.procomic.pro",
+        "img3.procomic.pro",
+        "img4.procomic.pro",
+    }
+    assert case["tile_bytes_range"] == [302, 54158]
+    assert case["aomedia_decoder_required"] is True
+    assert case["maps_failed"] == case["tiles_failed"] == 0
+
+
 def test_deferred_media_contract_recovers_all_protected_pages() -> None:
     case = load()["deferred_media_contract"]
     assert case["publicImageCount"] == 3
@@ -242,24 +277,28 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert "Bitmap.createBitmap" in interceptor
     assert "Canvas" in interceptor
     assert "ImageDecoder" in interceptor
-    assert "PreferredColorConfig.RGBA_8888" in interceptor
+    assert "AvifDecoder" in interceptor
+    assert "decodeWithAomedia" in interceptor
+    assert "MAX_TILE_PIXELS" in interceptor
     assert "MAX_TILE_BYTES" in interceptor
     assert "MAX_MAP_RESPONSE_BYTES" in interceptor
     assert "readBoundedBytes(tileResponse, MAX_TILE_BYTES)" in interceptor
     assert "readBoundedText(response, MAX_MAP_RESPONSE_BYTES)" in interceptor
-    assert "coder.decode(bytes)" in interceptor
+    assert "AvifDecoder.decode(source, bytes.size, bitmap)" in interceptor
     assert "logUnexpectedTileMetadata" in interceptor
     assert "protected tile body signature invalid" in interceptor
-    assert "native AVIF decoder initialization failed" in interceptor
+    assert "AOMedia AVIF decoder returned no bitmap" in interceptor
     build = BUILD.read_text()
     ci = CI.read_text()
-    assert "io.github.awxkee:avif-coder:2.2.1" in build
-    assert "com.github.awxkee:avif-coder:2.1.3" not in build
+    assert "org.aomedia.avif.android:avif:1.3.0.841110fd" in build
+    assert "avif-coder" not in build
     assert 'compileOnly("org.jsoup:jsoup:1.23.1")' in build
     assert 'compileOnly("org.jsoup:jsoup:1.16.2")' not in build
-    assert "compileSdk = 36" in build
+    assert "compileSdk = 35" in build
     assert "targetSdk = 35" in build
-    assert 'sdkmanager" "platforms;android-36"' in ci
+    assert "versionCode = 3" in build
+    assert 'versionName = "1.2"' in build
+    assert 'sdkmanager" "platforms;android-35"' in ci
     assert "useLegacyPackaging = true" in build
     assert "extractNativeLibs" not in MANIFEST.read_text()
     assert "img1.procomic.pro" in utils
@@ -270,15 +309,15 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert "chapter-map-session-key" not in procomic
 
 
-def test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup() -> None:
+def test_aomedia_avif_decoder_is_bounded_and_nonfatal_at_extension_startup() -> None:
     interceptor = (PROCOMIC.parent / "ProComicImageInterceptor.kt").read_text()
-    assert "val avifCoder: HeifCoder? by lazy" in interceptor
-    assert "runCatching { HeifCoder() }" in interceptor
-    assert "native AVIF decoder initialization failed" in interceptor
-    assert "avifCoder?.let" in interceptor
-    assert "coder.decode(bytes, PreferredColorConfig.RGBA_8888)" in interceptor
-    assert "coder.decode(bytes)" in interceptor
-    assert "val avifCoder = HeifCoder()" not in interceptor
+    assert "runCatching { decodeWithAomedia(bytes) }" in interceptor
+    assert "AvifDecoder.getInfo" in interceptor
+    assert "AvifDecoder.decode" in interceptor
+    assert "ByteBuffer.allocateDirect" in interceptor
+    assert "MAX_TILE_PIXELS" in interceptor
+    assert "AOMedia AVIF tile decode failed" in interceptor
+    assert "AOMedia AVIF decoder returned no bitmap" in interceptor
 
 
 def test_premium_response_is_distinguished_from_missing_manifest() -> None:
@@ -322,13 +361,14 @@ def main() -> None:
     test_legacy_nested_deferred_media_remains_supported_and_malformed_sibling_is_rejected()
     test_chapter_131_page_4_tiles_are_valid_avif_and_geometry_is_complete()
     test_exact_chapter_1_contract_has_valid_protected_tiles()
+    test_exact_chapter_5_contract_covers_yuv444_and_all_protected_tiles()
     test_deferred_media_contract_recovers_all_protected_pages()
     test_source_uses_deferred_media_and_protected_tile_reconstruction()
-    test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup()
+    test_aomedia_avif_decoder_is_bounded_and_nonfatal_at_extension_startup()
     test_premium_response_is_distinguished_from_missing_manifest()
     test_safe_browsing_response_is_distinguished_from_missing_manifest()
     test_source_preserves_reader_bounds_and_explicit_access_diagnostic()
-    print("reader contract tests: PASS (public/deferred pages, protected-map geometry, lazy AVIF startup, escaped RSC boundaries, access states, bounds)")
+    print("reader contract tests: PASS (public/deferred pages, protected-map geometry, bounded AOMedia AVIF fallback, escaped RSC boundaries, access states, bounds)")
 
 
 if __name__ == "__main__":

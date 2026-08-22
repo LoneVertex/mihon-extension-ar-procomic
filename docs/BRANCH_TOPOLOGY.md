@@ -1,4 +1,4 @@
-# ProComic Branch and Commit Topology
+# ProComic Branch and Review Topology
 
 **Status:** CURRENT
 
@@ -8,17 +8,17 @@
 
 **Authoritative remote implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
 
+**Current implementation branch HEAD:** [`89a2859e261c1e48dbc2ddd36a410d8b90fade76`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/89a2859e261c1e48dbc2ddd36a410d8b90fade76)
+
+**Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
+
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Latest audit-remediation HEAD:** [`f3f4290d13f1bf204b0278e25a01235a77ba0087`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087)
-
-The documentation synchronization, CI action remediation, comment cleanup, and test-dependency follow-up are focused commits after the implementation baseline. The 26-commit count below refers only to the original implementation/review stack; the current audit-remediation commits `0bda7ea` and `f3f4290` are follow-ups after that stack.
-
-**Local checkout note:** The verified local checkout uses branch `procomic-ready-to-test`, which tracks `origin/fix/runtime-eof-search-feeds`. Documentation pushes use an explicit `HEAD:fix/runtime-eof-search-feeds` refspec.
+**Local checkout:** The verified local checkout uses branch `procomic-ready-to-test`, which tracks `origin/fix/runtime-eof-search-feeds`. Pushes use an explicit `HEAD:fix/runtime-eof-search-feeds` refspec.
 
 **Default branch baseline:** `main` remains unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73`.
 
-## Current Topology
+## Current topology
 
 ```text
 main  76c8ed49ee81d066d30cebe6e412040db2d43a73
@@ -38,6 +38,7 @@ main  76c8ed49ee81d066d30cebe6e412040db2d43a73
   | 1ce41bb  docs: finalize repository hygiene and release documentation
   |                         ← fix/full-remediation / PR #10 → main
   | 3888b28  fix(runtime): prevent EOF on search and feed responses
+  | 85aad15  fix(feeds): preserve Popular cover image URLs
   | 3438b0e  fix(search): harden thumbnail fallback and chapter pagination lifecycle
   | 88500ea  ci: validate focused fix branches
   | 477dc12  ci: publish debug and release APKs
@@ -49,66 +50,81 @@ main  76c8ed49ee81d066d30cebe6e412040db2d43a73
   | 5145460  fix: defer AVIF native loading until protected tile decoding
   | 6bbdc05  fix: sibling deferred media parsing and stale genre filter
   | 8f88ec9  fix: harden protected tile decoding and rank Search results
-  | 1285213d  ci: modernize action versions and synchronize audit documentation
-  | affbcf3   fix(procomic): map lifecycle status and harden protected tile decoding
-  | 0bda7ea   ci: run contract tests with least-privilege workflow
-  | f3f4290   ci: install pinned icon test dependency
+  | ceafa8f  docs: synchronize documentation to current implementation state
+  | 1285213d  ci: update GitHub Actions to supported runtimes
+  | 30824a0  docs: record repository audit and CI remediation
+  | affbcf3  fix(procomic): map lifecycle status and harden protected tile decoding
+  | e64cee1  docs: synchronize status, reader, and APK evidence
+  | 0bda7ea  ci: run contract tests with least-privilege workflow
+  | f3f4290  ci: install pinned icon test dependency
+  | bf4c8d6  docs: synchronize full audit and CI validation state
+  | 334888c  fix(reader): update AVIF decoder for protected tiles
+  | 89a2859  docs(reader): record Android 16 remediation evidence
   |                         ← fix/runtime-eof-search-feeds / PR #11 → fix/full-remediation
 ```
 
-The historical implementation stack is 26 commits ahead of `main`. The history remains unsquashed: the first 13 commits form the `fix/full-remediation` review stack, and the later 13 commits form the `fix/runtime-eof-search-feeds` stack. The documentation, CI, comment, and test-dependency follow-ups are intentionally excluded from that historical count; the current audit head is `f3f4290`.
+The live branch is 36 commits ahead of `main`. The first 13 commits form the `fix/full-remediation` review stack represented by PR #10. The remaining 23 commits form the stacked `fix/runtime-eof-search-feeds` review branch represented by PR #11. History remains unsquashed and no public history was rewritten.
 
-## Exact Stack Summary
+## Commit stack
 
-| Stack position | Commit | Message summary | Review stack |
+| Position | Commit | Message summary | Review stack |
 |---:|---|---|---|
-| 1 | `81de09d` | `chore(version): bump extension to 1.1` | PR #10 base stack |
-| 2 | `7f8fe084` | `fix(reader): align page loading with canonical ProComic chapter route` | PR #10 base stack |
-| 3 | `bd18af03` | `fix(details): handle canonical ProComic series route` | PR #10 base stack |
-| 4 | `438828b0` | `fix(chapters): normalize language and chapter ordering` | PR #10 base stack |
-| 5 | `363c606` | `fix(details): handle restricted series RSC payloads` | PR #10 base stack |
-| 6 | `9465f803` | `fix(diagnostics): redact runtime request and response logging` | PR #10 base stack |
-| 7 | `cdfa605` | `fix(chapters): unify legacy and REST chapter normalization` | PR #10 base stack |
-| 8 | `2458256` | `fix(feeds): use verified Popular API contract` | PR #10 base stack |
-| 9 | `1fd9e7c` | `fix(feeds): use verified Latest API contract` | PR #10 base stack |
-| 10 | `666d1f0` | `feat(chapters): add persistent show-paid preference` | PR #10 base stack |
-| 11 | `e5ef4d0` | `hardening(parser): bound RSC candidates and image hosts` | PR #10 base stack |
-| 12 | `4265b49` | `docs: synchronize repository and system documentation` | PR #10 base stack |
-| 13 | `1ce41bb` | `docs: finalize repository hygiene and release documentation` | PR #10 base stack |
-| 14 | `3888b28` | `fix(runtime): prevent EOF on search and feed responses` | PR #11 stack |
-| 15 | `3438b0e` | `fix(search): harden thumbnail fallback and chapter pagination lifecycle` | PR #11 stack |
-| 16 | `88500ea` | `ci: validate focused fix branches` | PR #11 stack |
-| 17 | `477dc12` | `ci: publish debug and release APKs` | PR #11 stack |
-| 18 | `463de71` | `fix: handle feed variants and restricted reader states` | PR #11 stack |
-| 19 | `99b2272` | `fix(search): fix search continuation and escaped reader manifests` | PR #11 stack |
-| 20 | `89cf1ff` | `fix: RSC bracket scanner and Search batch consumption` | PR #11 stack |
-| 21 | `b225a90` | `fix: Search relevance and update official ProComic icon` | PR #11 stack |
-| 22 | `8cd4ffc` | `feat: deferred-media Reader flow with proxy-plan tile reconstruction` | PR #11 stack |
-| 23 | `5145460` | `fix: defer AVIF native loading until protected tile decoding` | PR #11 stack |
-| 24 | `6bbdc05` | `fix: sibling deferred media parsing and stale genre filter` | PR #11 stack |
-| 25 | `8f88ec9` | `fix: harden protected tile decoding and rank Search results` | PR #11 stack |
+| 1 | `81de09d` | `chore(version): bump extension to 1.1` | PR #10 base |
+| 2 | `7f8fe084` | `fix(reader): align page loading with canonical ProComic chapter route` | PR #10 base |
+| 3 | `bd18af03` | `fix(details): handle canonical ProComic series route` | PR #10 base |
+| 4 | `438828b0` | `fix(chapters): normalize language and chapter ordering` | PR #10 base |
+| 5 | `363c606` | `fix(details): handle restricted series RSC payloads` | PR #10 base |
+| 6 | `9465f803` | `fix(diagnostics): redact runtime request and response logging` | PR #10 base |
+| 7 | `cdfa605` | `fix(chapters): unify legacy and REST chapter normalization` | PR #10 base |
+| 8 | `2458256` | `fix(feeds): use verified Popular API contract` | PR #10 base |
+| 9 | `1fd9e7c` | `fix(feeds): use verified Latest API contract` | PR #10 base |
+| 10 | `666d1f0` | `feat(chapters): add persistent show-paid preference` | PR #10 base |
+| 11 | `e5ef4d0` | `hardening(parser): bound RSC candidates and image hosts` | PR #10 base |
+| 12 | `4265b49` | `docs: synchronize repository and system documentation` | PR #10 base |
+| 13 | `1ce41bb` | `docs: finalize repository hygiene and release documentation` | PR #10 base |
+| 14 | `3888b28` | `fix(runtime): prevent EOF on search and feed responses` | PR #11 |
+| 15 | `85aad15` | `fix(feeds): preserve Popular cover image URLs` | PR #11 |
+| 16 | `3438b0e` | `fix(search): harden thumbnail fallback and chapter pagination lifecycle` | PR #11 |
+| 17 | `88500ea` | `ci: validate focused fix branches` | PR #11 |
+| 18 | `477dc12` | `ci: publish debug and release APKs` | PR #11 |
+| 19 | `463de71` | `fix: handle feed variants and restricted reader states` | PR #11 |
+| 20 | `99b2272` | `fix(search): fix search continuation and escaped reader manifests` | PR #11 |
+| 21 | `89cf1ff` | `fix: RSC bracket scanner and Search batch consumption` | PR #11 |
+| 22 | `b225a90` | `fix: Search relevance and update official ProComic icon` | PR #11 |
+| 23 | `8cd4ffc` | `feat: deferred-media Reader flow with proxy-plan tile reconstruction` | PR #11 |
+| 24 | `5145460` | `fix: defer AVIF native loading until protected tile decoding` | PR #11 |
+| 25 | `6bbdc05` | `fix: sibling deferred media parsing and stale genre filter` | PR #11 |
+| 26 | `8f88ec9` | `fix: harden protected tile decoding and rank Search results` | PR #11 |
+| 27 | `ceafa8f` | `docs: synchronize documentation to current implementation state` | PR #11 follow-up |
+| 28 | `1285213d` | `ci: update GitHub Actions to supported runtimes` | PR #11 follow-up |
+| 29 | `30824a0` | `docs: record repository audit and CI remediation` | PR #11 follow-up |
+| 30 | `affbcf3` | `fix(procomic): map lifecycle status and harden protected tile decoding` | PR #11 follow-up |
+| 31 | `e64cee1` | `docs: synchronize status, reader, and APK evidence` | PR #11 follow-up |
+| 32 | `0bda7ea` | `ci: run contract tests with least-privilege workflow` | PR #11 follow-up |
+| 33 | `f3f4290` | `ci: install pinned icon test dependency` | PR #11 follow-up |
+| 34 | `bf4c8d6` | `docs: synchronize full audit and CI validation state` | PR #11 follow-up |
+| 35 | `334888c` | `fix(reader): update AVIF decoder for protected tiles` | PR #11 follow-up |
+| 36 | `89a2859` | `docs(reader): record Android 16 remediation evidence` | PR #11 follow-up |
 
-The original implementation baseline is `8f88ec9fe839cbbca9076cd0c866f287a7b684dd`. The documentation synchronization (`ceafa8f`), CI action remediation (`1285213d`), source remediation (`affbcf3`), comment/CI coverage remediation (`0bda7ea`), and pinned test-dependency follow-up (`f3f4290`) are focused commits after the historical stack. The 26-commit historical stack remains unchanged and unsquashed.
+## Pull requests and remote branches
 
-## Pull Requests and Remote Branches
-
-| Item | State and relationship |
+| Item | Verified state and relationship |
 |---|---|
-| PR #10 | Open; `fix/full-remediation` → `main`; must not be merged without explicit approval |
-| PR #11 | Open; `fix/runtime-eof-search-feeds` → `fix/full-remediation`; must not be merged without explicit approval |
-| `main` | Default branch; protected by process; unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
-| `fix/full-remediation` | Open PR #10 head at `1ce41bb6ab4968dfa7f1862572171333a9129f38` before the documentation sync |
-| `fix/runtime-eof-search-feeds` | Open PR #11 branch; historical implementation baseline `8f88ec9fe839cbbca9076cd0c866f287a7b684dd`, followed by documentation, CI, source, comment, and test-dependency commits; current head `f3f4290` |
+| PR #10 | Open; `fix/full-remediation` → `main`; head `1ce41bb6ab4968dfa7f1862572171333a9129f38`; no merge or close performed |
+| PR #11 | Open; `fix/runtime-eof-search-feeds` → `fix/full-remediation`; head `89a2859e261c1e48dbc2ddd36a410d8b90fade76`; push and pull-request CI passed |
+| `main` | Default branch; unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
+| `fix/full-remediation` | PR #10 head remains `1ce41bb6ab4968dfa7f1862572171333a9129f38` |
+| `fix/runtime-eof-search-feeds` | PR #11 head is `89a2859e261c1e48dbc2ddd36a410d8b90fade76` |
 | Local `procomic-ready-to-test` | Clean checkout tracking `origin/fix/runtime-eof-search-feeds` |
 
-## Dependabot Pull Requests
+## Dependabot pull requests
 
-Dependabot PRs #1–#9 are open and target `main`. They remain available for a separate compatibility review; none is merged, closed, or retargeted by this documentation synchronization.
+Dependabot PRs #1–#9 are open and target `main`. They remain available for separate compatibility review; none was merged, closed, deleted, or retargeted by this operation.
 
-## Tags and Releases
+## Tags and releases
 
-The repository currently has no Git tags and no GitHub Releases. Creating a version tag or publishing a release is a separate approval-gated operation. CI APK artifacts and their checksums are recorded in `docs/VALIDATION.md` and the external synchronization evidence bundle, not treated as a GitHub Release.
+The repository has no Git tags and no GitHub Releases. Creating a version tag or publishing a release remains a separate approval-gated operation. CI APK artifacts and checksums are recorded in the current validation evidence and are not treated as a GitHub Release.
 
-## Review and Release Path
+## Review and release path
 
-The intended review order is PR #11 into `fix/full-remediation`, followed by PR #10 into `main`, only if each operation is explicitly approved. The documentation sync pushes only to `fix/runtime-eof-search-feeds`; it does not merge, close, delete, retarget, force-push, tag, release, or modify `main`.
+The intended review order is PR #11 into `fix/full-remediation`, followed by PR #10 into `main`, only if each operation is explicitly approved. This operation updates only `fix/runtime-eof-search-feeds`; it does not merge, close, delete, retarget, force-push, tag, release, or modify `main`.

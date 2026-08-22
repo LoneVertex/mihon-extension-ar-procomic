@@ -6,7 +6,9 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Latest audit-remediation HEAD:** [`f3f4290d13f1bf204b0278e25a01235a77ba0087`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087)
+**Current branch HEAD:** [`89a2859e261c1e48dbc2ddd36a410d8b90fade76`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/89a2859e261c1e48dbc2ddd36a410d8b90fade76)
+
+**Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
 
@@ -105,7 +107,7 @@ The Gradle packaging block sets `useLegacyPackaging=true`, extracting bundled na
 
 The launcher icon is the official ProComic website favicon, sourced from `https://procomic.net/favicon.svg` and rasterized into the required Android density resources. The deterministic icon contract verifies the provenance, launcher reference, resource set, and density hashes.
 
-The module uses compileSdk 36, targetSdk 35, min SDK 26, `versionCode=2`, and `versionName=1.1`. The AVIF native dependency is `io.github.awxkee:avif-coder:2.2.1`, packaged with `useLegacyPackaging=true`; the dependency’s declared compile requirement is why only compileSdk was raised.
+The module uses compileSdk 36, targetSdk 35, min SDK 26, `versionCode=2`, and `versionName=1.1`. The AVIF native dependency is `io.github.awxkee:avif-coder:2.2.1`, and compile-only Jsoup is `org.jsoup:jsoup:1.23.1`; native libraries are packaged with `useLegacyPackaging=true`. The AVIF dependency’s declared compile requirement is why only compileSdk was raised.
 
 ## Validation Strategy
 
@@ -136,7 +138,7 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 ./gradlew clean :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 ```
 
-Audit-remediation CI runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed on `f3f4290`. Source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) passed on `affbcf3`. Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The external manual evidence that informed the final fixes is distinct from a claim of exhaustive device coverage.
+Reader-remediation CI runs [32561773852](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561773852) and [32561776865](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561776865) passed on `89a2859`; these runs provision Android API 36, execute all deterministic suites, and build both APK variants. Earlier audit-remediation runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137), source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824), and implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The external manual evidence that informed the final fixes is distinct from a claim of exhaustive device coverage.
 
 ## Known Limitations and Safety Boundaries
 

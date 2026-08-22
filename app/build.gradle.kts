@@ -81,7 +81,8 @@ dependencies {
     compileOnly("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Jsoup (provided by Tachiyomi app at runtime, needed for interface compliance)
-    compileOnly("org.jsoup:jsoup:1.16.2")
+    // 1.23.1 includes the published security fix for malformed raw-text element handling.
+    compileOnly("org.jsoup:jsoup:1.23.1")
 
     // Bundled native AVIF decoder for protected Reader tiles; Android BitmapFactory is not
     // available for AVIF on every supported minSdk device. The old JitPack 2.1.3 publication is

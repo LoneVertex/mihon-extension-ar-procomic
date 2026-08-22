@@ -255,6 +255,8 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     ci = CI.read_text()
     assert "io.github.awxkee:avif-coder:2.2.1" in build
     assert "com.github.awxkee:avif-coder:2.1.3" not in build
+    assert 'compileOnly("org.jsoup:jsoup:1.23.1")' in build
+    assert 'compileOnly("org.jsoup:jsoup:1.16.2")' not in build
     assert "compileSdk = 36" in build
     assert "targetSdk = 35" in build
     assert 'sdkmanager" "platforms;android-36"' in ci

@@ -6,7 +6,9 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Latest audit-remediation HEAD:** [`f3f4290d13f1bf204b0278e25a01235a77ba0087`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087)
+**Current branch HEAD:** [`89a2859e261c1e48dbc2ddd36a410d8b90fade76`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/89a2859e261c1e48dbc2ddd36a410d8b90fade76)
+
+**Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
 
@@ -67,6 +69,8 @@ The current audit-remediation CI history is:
 |---:|---|---|---|
 | [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) | First workflow run after adding suite coverage | `0bda7ea` | FAIL — GitHub runner lacked Pillow for the icon contract |
 | [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639) | Pull-request reproduction of the same failure | `0bda7ea` | FAIL — same missing test dependency |
+| [32561773852](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561773852) | Reader-remediation branch push validation | `89a2859` | PASS |
+| [32561776865](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561776865) | Reader-remediation pull-request validation | `89a2859` | PASS |
 | [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) | Corrected branch push validation | `f3f4290` | PASS |
 | [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) | Corrected pull-request validation | `f3f4290` | PASS |
 | [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) | Source-remediation branch push | `affbcf3` | PASS |
@@ -76,7 +80,7 @@ The corrected runs execute the pinned Pillow install, all 12 deterministic suite
 
 ## APK Identity
 
-The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The build uses compileSdk 36, targetSdk 35, min SDK 26, stable `io.github.awxkee:avif-coder:2.2.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 36 because the decoder AAR declares `minCompileSdk=36`. The universal native decoder payload is the primary reason the APK is much larger than pure-Kotlin extensions.
+The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The build uses compileSdk 36, targetSdk 35, min SDK 26, stable `io.github.awxkee:avif-coder:2.2.1`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 36 because the decoder AAR declares `minCompileSdk=36`. The universal native decoder payload is the primary reason the APK is much larger than pure-Kotlin extensions.
 
 | Variant | Current local APK | Package | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
@@ -99,6 +103,7 @@ The current deterministic fixtures cover the final reported failure sequence:
 | Reader stopped at three public pages | Sibling `deferredMedia` retrieval and protected-page placeholders extend the page list through the site’s own media contracts |
 | Chapter 131 protected tiles failed | `ImageDecoder` fallback, explicit RGBA output, default-color native fallback, bounded map/tile reads, and protected-map geometry checks |
 | Exact series 109 / chapter 5650 protected tiles failed on Android 16 arm64 | Stable AVIF Coder 2.2.1 replaces the obsolete JitPack 2.1.3 artifact; native initialization and tile metadata/signature stages now emit redacted diagnostics; exact fixture proves 3 maps and 17 valid AVIF tiles |
+| Jsoup security advisory affecting the previous compile-only version | `org.jsoup:jsoup` is pinned to 1.23.1, the advisory’s fixed version; it is compile-only and is not bundled into the APK |
 | Trusting the extension caused it to disappear | Native AVIF decoder initialization is lazy; native libraries use `useLegacyPackaging=true` |
 | Extension icon was incorrect | Official `procomic.net/favicon.svg` is rasterized across the Android density resources |
 | Shared response reads could fail at EOF | Bounded at-most body reads distinguish truncated/empty/oversize responses |

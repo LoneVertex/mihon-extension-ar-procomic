@@ -74,6 +74,10 @@ The current branch includes the following completed and tested work:
 
 No authentication, login, session/cookie bypass, payment bypass, WebView, browser automation, or fabricated premium page behavior was added.
 
+## Global Black-Line Finding
+
+The reported thin black line is not present in the exact chapter-10 page bytes or protected composite geometry. The live contract contains three public manifest images, two direct deferred images, and one protected map with complete rectangle coverage; all protected tiles are valid HTTP 200 AVIF responses. Mihon’s Reader displays these as separate Page objects while WebView presents them continuously. This matches [Mihon issue #696](https://github.com/mihonapp/mihon/issues/696), which documents an intermittent black stripe between Long Strip pages. Treat this as a Mihon viewer inter-page gap, not a missing ProComic page. The extension must not collapse all logical pages into one image because that would break page navigation, progress, memory bounds, and source semantics.
+
 ## Required Validation Workflow
 
 Run the complete deterministic gate:

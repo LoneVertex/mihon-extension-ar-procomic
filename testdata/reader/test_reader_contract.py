@@ -216,6 +216,42 @@ def test_exact_chapter_5_contract_covers_yuv444_and_all_protected_tiles() -> Non
     assert case["maps_failed"] == case["tiles_failed"] == 0
 
 
+def test_global_page_boundary_contract_preserves_all_logical_sources_and_full_frame() -> None:
+    case = load()["global_page_boundary_contract"]
+    assert case["series_id"] == 387
+    assert case["chapter_id"] == 19269
+    assert case["chapter_label"] == "10"
+    assert case["language"] == "AR"
+    assert case["chapter_response_status"] == case["deferred_media_status"] == 200
+    assert case["public_manifest_count"] == 3
+    assert case["deferred_image_count"] == 2
+    assert case["protected_map_count"] == 1
+    assert case["logical_page_count"] == 6
+    assert case["logical_page_indices"] == list(range(case["logical_page_count"]))
+    assert case["page_source_order"] == [
+        "public_manifest", "public_manifest", "public_manifest",
+        "deferred_image", "deferred_image", "protected_map",
+    ]
+    assert case["protected_page_index"] == 5
+    assert case["proxy_page_index"] == 3
+    page = case["map"]
+    assert page["dim"] == [1000, 7659]
+    assert page["mode"] == "grid_2x2"
+    assert page["piece_count"] == page["rect_count"] == 4
+    assert page["rectangles"] == [
+        [0, 0, 500, 3830],
+        [500, 0, 500, 3830],
+        [0, 3830, 500, 3829],
+        [500, 3830, 500, 3829],
+    ]
+    assert page["coverage"] == "exact_full_frame_no_uncovered_rows_or_columns"
+    assert page["tile_status"] == 200
+    assert page["tile_content_type"] == "image/avif"
+    assert page["tile_body_signature"] == "avif/isobmff"
+    assert case["black_strip_in_page_bytes"] is False
+    assert case["viewer_gap_candidate"] is True
+
+
 def test_deferred_media_contract_recovers_all_protected_pages() -> None:
     case = load()["deferred_media_contract"]
     assert case["publicImageCount"] == 3
@@ -362,6 +398,7 @@ def main() -> None:
     test_chapter_131_page_4_tiles_are_valid_avif_and_geometry_is_complete()
     test_exact_chapter_1_contract_has_valid_protected_tiles()
     test_exact_chapter_5_contract_covers_yuv444_and_all_protected_tiles()
+    test_global_page_boundary_contract_preserves_all_logical_sources_and_full_frame()
     test_deferred_media_contract_recovers_all_protected_pages()
     test_source_uses_deferred_media_and_protected_tile_reconstruction()
     test_aomedia_avif_decoder_is_bounded_and_nonfatal_at_extension_startup()

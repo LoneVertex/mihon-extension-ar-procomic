@@ -101,6 +101,8 @@ The decoder chain is:
 
 The generic hardening adds an eight-million-byte per-tile bound, an eight-million-pixel per-tile bound, a one-million-byte protected-map response bound, a 32-tile bound, and a 40-million-pixel composite bound. The AOMedia call is contained in a failure boundary and emits only redacted stage metadata, so native loading or decode errors cannot make extension discovery fail.
 
+A global thin black line between consecutive images must be classified separately from tile decoding. The exact chapter-10 contract contains three public images, two direct deferred images, and one protected map whose rectangles cover the full frame; in-memory edge measurements found no full-width black strip in the source image bytes. WebView lays those sources out continuously, while Mihon renders them as separate Page objects. This matches Mihon’s documented Background color behavior and [Mihon issue #696](https://github.com/mihonapp/mihon/issues/696), which records a Long Strip inter-page black stripe. The extension therefore preserves logical Page boundaries rather than merging a chapter into one unbounded image.
+
 The Gradle packaging block sets `useLegacyPackaging=true`, extracting bundled native libraries at install time across the shipped ABIs. The manifest does not use the removed `extractNativeLibs` attribute. Audited page and tile requests remain restricted to evidence-derived HTTPS hosts and paths; arbitrary image-host allowlists are not used.
 
 ## Icon and Build Packaging

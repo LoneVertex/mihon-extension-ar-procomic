@@ -61,6 +61,8 @@ The version 1.2 release APK is approximately 2.09 MB and the debug APK approxima
 
 Authentication and full paid access are not implemented. Restricted/auth-required content remains visible as a distinct access state, but authenticated behavior is not provided or claimed as validated. Public-image availability can still be constrained by server-side access rules. The extension does not provide a WebView fallback and does not bypass login, session, payment, or safe-browsing controls. Novel-type content is excluded because Mihon is a comic reader.
 
+A thin black line between otherwise complete images is a Mihon Reader layout symptom, not a ProComic image boundary, when the page bytes and map rectangles are complete. Mihon documents a configurable Reader background color, and [Mihon issue #696](https://github.com/mihonapp/mihon/issues/696) records the same intermittent black stripe between Long Strip pages. The extension cannot control Mihon’s inter-page gutter without collapsing all chapter pages into one image, which would break page navigation, progress, memory limits, and source semantics. For the supplied symptom, compare with Mihon’s Background color setting and the latest Mihon build; do not treat this viewer-owned stripe as a missing ProComic page.
+
 ## Build and Test
 
 Use JDK 21 and the repository’s Gradle wrapper. The wrapper currently resolves Gradle 8.14.4. Install Android API 35 and the test-only dependency before running the deterministic suite, then use the documented software-gate command:

@@ -17,7 +17,8 @@ kotlin {
 }
 
 android {
-    compileSdk = 35
+    // avif-coder 2.2.1 declares minCompileSdk 36; target remains 35 to preserve runtime behavior.
+    compileSdk = 36
     namespace = "eu.kanade.tachiyomi.extension.ar.procomic"
 
     defaultConfig {
@@ -83,6 +84,7 @@ dependencies {
     compileOnly("org.jsoup:jsoup:1.16.2")
 
     // Bundled native AVIF decoder for protected Reader tiles; Android BitmapFactory is not
-    // available for AVIF on every supported minSdk device. The library supports API 24+.
-    implementation("com.github.awxkee:avif-coder:2.1.3@aar")
+    // available for AVIF on every supported minSdk device. The old JitPack 2.1.3 publication is
+    // obsolete; use the stable Maven Central publication with the same API and four ABIs.
+    implementation("io.github.awxkee:avif-coder:2.2.1")
 }

@@ -59,6 +59,27 @@
       "tile_decode_probe": "pillow_avif_ok"
     },
     "all_tile_hosts": ["img1.procomic.pro", "img2.procomic.pro", "img3.procomic.pro", "img4.procomic.pro"],
-    "all_proxy_statuses": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]
+    "all_proxy_statuses": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]
+  },
+  "exact_chapter_1_tile_decode_contract": {
+    "title": "After being laid off, I received a system worth billions of dollars, and I upgraded it alone",
+    "series_id": 109,
+    "chapter_id": 5650,
+    "chapter_label": "1",
+    "deferred_media_status": 200,
+    "map_count": 3,
+    "maps": [
+      {"dim": [800, 7500], "mode": "grid_3x2", "piece_count": 6, "rect_count": 6, "tile_status": 200},
+      {"dim": [800, 7500], "mode": "grid_2x3", "piece_count": 6, "rect_count": 6, "tile_status": 200},
+      {"dim": [800, 5273], "mode": "vertical_5", "piece_count": 5, "rect_count": 5, "tile_status": 200}
+    ],
+    "total_tile_count": 17,
+    "tile_content_types": ["image/avif"],
+    "tile_body_signatures": ["avif/isobmff"],
+    "tile_decode_probe": "pillow_avif_ok",
+    "all_tile_hosts": ["img1.procomic.pro", "img2.procomic.pro", "img3.procomic.pro", "img4.procomic.pro"],
+    "tile_host_counts": {"img1.procomic.pro": 5, "img2.procomic.pro": 4, "img3.procomic.pro": 4, "img4.procomic.pro": 4},
+    "maps_failed": 0,
+    "tiles_failed": 0
   }
 }

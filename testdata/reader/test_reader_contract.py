@@ -11,6 +11,7 @@ FIXTURES = ROOT / "testdata" / "reader"
 UTILS = ROOT / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/ProComicUtils.kt"
 PROCOMIC = ROOT / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/ProComic.kt"
 BUILD = ROOT / "app/build.gradle.kts"
+CI = ROOT / ".github/workflows/ci.yml"
 MANIFEST = ROOT / "app/src/main/AndroidManifest.xml"
 
 
@@ -154,6 +155,32 @@ def test_chapter_131_page_4_tiles_are_valid_avif_and_geometry_is_complete() -> N
     }
 
 
+def test_exact_chapter_1_contract_has_valid_protected_tiles() -> None:
+    case = load()["exact_chapter_1_tile_decode_contract"]
+    assert case["series_id"] == 109
+    assert case["chapter_id"] == 5650
+    assert case["chapter_label"] == "1"
+    assert case["deferred_media_status"] == 200
+    assert case["map_count"] == 3
+    assert [item["dim"] for item in case["maps"]] == [[800, 7500], [800, 7500], [800, 5273]]
+    assert [item["mode"] for item in case["maps"]] == ["grid_3x2", "grid_2x3", "vertical_5"]
+    assert [item["piece_count"] for item in case["maps"]] == [6, 6, 5]
+    assert [item["piece_count"] for item in case["maps"]] == [item["rect_count"] for item in case["maps"]]
+    assert all(item["tile_status"] == 200 for item in case["maps"])
+    assert case["total_tile_count"] == 17
+    assert case["tile_content_types"] == ["image/avif"]
+    assert case["tile_body_signatures"] == ["avif/isobmff"]
+    assert case["tile_decode_probe"] == "pillow_avif_ok"
+    assert set(case["all_tile_hosts"]) == {
+        "img1.procomic.pro",
+        "img2.procomic.pro",
+        "img3.procomic.pro",
+        "img4.procomic.pro",
+    }
+    assert sum(case["tile_host_counts"].values()) == case["total_tile_count"]
+    assert case["maps_failed"] == case["tiles_failed"] == 0
+
+
 def test_deferred_media_contract_recovers_all_protected_pages() -> None:
     case = load()["deferred_media_contract"]
     assert case["publicImageCount"] == 3
@@ -221,7 +248,17 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert "readBoundedBytes(tileResponse, MAX_TILE_BYTES)" in interceptor
     assert "readBoundedText(response, MAX_MAP_RESPONSE_BYTES)" in interceptor
     assert "coder.decode(bytes)" in interceptor
-    assert "useLegacyPackaging = true" in BUILD.read_text()
+    assert "logUnexpectedTileMetadata" in interceptor
+    assert "protected tile body signature invalid" in interceptor
+    assert "native AVIF decoder initialization failed" in interceptor
+    build = BUILD.read_text()
+    ci = CI.read_text()
+    assert "io.github.awxkee:avif-coder:2.2.1" in build
+    assert "com.github.awxkee:avif-coder:2.1.3" not in build
+    assert "compileSdk = 36" in build
+    assert "targetSdk = 35" in build
+    assert 'sdkmanager" "platforms;android-36"' in ci
+    assert "useLegacyPackaging = true" in build
     assert "extractNativeLibs" not in MANIFEST.read_text()
     assert "img1.procomic.pro" in utils
     assert "android.webkit.WebView" not in procomic
@@ -234,7 +271,8 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
 def test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup() -> None:
     interceptor = (PROCOMIC.parent / "ProComicImageInterceptor.kt").read_text()
     assert "val avifCoder: HeifCoder? by lazy" in interceptor
-    assert "runCatching { HeifCoder() }.getOrNull()" in interceptor
+    assert "runCatching { HeifCoder() }" in interceptor
+    assert "native AVIF decoder initialization failed" in interceptor
     assert "avifCoder?.let" in interceptor
     assert "coder.decode(bytes, PreferredColorConfig.RGBA_8888)" in interceptor
     assert "coder.decode(bytes)" in interceptor
@@ -281,6 +319,7 @@ def main() -> None:
     test_current_reader_sibling_deferred_media_recovers_ten_logical_pages()
     test_legacy_nested_deferred_media_remains_supported_and_malformed_sibling_is_rejected()
     test_chapter_131_page_4_tiles_are_valid_avif_and_geometry_is_complete()
+    test_exact_chapter_1_contract_has_valid_protected_tiles()
     test_deferred_media_contract_recovers_all_protected_pages()
     test_source_uses_deferred_media_and_protected_tile_reconstruction()
     test_native_avif_decoder_is_lazy_and_nonfatal_at_extension_startup()

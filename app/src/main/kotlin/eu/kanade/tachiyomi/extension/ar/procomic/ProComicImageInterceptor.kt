@@ -129,6 +129,13 @@ class ProComicImageInterceptor(
                         responseBuilder = tileResponse.newBuilder().request(pageRequest)
                     }
                     val bytes = readBoundedBytes(tileResponse, MAX_TILE_BYTES)
+                    logUnexpectedTileMetadata(
+                        bytes = bytes,
+                        contentType = tileResponse.header("Content-Type"),
+                        pageIndex = pageIndex,
+                        outputIndex = outputIndex,
+                        sourceIndex = sourceIndex,
+                    )
                     val tile = decodeTile(
                         bytes = bytes,
                         pageIndex = pageIndex,
@@ -218,6 +225,37 @@ class ProComicImageInterceptor(
         throw IOException("ProComic Reader: protected tile could not be decoded")
     }
 
+    private fun logUnexpectedTileMetadata(
+        bytes: ByteArray,
+        contentType: String?,
+        pageIndex: Int,
+        outputIndex: Int,
+        sourceIndex: Int,
+    ) {
+        val normalizedType = contentType?.substringBefore(';')?.trim()?.lowercase()
+        val hasIsoBmffSignature = bytes.size >= 12 &&
+            bytes[4] == 'f'.code.toByte() &&
+            bytes[5] == 't'.code.toByte() &&
+            bytes[6] == 'y'.code.toByte() &&
+            bytes[7] == 'p'.code.toByte()
+        if (normalizedType != "image/avif") {
+            ProComicDiag.logStage(
+                "PAGES",
+                96,
+                "protected tile response metadata unexpected page=$pageIndex tile=$outputIndex " +
+                    "source=$sourceIndex bytes=${bytes.size} contentType=${contentType ?: "(absent)"}",
+            )
+        }
+        if (!hasIsoBmffSignature) {
+            ProComicDiag.logStage(
+                "PAGES",
+                96,
+                "protected tile body signature invalid page=$pageIndex tile=$outputIndex " +
+                    "source=$sourceIndex bytes=${bytes.size} contentType=${contentType ?: "(absent)"}",
+            )
+        }
+    }
+
     private fun fallbackRectangles(
         mode: String,
         width: Int,
@@ -275,7 +313,15 @@ class ProComicImageInterceptor(
         // companion initializer calls System.loadLibrary("coder"), which can fail on an ABI or
         // packaging mismatch and make Mihon remove the extension immediately after trust.
         val avifCoder: HeifCoder? by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-            runCatching { HeifCoder() }.getOrNull()
+            runCatching { HeifCoder() }
+                .onFailure {
+                    ProComicDiag.logStage(
+                        "PAGES",
+                        96,
+                        "native AVIF decoder initialization failed errorType=${it.javaClass.simpleName}",
+                    )
+                }
+                .getOrNull()
         }
     }
 }

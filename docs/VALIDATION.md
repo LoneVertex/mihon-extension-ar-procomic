@@ -76,12 +76,12 @@ The corrected runs execute the pinned Pillow install, all 12 deterministic suite
 
 ## APK Identity
 
-The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The build uses compile/target SDK 35, min SDK 26, AVIF Coder 2.1.3, and `useLegacyPackaging=true` for install-time native-library extraction. The universal native decoder payload is the primary reason the APK is much larger than pure-Kotlin extensions.
+The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The build uses compileSdk 36, targetSdk 35, min SDK 26, stable `io.github.awxkee:avif-coder:2.2.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 36 because the decoder AAR declares `minCompileSdk=36`. The universal native decoder payload is the primary reason the APK is much larger than pure-Kotlin extensions.
 
 | Variant | Current local APK | Package | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
-| Debug | `app/build/outputs/apk/debug/app-debug.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 23,278,712 bytes | `22072281eeed34b46c913ee9bff68fb48e282e6cfc665c75e671ef2d6647ed76` |
-| Release | `app/build/outputs/apk/release/app-release.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 21,464,829 bytes | `01030b6005785f8fffcd51b661c22cdf67e4dd5a7d481585a0f677486927810e` |
+| Debug | `app/build/outputs/apk/debug/app-debug.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 25,631,098 bytes | `2427a1a1c516b8fb2b067fbb16a9a4e26d5fc972ad6a201061c199d915cb5d8e` |
+| Release | `app/build/outputs/apk/release/app-release.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 22,830,491 bytes | `7dc72b668bd958275cd3f3bf47c3b9d59218f6984941ae5b61e6a3f0000d2bb0` |
 
 The standard local output paths are `app/build/outputs/apk/debug/app-debug.apk` and `app/build/outputs/apk/release/app-release.apk`. The CI artifact copies and checksum file are retained in the external synchronization evidence bundle, not committed into this source repository. The debug hash was stable across the repeated clean gate; the release hash varied between two clean local builds while size and metadata remained identical, so the latest local hash above is evidence for that exact build only, not a reproducibility certificate.
 
@@ -98,11 +98,12 @@ The current deterministic fixtures cover the final reported failure sequence:
 | Novel/manhua duplicate rows appeared | Stable search identity collapse removes duplicates |
 | Reader stopped at three public pages | Sibling `deferredMedia` retrieval and protected-page placeholders extend the page list through the site’s own media contracts |
 | Chapter 131 protected tiles failed | `ImageDecoder` fallback, explicit RGBA output, default-color native fallback, bounded map/tile reads, and protected-map geometry checks |
+| Exact series 109 / chapter 5650 protected tiles failed on Android 16 arm64 | Stable AVIF Coder 2.2.1 replaces the obsolete JitPack 2.1.3 artifact; native initialization and tile metadata/signature stages now emit redacted diagnostics; exact fixture proves 3 maps and 17 valid AVIF tiles |
 | Trusting the extension caused it to disappear | Native AVIF decoder initialization is lazy; native libraries use `useLegacyPackaging=true` |
 | Extension icon was incorrect | Official `procomic.net/favicon.svg` is rasterized across the Android density resources |
 | Shared response reads could fail at EOF | Bounded at-most body reads distinguish truncated/empty/oversize responses |
 
-Reported manual Android testing informed these fixes. Live public probing confirmed the captured deferred-media/proxy-plan route returns seven protected maps and valid AVIF tiles; the sandbox has no connected Android device or emulator, so direct Mihon rendering of the user’s exact device remains not verified. The repository does not claim that every Android version, device, authenticated session, premium chapter, or server-side access state has been exhaustively tested.
+Reported manual Android testing informed these fixes. Live public probing confirmed the exact series-109/chapter-5650 deferred-media/proxy-plan route returns three protected maps and 17 valid AVIF tiles, while the sandbox has no connected Android device or emulator. The software remediation and APK build are verified, but direct Mihon rendering on the user’s Android 16 arm64 device remains **NOT VERIFIED** until the new APK is installed and tested. The repository does not claim that every Android version, device, authenticated session, premium chapter, or server-side access state has been exhaustively tested.
 
 ## Runtime and Security Boundaries
 
@@ -112,7 +113,7 @@ The Reader validation evidence must distinguish the chapter route, Mihon Reader 
 
 ## Current Limitations
 
-Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; direct Android-device rendering and authenticated/premium behavior remain PARTIAL/NOT VERIFIED limitations relevant to any future release decision. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release build also uses the debug keystore for sideload/testing; a production release requires maintainer-owned signing credentials and explicit release authorization.
+Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release build also uses the debug keystore for sideload/testing; a production release requires maintainer-owned signing credentials and explicit release authorization.
 
 ## Approval-Gated Follow-ups
 

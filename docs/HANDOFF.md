@@ -36,19 +36,19 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 |---|---|
 | Package | `eu.kanade.tachiyomi.extension.ar.procomic` |
 | `versionCode` / `versionName` | `2` / `1.1` |
-| Compile/target SDK | `35` / `35` |
+| Compile/target SDK | `36` / `35` |
 | Minimum SDK | `26` |
-| AVIF dependency | `com.github.awxkee:avif-coder:2.1.3@aar` |
+| AVIF dependency | `io.github.awxkee:avif-coder:2.2.1` |
 | Native packaging | `useLegacyPackaging=true` |
-| Release local APK | `app/build/outputs/apk/release/app-release.apk`, 21,464,829 bytes |
-| Release local SHA-256 | `01030b6005785f8fffcd51b661c22cdf67e4dd5a7d481585a0f677486927810e` |
-| Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, 23,278,712 bytes |
-| Debug local SHA-256 | `22072281eeed34b46c913ee9bff68fb48e282e6cfc665c75e671ef2d6647ed76` |
+| Release local APK | `app/build/outputs/apk/release/app-release.apk`, 22,830,491 bytes |
+| Release local SHA-256 | `7dc72b668bd958275cd3f3bf47c3b9d59218f6984941ae5b61e6a3f0000d2bb0` |
+| Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, 25,631,098 bytes |
+| Debug local SHA-256 | `2427a1a1c516b8fb2b067fbb16a9a4e26d5fc972ad6a201061c199d915cb5d8e` |
 | Size rationale | Universal `avif-coder` native libraries across four ABIs; no ABI split applied without Mihon distribution evidence |
 | Reproducibility note | Debug hash was stable across repeated clean builds; release hash varied while size/metadata remained identical, so the recorded release hash identifies this exact local artifact only |
 | Release signing | Debug keystore for sideload/testing; production publication requires maintainer-owned signing credentials |
 
-The first suite-enabled workflow runs failed because the GitHub runner lacked Pillow: [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) and [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639). After adding pinned `Pillow==12.3.0` in `requirements-test.txt`, corrected push/PR runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed. The workflow also sets `permissions: contents: read`. Source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) and earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current artifact copies and checksum file are retained in the external synchronization evidence bundle.
+The current workflow explicitly installs Android API 36 before building because the stable AVIF decoder declares `minCompileSdk=36`. The first suite-enabled workflow runs failed because the GitHub runner lacked Pillow: [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) and [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639). After adding pinned `Pillow==12.3.0` in `requirements-test.txt`, corrected push/PR runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed. The workflow also sets `permissions: contents: read`. Source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) and earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current artifact copies and checksum file are retained in the external synchronization evidence bundle.
 
 ## Completed Implementation Fixes
 

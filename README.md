@@ -6,7 +6,7 @@ ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available fr
 
 ## Current Repository State
 
-The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds) is commit [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd). The latest audit-remediation HEAD is [`f3f4290d13f1bf204b0278e25a01235a77ba0087`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3f4290d13f1bf204b0278e25a01235a77ba0087), adding deterministic CI contract coverage, least-privilege workflow permissions, and a pinned Pillow test dependency after the initial CI reproduction exposed a missing runner dependency. It is reviewed through stacked [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), targeting [`fix/full-remediation`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/full-remediation), above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10), which targets `main`. Both PRs remain open; no merge, tag, or GitHub Release is implied by this documentation.
+The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds) is the prior remediation chain, and the current focused Reader remediation commit is [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c). It updates the obsolete JitPack AVIF decoder, provisions compileSdk 36, adds exact chapter-5650 coverage, and adds redacted native/tile-stage diagnostics after the Android 16 arm64 failure remained reproducible with the prior APK. It is reviewed through stacked [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), targeting [`fix/full-remediation`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/full-remediation), above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10), which targets `main`. Both PRs remain open; no merge, tag, or GitHub Release is implied by this documentation.
 
 | Property | Value |
 |---|---|
@@ -16,8 +16,8 @@ The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.c
 | Base domain | `https://procomic.net` |
 | Version | `versionCode=2`, `versionName=1.1` |
 | Implementation branch | `fix/runtime-eof-search-feeds` |
-| Implementation baseline | `8f88ec9fe839cbbca9076cd0c866f287a7b684dd` |
-| Latest audit-remediation HEAD | `f3f4290d13f1bf204b0278e25a01235a77ba0087` |
+| Implementation baseline | Prior remediation chain through `bf4c8d6` |
+| Current focused Reader remediation | `334888c` |
 | Latest review PR | [#11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), stacked above [#10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) |
 | Default branch | `main` remains unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
 | Runtime status | Lifecycle-status, protected-reader, and CI coverage fixes are implemented; corrected push/PR CI and local gates pass. Direct Android-device rendering remains not verified in this sandbox; authenticated/premium behavior remains outside scope. |
@@ -41,7 +41,7 @@ The extension uses normal OkHttp requests through Mihon’s `HttpSource` API. Pu
 
 A protected Reader page is not fabricated. Mihon receives a page placeholder containing the site’s own short-lived map capability. At image-request time, the interceptor requests a fresh proxy plan for that chapter, validates the returned geometry and evidence-derived tile URLs, downloads bounded AVIF pieces, reconstructs the page into a normal bitmap, and returns a JPEG response to Mihon. Map responses and tile bodies are read with explicit byte bounds. The decoder chain is `BitmapFactory`, then Android `ImageDecoder` where available, then the lazily initialized AVIF decoder with `PreferredColorConfig.RGBA_8888` followed by the library’s default-color decode as a compatibility fallback.
 
-The chapter-131 regression hardened tile decoding with an `ImageDecoder` fallback, explicit RGBA output, per-tile and map-response byte limits, tile-count and composite-pixel bounds, and diagnostic metadata that never records raw response bodies or sensitive headers. Native AVIF loading is lazy so Mihon can complete extension discovery and trust transitions without eagerly loading the native library. Gradle uses `useLegacyPackaging=true` so the bundled native libraries are extracted at install time.
+The chapter-131 regression hardened tile decoding with an `ImageDecoder` fallback, explicit RGBA output, per-tile and map-response byte limits, tile-count and composite-pixel bounds, and diagnostic metadata that never records raw response bodies or sensitive headers. For the exact series-109/chapter-5650 failure, the obsolete JitPack AVIF artifact was replaced with stable Maven Central `io.github.awxkee:avif-coder:2.2.1`; native initialization failures and unexpected tile metadata/body signatures are now classified without logging secrets. Native AVIF loading remains lazy so Mihon can complete extension discovery and trust transitions without eagerly loading the native library. Gradle uses `useLegacyPackaging=true` so bundled native libraries are extracted at install time.
 
 ## Chapter and Gate Rules
 
@@ -51,11 +51,11 @@ The persistent preference `show_paid_chapters` defaults to `true`. When disabled
 
 ## Validation Status
 
-The deterministic software gate passes all 12 repository test suites, `git diff --check`, protected-path checks, and debug/release CI builds. The workflow now installs `Pillow==12.3.0` from `requirements-test.txt`, sets `permissions: contents: read`, and uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. The first suite-enabled runs failed because Pillow was absent on the runner ([32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071), [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639)); the corrected push and PR runs passed ([32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810), [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137)). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+The deterministic software gate passes all 12 repository test suites, `git diff --check`, protected-path checks, and clean debug/release APK builds. The workflow provisions Android API 36, installs `Pillow==12.3.0` from `requirements-test.txt`, sets `permissions: contents: read`, and uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. The first suite-enabled runs failed because Pillow was absent on the runner ([32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071), [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639)); the corrected push and PR runs passed ([32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810), [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137)). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
-Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, trust-transition/native-loading failure, and `Unknown` publication status. The corresponding fixes are covered by deterministic fixtures and CI assertions. Live public probing confirmed the deferred-media/proxy-plan contract returns seven protected maps and valid AVIF tiles for the captured chapter; direct Android-device rendering is still not verified here.
+Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, trust-transition/native-loading failure, and `Unknown` publication status. The exact series-109/chapter-5650 failure is now covered by a redacted fixture proving three protected maps and 17 valid AVIF tiles, plus native-init and response-stage diagnostics. Live public probing confirmed the exact deferred-media/proxy-plan contract; direct Android-device rendering of the new APK is still **NOT VERIFIED** here.
 
-The release APK is approximately 21.46 MB and the debug APK approximately 23.28 MB because `avif-coder` bundles native AVIF/HEIF libraries for four ABIs. This is materially larger than pure-Kotlin extensions, but it is expected for a universal native-decoder APK. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release build is debug-keystore signed for sideload/testing; a production release requires maintainer-owned signing credentials.
+The release APK is approximately 22.83 MB and the debug APK approximately 25.63 MB because stable `avif-coder` bundles native AVIF/HEIF libraries for four ABIs. This is materially larger than pure-Kotlin extensions, but it is expected for a universal native-decoder APK. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release build is debug-keystore signed for sideload/testing; a production release requires maintainer-owned signing credentials.
 
 ## Known Limitations
 
@@ -63,7 +63,7 @@ Authentication and full paid access are not implemented. Restricted/auth-require
 
 ## Build and Test
 
-Use JDK 21 and the repository’s Gradle wrapper. The wrapper currently resolves Gradle 8.14.4. Install the test-only dependency before running the deterministic suite, then use the documented software-gate command:
+Use JDK 21 and the repository’s Gradle wrapper. The wrapper currently resolves Gradle 8.14.4. Install Android API 36 and the test-only dependency before running the deterministic suite, then use the documented software-gate command:
 
 ```bash
 ANDROID_HOME=/home/ubuntu/android-sdk \

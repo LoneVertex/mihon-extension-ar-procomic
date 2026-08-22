@@ -16,7 +16,7 @@
 
 This document is the current engineering reference for the Arabic ProComic Mihon extension. It describes the implementation present at the current branch HEAD. Deep probes, raw captures, and investigation history remain retained audit artifacts; they are evidence, not alternate implementation instructions.
 
-The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The Android build uses compile/target SDK 35, min SDK 26, and `com.github.awxkee:avif-coder:2.1.3@aar` for the final native AVIF fallback. The universal native decoder is the reason the release APK is approximately 21.46 MB rather than the kilobyte scale of pure-Kotlin extensions.
+The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=2` and `versionName=1.1`. The Android build uses compileSdk 36, targetSdk 35, min SDK 26, and stable Maven Central `io.github.awxkee:avif-coder:2.2.1` for the final native AVIF fallback. The universal native decoder is the reason the release APK is approximately 22.83 MB rather than the kilobyte scale of pure-Kotlin extensions.
 
 ## System Architecture
 
@@ -105,7 +105,7 @@ The Gradle packaging block sets `useLegacyPackaging=true`, extracting bundled na
 
 The launcher icon is the official ProComic website favicon, sourced from `https://procomic.net/favicon.svg` and rasterized into the required Android density resources. The deterministic icon contract verifies the provenance, launcher reference, resource set, and density hashes.
 
-The module uses compile/target SDK 35, min SDK 26, `versionCode=2`, and `versionName=1.1`. The AVIF native dependency is `com.github.awxkee:avif-coder:2.1.3@aar`, packaged with `useLegacyPackaging=true`.
+The module uses compileSdk 36, targetSdk 35, min SDK 26, `versionCode=2`, and `versionName=1.1`. The AVIF native dependency is `io.github.awxkee:avif-coder:2.2.1`, packaged with `useLegacyPackaging=true`; the dependency’s declared compile requirement is why only compileSdk was raised.
 
 ## Validation Strategy
 

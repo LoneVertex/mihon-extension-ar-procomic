@@ -69,6 +69,8 @@ The current audit-remediation CI history is:
 |---:|---|---|---|
 | [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) | First workflow run after adding suite coverage | `0bda7ea` | FAIL — GitHub runner lacked Pillow for the icon contract |
 | [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639) | Pull-request reproduction of the same failure | `0bda7ea` | FAIL — same missing test dependency |
+| [32573390967](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32573390967) | Final master-audit branch push validation | `400556d` | PASS |
+| [32573394359](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32573394359) | Final master-audit pull-request validation | `400556d` | PASS |
 | [32561773852](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561773852) | Reader-remediation branch push validation | `89a2859` | PASS |
 | [32561776865](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561776865) | Reader-remediation pull-request validation | `89a2859` | PASS |
 | [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) | Corrected branch push validation | `f3f4290` | PASS |

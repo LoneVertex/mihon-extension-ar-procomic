@@ -12,7 +12,7 @@
 
 **Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
 
-The snapshot parent includes the pushed Reader remediation and the compile-only Jsoup security update; the final documentation commit is the child of this snapshot.
+The snapshot parent includes the pushed Reader remediation and the compile-only Jsoup security update; `400556d` is the first documentation/security follow-up, and this current refresh is documentation-only.
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
@@ -63,10 +63,11 @@ main  76c8ed49ee81d066d30cebe6e412040db2d43a73
   | 334888c  fix(reader): update AVIF decoder for protected tiles
   | 89a2859  docs(reader): record Android 16 remediation evidence
   | 90234e2  chore(repo): synchronize topology and dependency security
+  | 400556d  docs(repo): finalize master audit snapshot
   |                         ← fix/runtime-eof-search-feeds / PR #11 → fix/full-remediation
 ```
 
-The documentation snapshot parent is 37 commits ahead of `main`; the final documentation commit is one additional child.  The first 13 commits form the `fix/full-remediation` review stack represented by PR #10. The remaining 23 commits form the stacked `fix/runtime-eof-search-feeds` review branch represented by PR #11. History remains unsquashed and no public history was rewritten.
+The code-validation snapshot parent is 37 commits ahead of `main`; `400556d` and this current documentation refresh are documentation-only follow-ups. The first 13 commits form the `fix/full-remediation` review stack represented by PR #10. The remaining 23 commits form the stacked `fix/runtime-eof-search-feeds` review branch represented by PR #11. History remains unsquashed and no public history was rewritten.
 
 ## Commit stack
 
@@ -109,16 +110,17 @@ The documentation snapshot parent is 37 commits ahead of `main`; the final docum
 | 35 | `334888c` | `fix(reader): update AVIF decoder for protected tiles` | PR #11 follow-up |
 | 36 | `89a2859` | `docs(reader): record Android 16 remediation evidence` | PR #11 follow-up |
 | 37 | `90234e2` | `chore(repo): synchronize topology and dependency security` | PR #11 follow-up |
+| 38 | `400556d` | `docs(repo): finalize master audit snapshot` | PR #11 follow-up |
 
 ## Pull requests and remote branches
 
 | Item | Verified state and relationship |
 |---|---|
 | PR #10 | Open; `fix/full-remediation` → `main`; head `1ce41bb6ab4968dfa7f1862572171333a9129f38`; no merge or close performed |
-| PR #11 | Open; `fix/runtime-eof-search-feeds` → `fix/full-remediation`; head `89a2859e261c1e48dbc2ddd36a410d8b90fade76`; push and pull-request CI passed |
+| PR #11 | Open; `fix/runtime-eof-search-feeds` → `fix/full-remediation`; code-validation head `400556d`; this document refresh is docs-only and follows it |
 | `main` | Default branch; unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
 | `fix/full-remediation` | PR #10 head remains `1ce41bb6ab4968dfa7f1862572171333a9129f38` |
-| `fix/runtime-eof-search-feeds` | Documentation snapshot parent head is `90234e2`; final documentation child follows it |
+| `fix/runtime-eof-search-feeds` | Code-validation head is `400556d`; this document refresh is a documentation-only child |
 | Local `procomic-ready-to-test` | Clean checkout tracking `origin/fix/runtime-eof-search-feeds` |
 
 ## Dependabot pull requests

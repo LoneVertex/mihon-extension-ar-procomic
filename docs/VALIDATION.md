@@ -4,11 +4,11 @@
 
 **Implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
 
-**Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
+**Implementation baseline HEAD:** [`81485ee15f88b292842e03cc548474de044056f1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
 
-**Documentation snapshot parent HEAD:** [`90234e2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/90234e2)
+**Documentation snapshot parent HEAD:** [`81485ee`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
 
-**Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
+**Focused Reader source commit:** [`81485ee`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
 
 **Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
 
@@ -18,7 +18,7 @@
 
 ## Software Gate
 
-The audit-remediation gate passed all 12 suites, `git diff --check`, protected-path checks, and clean debug/release builds. The historical implementation stack remains 26 commits ahead of unchanged `main`; the current audit commits are focused follow-ups after that stack, and the stacked PRs remain open.
+The audit-remediation gate passed all 12 suites, `git diff --check`, protected-path checks, and clean debug/release builds. The final implementation branch is 37 commits ahead of unchanged `main`, including the generic Reader follow-up; the stacked PRs remain open.
 
 | Gate | Result | Evidence |
 |---|---|---|

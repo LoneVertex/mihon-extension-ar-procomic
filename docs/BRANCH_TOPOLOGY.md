@@ -8,9 +8,11 @@
 
 **Authoritative remote implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
 
-**Current implementation branch HEAD:** [`89a2859e261c1e48dbc2ddd36a410d8b90fade76`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/89a2859e261c1e48dbc2ddd36a410d8b90fade76)
+**Documentation snapshot parent HEAD:** [`90234e2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/90234e2)
 
 **Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
+
+The snapshot parent includes the pushed Reader remediation and the compile-only Jsoup security update; the final documentation commit is the child of this snapshot.
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
@@ -60,10 +62,11 @@ main  76c8ed49ee81d066d30cebe6e412040db2d43a73
   | bf4c8d6  docs: synchronize full audit and CI validation state
   | 334888c  fix(reader): update AVIF decoder for protected tiles
   | 89a2859  docs(reader): record Android 16 remediation evidence
+  | 90234e2  chore(repo): synchronize topology and dependency security
   |                         ← fix/runtime-eof-search-feeds / PR #11 → fix/full-remediation
 ```
 
-The live branch is 36 commits ahead of `main`. The first 13 commits form the `fix/full-remediation` review stack represented by PR #10. The remaining 23 commits form the stacked `fix/runtime-eof-search-feeds` review branch represented by PR #11. History remains unsquashed and no public history was rewritten.
+The documentation snapshot parent is 37 commits ahead of `main`; the final documentation commit is one additional child.  The first 13 commits form the `fix/full-remediation` review stack represented by PR #10. The remaining 23 commits form the stacked `fix/runtime-eof-search-feeds` review branch represented by PR #11. History remains unsquashed and no public history was rewritten.
 
 ## Commit stack
 
@@ -105,6 +108,7 @@ The live branch is 36 commits ahead of `main`. The first 13 commits form the `fi
 | 34 | `bf4c8d6` | `docs: synchronize full audit and CI validation state` | PR #11 follow-up |
 | 35 | `334888c` | `fix(reader): update AVIF decoder for protected tiles` | PR #11 follow-up |
 | 36 | `89a2859` | `docs(reader): record Android 16 remediation evidence` | PR #11 follow-up |
+| 37 | `90234e2` | `chore(repo): synchronize topology and dependency security` | PR #11 follow-up |
 
 ## Pull requests and remote branches
 
@@ -114,7 +118,7 @@ The live branch is 36 commits ahead of `main`. The first 13 commits form the `fi
 | PR #11 | Open; `fix/runtime-eof-search-feeds` → `fix/full-remediation`; head `89a2859e261c1e48dbc2ddd36a410d8b90fade76`; push and pull-request CI passed |
 | `main` | Default branch; unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
 | `fix/full-remediation` | PR #10 head remains `1ce41bb6ab4968dfa7f1862572171333a9129f38` |
-| `fix/runtime-eof-search-feeds` | PR #11 head is `89a2859e261c1e48dbc2ddd36a410d8b90fade76` |
+| `fix/runtime-eof-search-feeds` | Documentation snapshot parent head is `90234e2`; final documentation child follows it |
 | Local `procomic-ready-to-test` | Clean checkout tracking `origin/fix/runtime-eof-search-feeds` |
 
 ## Dependabot pull requests

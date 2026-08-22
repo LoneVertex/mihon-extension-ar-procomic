@@ -6,7 +6,7 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Current branch HEAD:** [`89a2859e261c1e48dbc2ddd36a410d8b90fade76`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/89a2859e261c1e48dbc2ddd36a410d8b90fade76)
+**Documentation snapshot parent HEAD:** [`90234e2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/90234e2)
 
 **Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
 

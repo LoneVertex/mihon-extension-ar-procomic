@@ -6,7 +6,7 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Current branch HEAD:** [`89a2859e261c1e48dbc2ddd36a410d8b90fade76`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/89a2859e261c1e48dbc2ddd36a410d8b90fade76)
+**Documentation snapshot parent HEAD:** [`90234e2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/90234e2)
 
 **Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
 
@@ -85,7 +85,7 @@ The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with 
 | Variant | Current local APK | Package | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
 | Debug | `app/build/outputs/apk/debug/app-debug.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 25,631,098 bytes | `2427a1a1c516b8fb2b067fbb16a9a4e26d5fc972ad6a201061c199d915cb5d8e` |
-| Release | `app/build/outputs/apk/release/app-release.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 22,830,491 bytes | `7dc72b668bd958275cd3f3bf47c3b9d59218f6984941ae5b61e6a3f0000d2bb0` |
+| Release | `app/build/outputs/apk/release/app-release.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=2`, `versionName=1.1` | 22,830,495 bytes | `c559559cdda1d1aa200349ff32c63862f67787fd419724a15aa4a6e98af15b66` |
 
 The standard local output paths are `app/build/outputs/apk/debug/app-debug.apk` and `app/build/outputs/apk/release/app-release.apk`. The CI artifact copies and checksum file are retained in the external synchronization evidence bundle, not committed into this source repository. The debug hash was stable across the repeated clean gate; the release hash varied between two clean local builds while size and metadata remained identical, so the latest local hash above is evidence for that exact build only, not a reproducibility certificate.
 

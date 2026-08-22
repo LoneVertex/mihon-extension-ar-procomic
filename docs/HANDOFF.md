@@ -8,7 +8,7 @@
 
 **Implementation baseline HEAD:** [`8f88ec9fe839cbbca9076cd0c866f287a7b684dd`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/8f88ec9fe839cbbca9076cd0c866f287a7b684dd)
 
-**Current branch HEAD:** [`89a2859e261c1e48dbc2ddd36a410d8b90fade76`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/89a2859e261c1e48dbc2ddd36a410d8b90fade76)
+**Documentation snapshot parent HEAD:** [`90234e2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/90234e2)
 
 **Focused Reader source commit:** [`334888c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/334888c)
 
@@ -43,8 +43,8 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 | AVIF dependency | `io.github.awxkee:avif-coder:2.2.1` |
 | Jsoup compile-only dependency | `org.jsoup:jsoup:1.23.1` |
 | Native packaging | `useLegacyPackaging=true` |
-| Release local APK | `app/build/outputs/apk/release/app-release.apk`, 22,830,491 bytes |
-| Release local SHA-256 | `7dc72b668bd958275cd3f3bf47c3b9d59218f6984941ae5b61e6a3f0000d2bb0` |
+| Release local APK | `app/build/outputs/apk/release/app-release.apk`, 22,830,495 bytes |
+| Release local SHA-256 | `c559559cdda1d1aa200349ff32c63862f67787fd419724a15aa4a6e98af15b66` |
 | Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, 25,631,098 bytes |
 | Debug local SHA-256 | `2427a1a1c516b8fb2b067fbb16a9a4e26d5fc972ad6a201061c199d915cb5d8e` |
 | Size rationale | Universal `avif-coder` native libraries across four ABIs; no ABI split applied without Mihon distribution evidence |

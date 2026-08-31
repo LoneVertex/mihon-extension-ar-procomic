@@ -1,13 +1,16 @@
+# Dependabot is disabled for this repository.
+# Dependencies are evaluated and updated manually to ensure compatibility
+# with the Mihon runtime before merging.
 version: 2
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0

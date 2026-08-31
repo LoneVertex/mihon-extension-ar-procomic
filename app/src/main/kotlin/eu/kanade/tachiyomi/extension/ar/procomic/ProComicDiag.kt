@@ -34,6 +34,10 @@ object ProComicDiag {
         "(?i)(\\b(?:authorization|cookie|set-cookie|proxy-authorization|x-csrf-token|csrf|api[_-]?key|password|pass|secret|session(?:[_-]?id)?|token|signature|sig)\\b\\s*[:=]\\s*)(?:\\\"[^\\\"]*\\\"|'[^']*'|[^,;\\s}]+)",
     )
 
+    private val compoundSensitiveAssignment = Regex(
+        "(?i)(\\b[A-Za-z0-9_-]*(?:api[_-]?key|auth(?:orization)?|csrf|nonce|pass(?:word)?|secret|session(?:[_-]?id)?|sig(?:nature)?|token)[A-Za-z0-9_-]*\\b\\s*[:=]\\s*)(?:\\\"[^\\\"]*\\\"|'[^']*'|[^,;\\s}]+)",
+    )
+
     private val bearerToken = Regex("(?i)\\bBearer\\s+[^\\s,;]+")
     private val absoluteUrl = Regex("https?://[^\\s\\\"'<>]+", RegexOption.IGNORE_CASE)
 
@@ -58,6 +62,7 @@ object ProComicDiag {
         sanitized = absoluteUrl.replace(sanitized) { redactUrl(it.value) }
         sanitized = bearerToken.replace(sanitized, "Bearer $REDACTED")
         sanitized = sensitiveAssignment.replace(sanitized) { "${it.groupValues[1]}$REDACTED" }
+        sanitized = compoundSensitiveAssignment.replace(sanitized) { "${it.groupValues[1]}$REDACTED" }
         return sanitized.take(512)
     }
 

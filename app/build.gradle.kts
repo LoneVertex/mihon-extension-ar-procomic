@@ -37,8 +37,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Use debug keystore for sideloading; replace with production key for repo submission.
-            signingConfig = signingConfigs.getByName("debug")
+            // Leave release unsigned; maintainers must apply their controlled signing config at release time.
         }
         debug { }
     }

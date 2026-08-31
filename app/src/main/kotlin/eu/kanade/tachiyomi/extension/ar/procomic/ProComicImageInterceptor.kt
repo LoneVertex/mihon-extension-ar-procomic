@@ -14,6 +14,7 @@ import kotlinx.serialization.encodeToString
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -36,6 +37,9 @@ class ProComicImageInterceptor(
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
+        if (!ProComicUtils.isProtectedPageImageUrl(request.url.toString())) {
+            return chain.proceed(request)
+        }
         val fragment = request.url.fragment ?: return chain.proceed(request)
         val payload = ProComicUtils.decodeProtectedPagePayload(fragment)
             ?: return chain.proceed(request)
@@ -66,9 +70,13 @@ class ProComicImageInterceptor(
             if (!response.isSuccessful) {
                 throw IOException("ProComic Reader: protected map request failed (${response.code})")
             }
-            ProComicUtils.json.decodeFromString<ProComicMapProxyResponse>(
+            val parsed = ProComicUtils.json.decodeFromString<ProComicMapProxyResponse>(
                 readBoundedText(response, MAX_MAP_RESPONSE_BYTES),
-            ).data?.map ?: throw IOException("ProComic Reader: protected map response has no map")
+            )
+            if (parsed.success == false) {
+                throw IOException("ProComic Reader: protected map response returned success=false")
+            }
+            parsed.data?.map ?: throw IOException("ProComic Reader: protected map response has no map")
         }
     }
 
@@ -77,10 +85,10 @@ class ProComicImageInterceptor(
         map: ProComicProtectedMap,
         pageIndex: Int,
     ): Response {
-        val width = map.dim.getOrNull(0)?.coerceAtLeast(1)
-            ?: throw IOException("ProComic Reader: protected map width is missing")
-        val height = map.dim.getOrNull(1)?.coerceAtLeast(1)
-            ?: throw IOException("ProComic Reader: protected map height is missing")
+        val width = map.dim.getOrNull(0)?.takeIf { it in 1..MAX_BITMAP_DIMENSION }
+            ?: throw IOException("ProComic Reader: protected map width is invalid")
+        val height = map.dim.getOrNull(1)?.takeIf { it in 1..MAX_BITMAP_DIMENSION }
+            ?: throw IOException("ProComic Reader: protected map height is invalid")
         if (width.toLong() * height.toLong() > MAX_COMPOSITE_PIXELS) {
             throw IOException("ProComic Reader: protected page is too large")
         }
@@ -99,18 +107,23 @@ class ProComicImageInterceptor(
         val canvas = Canvas(result)
         canvas.drawColor(android.graphics.Color.WHITE)
         val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
-        var responseBuilder: Response.Builder? = null
         try {
             order.forEachIndexed { outputIndex, sourceIndex ->
                 val pieceUrl = map.pieces.getOrNull(sourceIndex)
                     ?.takeIf { ProComicUtils.isAllowedProtectedTileUrl(it) }
                     ?: throw IOException("ProComic Reader: protected tile URL is invalid")
                 val rect = rects[outputIndex]
+                val right = (rect.left.toLong() + rect.width.toLong())
+                    .coerceIn(1L, width.toLong())
+                    .toInt()
+                val bottom = (rect.top.toLong() + rect.height.toLong())
+                    .coerceIn(1L, height.toLong())
+                    .toInt()
                 val destination = Rect(
                     rect.left.coerceIn(0, width - 1),
                     rect.top.coerceIn(0, height - 1),
-                    (rect.left + rect.width).coerceIn(1, width),
-                    (rect.top + rect.height).coerceIn(1, height),
+                    right,
+                    bottom,
                 )
                 if (destination.right <= destination.left || destination.bottom <= destination.top) {
                     throw IOException("ProComic Reader: protected tile rectangle is invalid")
@@ -123,9 +136,6 @@ class ProComicImageInterceptor(
                 tileClient.newCall(tileRequest).execute().use { tileResponse ->
                     if (!tileResponse.isSuccessful) {
                         throw IOException("ProComic Reader: protected tile request failed (${tileResponse.code})")
-                    }
-                    if (responseBuilder == null) {
-                        responseBuilder = tileResponse.newBuilder().request(pageRequest)
                     }
                     val bytes = readBoundedBytes(tileResponse, MAX_TILE_BYTES)
                     logUnexpectedTileMetadata(
@@ -154,8 +164,16 @@ class ProComicImageInterceptor(
             if (!result.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, buffer.outputStream())) {
                 throw IOException("ProComic Reader: reconstructed page could not be encoded")
             }
-            val responseBody = buffer.readByteArray().toResponseBody(JPEG_MEDIA_TYPE)
-            return (responseBuilder ?: throw IOException("ProComic Reader: protected page had no tile response"))
+            val outputBytes = buffer.readByteArray()
+            if (outputBytes.size > MAX_OUTPUT_BYTES) {
+                throw IOException("ProComic Reader: reconstructed page output is too large")
+            }
+            val responseBody = outputBytes.toResponseBody(JPEG_MEDIA_TYPE)
+            return Response.Builder()
+                .request(pageRequest)
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
                 .header("Content-Type", JPEG_MEDIA_TYPE.toString())
                 .body(responseBody)
                 .build()
@@ -171,11 +189,17 @@ class ProComicImageInterceptor(
         sourceIndex: Int,
         contentType: String?,
     ): Bitmap {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bounds.outWidth > 0 && bounds.outHeight > 0) {
+            validateTileDimensions(bounds.outWidth, bounds.outHeight)
+        }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { return it }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             runCatching {
-                ImageDecoder.decodeBitmap(ImageDecoder.createSource(ByteBuffer.wrap(bytes))) { decoder, _, _ ->
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(ByteBuffer.wrap(bytes))) { decoder, info, _ ->
+                    validateTileDimensions(info.size.width, info.size.height)
                     decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
                     decoder.isMutableRequired = false
                 }
@@ -209,6 +233,12 @@ class ProComicImageInterceptor(
                 "bytes=${bytes.size} contentType=${contentType ?: "(absent)"}",
         )
         throw IOException("ProComic Reader: protected tile could not be decoded")
+    }
+
+    private fun validateTileDimensions(width: Int, height: Int) {
+        if (width <= 0 || height <= 0 || width.toLong() * height.toLong() > MAX_TILE_PIXELS) {
+            throw IOException("ProComic Reader: protected tile dimensions exceed limits")
+        }
     }
 
     private fun decodeWithAomedia(bytes: ByteArray): Bitmap? {
@@ -278,10 +308,10 @@ class ProComicImageInterceptor(
         return List(count) { index ->
             val column = index % actualColumns
             val row = if (grid) index / actualColumns else 0
-            val left = (width * column) / actualColumns
-            val right = (width * (column + 1)) / actualColumns
-            val top = if (grid) (height * row) / rows else 0
-            val bottom = if (grid) (height * (row + 1)) / rows else height
+            val left = (width.toLong() * column.toLong() / actualColumns).toInt()
+            val right = (width.toLong() * (column + 1).toLong() / actualColumns).toInt()
+            val top = if (grid) (height.toLong() * row.toLong() / rows).toInt() else 0
+            val bottom = if (grid) (height.toLong() * (row + 1).toLong() / rows).toInt() else height
             ProComicMapRect(left, top, right - left, bottom - top)
         }
     }
@@ -314,6 +344,8 @@ class ProComicImageInterceptor(
         const val MAX_TILE_BYTES = 8_000_000
         const val MAX_TILE_PIXELS = 8_000_000L
         const val MAX_COMPOSITE_PIXELS = 40_000_000L
+        const val MAX_BITMAP_DIMENSION = 16_384
+        const val MAX_OUTPUT_BYTES = 32_000_000
         const val JPEG_QUALITY = 95
         val JSON_MEDIA_TYPE = "application/json".toMediaType()
         val JPEG_MEDIA_TYPE = "image/jpeg".toMediaType()

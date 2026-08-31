@@ -115,7 +115,7 @@ def test_source_uses_dedicated_popular_contract() -> None:
     assert "hasNextPage = false" in popular_block
     assert "coverImageApp?.desktop" in source
     assert "cdnPath" in source
-    assert 'Regex("cdn\\\\d+")' in source
+    assert "isAllowedCdnPath" in source
 
 
 def main() -> None:

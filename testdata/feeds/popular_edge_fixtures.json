@@ -14,5 +14,45 @@
       {"content": {"id": 3, "title": "Minimal", "slug": "minimal", "type": "manga"}, "viewCount": null}
     ]
   },
+  "relative_thumbnail": {
+    "success": true,
+    "data": [
+      {"content": {
+        "id": 311,
+        "title": "Relative Thumbnail",
+        "slug": "relative-thumbnail",
+        "type": "manhua",
+        "thumbnail": "/311/image_series/1759062678865-xjn2zccaw09.avif",
+        "cdn_path": "cdn2",
+        "coverImageApp": {"desktop": "https://app.procomic.net/series/311/1759062680101-el3q317ryq-10e32aa8ac69-desktop.avif"},
+        "metadata": {"coverImage": "/311/image_series/1759062680101-el3q317ryq.avif"}
+      }, "viewCount": "1"}
+    ]
+  },
+  "relative_thumbnail_cdn_fallback": {
+    "success": true,
+    "data": [
+      {"content": {
+        "id": 40,
+        "title": "CDN Fallback",
+        "slug": "cdn-fallback",
+        "type": "manhua",
+        "thumbnail": "/40/image_series/1758447487254-ra92v1fqd5l.avif",
+        "cdn_path": "cdn2"
+      }, "viewCount": "1"}
+    ]
+  },
+  "exclusive_price_scalar": {
+    "success": true,
+    "data": [
+      {"content": {
+        "id": 527,
+        "title": "Scalar Exclusive Price",
+        "slug": "scalar-exclusive-price",
+        "type": "manhua",
+        "metadata": {"exclusivePrice": 5}
+      }, "viewCount": "1"}
+    ]
+  },
   "malformed": "{not-json"
 }

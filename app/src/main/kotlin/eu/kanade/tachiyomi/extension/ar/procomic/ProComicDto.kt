@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.ar.procomic
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -10,8 +11,10 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Deserializes a JSON field that can be either:
@@ -43,6 +46,32 @@ private object StringOrListSerializer : KSerializer<String?> {
     }
 
     override fun serialize(encoder: Encoder, value: String?) {
+        delegate.serialize(encoder, value)
+    }
+}
+
+/**
+ * Deserializes the live `exclusivePrice` field, which is normally a language-to-price object
+ * but is currently also returned as a scalar integer for some Popular rows. The scalar is
+ * retained under a synthetic default key because callers only need decoding to remain tolerant.
+ */
+private object IntOrMapSerializer : KSerializer<Map<String, Int>?> {
+    private val delegate = MapSerializer(String.serializer(), Int.serializer()).nullable
+
+    override val descriptor: SerialDescriptor = delegate.descriptor
+
+    override fun deserialize(decoder: Decoder): Map<String, Int>? {
+        val jsonDecoder = decoder as? JsonDecoder ?: return delegate.deserialize(decoder)
+        return when (val element = jsonDecoder.decodeJsonElement()) {
+            is JsonObject -> element.mapNotNull { (key, value) ->
+                value.jsonPrimitive.contentOrNull?.toIntOrNull()?.let { key to it }
+            }.toMap().ifEmpty { null }
+            is JsonPrimitive -> element.contentOrNull?.toIntOrNull()?.let { mapOf("_default" to it) }
+            else -> null
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: Map<String, Int>?) {
         delegate.serialize(encoder, value)
     }
 }
@@ -101,6 +130,12 @@ data class ProComicPopularItem(
 )
 
 @Serializable
+data class ProComicCoverImageApp(
+    val desktop: String? = null,
+    val mobile: String? = null,
+)
+
+@Serializable
 data class ProComicPopularContent(
     val id: Int,
     val title: String,
@@ -108,7 +143,10 @@ data class ProComicPopularContent(
     val description: String? = null,
     val type: String,
     val status: String? = null,
+    val progress: String? = null,
     val thumbnail: String? = null,
+    @SerialName("cdn_path") val cdnPath: String? = null,
+    val coverImageApp: ProComicCoverImageApp? = null,
     val metadata: ProComicSeriesMetadata? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
@@ -165,8 +203,10 @@ data class ProComicSeriesDto(
     val description: String? = null,
     val type: String,
     val status: String? = null,
+    val progress: String? = null,
     val thumbnail: String? = null,
     @SerialName("coverImage") val coverImage: String? = null,
+    @SerialName("cdn_path") val cdnPath: String? = null,
     val metadata: ProComicSeriesMetadata? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
@@ -228,6 +268,7 @@ data class ProComicSeriesMetadata(
     @SerialName("descriptions") val descriptions: ProComicDescriptions? = null,
     val exclusiveLockStrategy: String? = null,
     val exclusiveUniversalConfigs: Map<String, ProComicExclusiveConfig>? = null,
+    @Serializable(with = IntOrMapSerializer::class)
     val exclusivePrice: Map<String, Int>? = null,
 )
 
@@ -337,4 +378,96 @@ data class ProComicChapterMetadata(
 data class ProComicProtection(
     @SerialName("publicImageCount") val publicImageCount: Int,
     val version: Int = 0,
+    val deferredMedia: ProComicDeferredMedia? = null,
+)
+
+@Serializable
+data class ProComicDeferredMedia(
+    val token: String? = null,
+    val triggerAfterImageIndex: Int? = null,
+    val splitIndex: Int? = null,
+    val requireTurnstile: Boolean = false,
+    val turnstileMode: String? = null,
+)
+
+@Serializable
+data class ProComicDeferredMediaResponse(
+    val success: Boolean? = null,
+    val data: ProComicDeferredMediaData? = null,
+)
+
+@Serializable
+data class ProComicDeferredMediaData(
+    val chapterId: Int? = null,
+    val images: List<String> = emptyList(),
+    val maps: List<ProComicProtectedMapToken> = emptyList(),
+    val source: String? = null,
+    val splitIndex: Int? = null,
+)
+
+@Serializable
+data class ProComicProtectedMapToken(
+    val token: String,
+    val method: String = "browser_session",
+)
+
+@Serializable
+data class ProComicProtectedPagePayload(
+    val kind: String = "procomic-protected-page-v1",
+    val chapterId: Int,
+    val token: String,
+    val method: String = "browser_session",
+    val cdnPath: String,
+    val pageIndex: Int,
+)
+
+@Serializable
+data class ProComicMapProxyRequest(
+    val token: String,
+    val method: String,
+    val cdnPath: String,
+    val pageIndex: Int,
+)
+
+@Serializable
+data class ProComicMapProxyResponse(
+    val success: Boolean? = null,
+    val data: ProComicMapProxyData? = null,
+)
+
+@Serializable
+data class ProComicMapProxyData(
+    val map: ProComicProtectedMap? = null,
+    val viewerWatermark: ProComicViewerWatermark? = null,
+)
+
+@Serializable
+data class ProComicProtectedMap(
+    val dim: List<Int> = emptyList(),
+    val mode: String = "grid_1x1",
+    val order: List<Int> = emptyList(),
+    val pieces: List<String> = emptyList(),
+    val rects: List<ProComicMapRect> = emptyList(),
+)
+
+@Serializable
+data class ProComicMapRect(
+    val left: Int = 0,
+    val top: Int = 0,
+    val width: Int = 1,
+    val height: Int = 1,
+)
+
+@Serializable
+data class ProComicViewerWatermark(
+    val payload: String? = null,
+    val pageIndex: Int? = null,
+    val marks: List<ProComicWatermarkMark> = emptyList(),
+)
+
+@Serializable
+data class ProComicWatermarkMark(
+    val xPct: Double = 0.0,
+    val yPct: Double = 0.0,
+    val rotate: Double = 0.0,
 )

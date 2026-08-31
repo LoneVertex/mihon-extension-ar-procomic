@@ -1,0 +1,65 @@
+{
+  "data": [
+    {
+      "id": 286,
+      "title": "Absolute cover wins",
+      "slug": "absolute-cover-wins",
+      "description": null,
+      "type": "manhua",
+      "status": "approved",
+      "thumbnail": "/286/image_series/1758447487254-ra92v1fqd5l.avif",
+      "coverImage": "https://cdn2.procomic.net/286/image_series/1758447487254-ra92v1fqd5l.avif",
+      "cdn_path": "cdn2"
+    },
+    {
+      "id": 287,
+      "title": "Validated relative cover",
+      "slug": "validated-relative-cover",
+      "description": null,
+      "type": "manhwa",
+      "status": "approved",
+      "thumbnail": "/287/image_series/1758447487254-valid.avif",
+      "coverImage": null,
+      "cdn_path": "cdn2"
+    },
+    {
+      "id": 288,
+      "title": "Absolute thumbnail",
+      "slug": "absolute-thumbnail",
+      "description": null,
+      "type": "manga",
+      "status": "approved",
+      "thumbnail": "https://app.procomic.pro/series/288/originals/cover.avif",
+      "coverImage": null,
+      "cdn_path": "cdn2"
+    },
+    {
+      "id": 289,
+      "title": "Untrusted relative cover",
+      "slug": "untrusted-relative-cover",
+      "description": null,
+      "type": "manhua",
+      "status": "approved",
+      "thumbnail": "/289/image_series/1758447487254-unsafe.avif",
+      "coverImage": null,
+      "cdn_path": "uploads"
+    },
+    {
+      "id": 290,
+      "title": "Malformed thumbnail",
+      "slug": "malformed-thumbnail",
+      "description": null,
+      "type": "manhua",
+      "status": "approved",
+      "thumbnail": "//evil.example/cover.avif",
+      "coverImage": null,
+      "cdn_path": "cdn2"
+    }
+  ],
+  "meta": {
+    "total": 5,
+    "page": 1,
+    "limit": 18,
+    "pages": 1
+  }
+}

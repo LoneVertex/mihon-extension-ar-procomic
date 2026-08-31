@@ -1,0 +1,13 @@
+{
+  "source_url": "https://procomic.net/favicon.svg",
+  "source_content_type": "image/svg+xml",
+  "source_sha256": "d24923e052360a27191df9651bad97f5f6779d2b2df16564f8c4012e6d027269",
+  "source_title": "ProChan Icon",
+  "densities": {
+    "mipmap-mdpi": {"size": 48, "sha256": "3941a354203306c4bd29fa2a1dd9584c53e1aa6754263256665fa8f73382156e"},
+    "mipmap-hdpi": {"size": 72, "sha256": "ac2456c7e2fab1297fe68912ab8ec1cc8acaa0236a06ac003f16b653b587db3f"},
+    "mipmap-xhdpi": {"size": 96, "sha256": "0024a3e6d047698016f3f971958d9b25e6f548edcd8a67ac3bb4a039d90586ac"},
+    "mipmap-xxhdpi": {"size": 144, "sha256": "bfc661d024afa3e48be878c437a56fcf202ec62e77b5e93b866d0c5f54b27ba0"},
+    "mipmap-xxxhdpi": {"size": 192, "sha256": "56270c1385870939acf5ab37eb31a2d3166ca8352de5b54243bccb2b3b6d7c89"}
+  }
+}

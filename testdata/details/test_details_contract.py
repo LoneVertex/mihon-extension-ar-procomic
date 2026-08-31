@@ -206,6 +206,17 @@ def main() -> None:
     mismatched = '{"series":{"id":999,"title":"Wrong","slug":"wrong","type":"manhua"}}'
     assert parse_details(mismatched, 690, "wrong") is None
 
+    fallback = json.loads((ROOT / "restricted_fallback_fixtures.json").read_text())
+    assert fallback["details_summary"]["coverImage"] == ""
+    assert fallback["details_summary"]["description"] == ""
+    assert fallback["expected_manga"] == fallback["public_source"]
+
+    source = (ROOT.parent.parent / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/ProComic.kt").read_text()
+    assert "RestrictedMangaFallback" in source
+    assert ".tag(RestrictedMangaFallback::class.java" in source
+    assert "fallback?.thumbnailUrl" in source
+    assert "fallback?.description" in source
+
     expect_failure(ROOT / "malformed_details.rsc", 690, "anything")
     expect_failure(
         ROOT / "redirecting_678.rsc",
@@ -218,7 +229,7 @@ def main() -> None:
         "dream-reincarnation-i-became-the-supreme-master-of-martial-arts",
     )
 
-    print("details contract tests: PASS (canonical 678/690, restricted 695/691, unsafe null, malformed, redirecting, invalid)")
+    print("details contract tests: PASS (canonical/restricted parsing, public metadata fallback, unsafe null, malformed, redirecting, invalid)")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,13 @@
+{
+  "max_response_bytes": 2000000,
+  "valid_payloads": {
+    "search_dragon": {"bytes": 67513, "json": {"data": [{"id": 286, "title": "Dragon Son-In-Law God of War", "type": "manhua"}], "meta": {"page": 1, "pages": 3}}},
+    "popular": {"bytes": 180770, "json": {"success": true, "data": [{"content": {"id": 31, "title": "Disastrous Necromancer", "type": "manhua"}}]}},
+    "latest": {"bytes": 26521, "json": {"success": true, "data": [{"mangaId": 493, "mangaTitle": "Future City S: Awakening Ultimate Luck", "type": "manhua"}]}}
+  },
+  "edge_cases": {
+    "empty": {"bytes": 0, "expected": "explicit_parse_failure"},
+    "truncated_json": {"text": "{\"success\":true,\"data\":[", "expected": "explicit_parse_failure"},
+    "oversized": {"bytes": 2000001, "expected": "response_limit_failure"}
+  }
+}

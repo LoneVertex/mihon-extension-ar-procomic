@@ -1,0 +1,1053 @@
+{
+  "query": "dragon",
+  "page1": {
+    "meta": {
+      "total": 4,
+      "page": 1,
+      "limit": 3,
+      "pages": 2
+    },
+    "data": [
+      {
+        "id": 1,
+        "title": "Dragon Son-In-Law God",
+        "slug": "dragon-son-in-law-god",
+        "description": "A dragon story",
+        "type": "manhua"
+      },
+      {
+        "id": 2,
+        "title": "The Dragon",
+        "slug": "the-dragon",
+        "description": null,
+        "type": "manga"
+      },
+      {
+        "id": 3,
+        "title": "Unrelated Title",
+        "slug": "unrelated-title",
+        "description": null,
+        "type": "manga"
+      }
+    ]
+  },
+  "page2": {
+    "meta": {
+      "total": 4,
+      "page": 2,
+      "limit": 3,
+      "pages": 2
+    },
+    "data": [
+      {
+        "id": 4,
+        "title": "Another Unrelated Title",
+        "slug": "another-unrelated-title",
+        "description": null,
+        "type": "manhua"
+      }
+    ]
+  },
+  "lookahead": {
+    "pages": [
+      {
+        "meta": {
+          "total": 6,
+          "page": 1,
+          "limit": 3,
+          "pages": 3
+        },
+        "data": [
+          {
+            "id": 1,
+            "title": "Dragon Son-In-Law God",
+            "slug": "dragon-son-in-law-god",
+            "description": "A dragon story",
+            "type": "manhua"
+          },
+          {
+            "id": 3,
+            "title": "Unrelated Title",
+            "slug": "unrelated-title",
+            "description": null,
+            "type": "manga"
+          }
+        ]
+      },
+      {
+        "meta": {
+          "total": 6,
+          "page": 2,
+          "limit": 3,
+          "pages": 3
+        },
+        "data": [
+          {
+            "id": 4,
+            "title": "Another Unrelated Title",
+            "slug": "another-unrelated-title",
+            "description": null,
+            "type": "manhua"
+          }
+        ]
+      },
+      {
+        "meta": {
+          "total": 6,
+          "page": 3,
+          "limit": 3,
+          "pages": 3
+        },
+        "data": [
+          {
+            "id": 5,
+            "title": "Hidden Dragon in the City",
+            "slug": "hidden-dragon-in-the-city",
+            "description": null,
+            "type": "manhua"
+          }
+        ]
+      }
+    ],
+    "repeated_page": {
+      "meta": {
+        "total": 6,
+        "page": 3,
+        "limit": 3,
+        "pages": 4
+      },
+      "data": [
+        {
+          "id": 4,
+          "title": "Another Unrelated Title",
+          "slug": "another-unrelated-title",
+          "description": null,
+          "type": "manhua"
+        }
+      ]
+    }
+  },
+  "ranking_cases": {
+    "query": "dragon",
+    "rows": [
+      {
+        "id": 10,
+        "title": "Dragon Legend",
+        "slug": "dragon-legend",
+        "metadata": {"altTitles": ["Lегенда"]},
+        "type": "manhua"
+      },
+      {
+        "id": 11,
+        "title": "Visible Title Without Query",
+        "slug": "visible-title-without-query",
+        "metadata": {"altTitles": ["Dragon Saga"]},
+        "type": "manhua"
+      },
+      {
+        "id": 12,
+        "title": "Another Dragon Story",
+        "slug": "another-dragon-story",
+        "metadata": {"altTitles": []},
+        "type": "manga"
+      }
+    ],
+    "expected_quality_order": [10, 12, 11]
+  },
+  "duplicate_series_cases": {
+    "rows": [
+      {
+        "id": 659,
+        "title": "I, the Demon Lord, Am Being Targeted by My Female Disciples!",
+        "slug": "i-the-demon-lord-am-being-targeted-by-my-female-disciples",
+        "type": "novel",
+        "metadata": {"volumes": 0}
+      },
+      {
+        "id": 56,
+        "title": "I, the Demon Lord, Am Being Targeted by My Female Disciples!",
+        "slug": "i-the-demon-lord-am-being-targeted-by-my-female-disciples",
+        "type": "manhua",
+        "metadata": {"volumes": 12}
+      }
+    ],
+    "expected_ids_after_novel_filter": [56]
+  },
+  "live_batch_cases": {
+    "dragon": {
+      "request_limit": 50,
+      "pages": [
+        {
+          "meta": {
+            "total": 87,
+            "page": 1,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            286,
+            44,
+            525,
+            422,
+            388,
+            353,
+            246,
+            243,
+            95,
+            692,
+            690,
+            689,
+            688,
+            687,
+            686,
+            678,
+            677,
+            670,
+            659,
+            657,
+            655,
+            647,
+            643,
+            639,
+            635,
+            631,
+            612,
+            606,
+            605,
+            603,
+            600,
+            599,
+            598,
+            597,
+            595,
+            594,
+            593,
+            584,
+            580,
+            564,
+            551,
+            518,
+            509,
+            504,
+            502,
+            498,
+            493,
+            489,
+            477,
+            476
+          ],
+          "matching_ids": [
+            286,
+            44,
+            525,
+            422,
+            388,
+            353,
+            246,
+            243,
+            95
+          ]
+        },
+        {
+          "meta": {
+            "total": 87,
+            "page": 2,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            463,
+            457,
+            441,
+            436,
+            421,
+            407,
+            397,
+            383,
+            380,
+            351,
+            287,
+            285,
+            283,
+            282,
+            279,
+            228,
+            209,
+            198,
+            147,
+            124,
+            109,
+            107,
+            100,
+            80,
+            76,
+            59,
+            58,
+            57,
+            56,
+            54,
+            50,
+            49,
+            47,
+            45,
+            41,
+            40,
+            33
+          ],
+          "matching_ids": [
+            124,
+            57
+          ]
+        }
+      ]
+    },
+    "skill": {
+      "request_limit": 50,
+      "pages": [
+        {
+          "meta": {
+            "total": 62,
+            "page": 1,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            686,
+            637,
+            533,
+            511,
+            496,
+            469,
+            464,
+            399,
+            395,
+            383,
+            323,
+            215,
+            195,
+            153,
+            146,
+            118,
+            489,
+            690,
+            689,
+            676,
+            659,
+            653,
+            647,
+            639,
+            612,
+            606,
+            600,
+            595,
+            594,
+            592,
+            584,
+            580,
+            565,
+            520,
+            518,
+            509,
+            506,
+            502,
+            493,
+            476,
+            475,
+            465,
+            374,
+            310,
+            296,
+            287,
+            285,
+            279,
+            202,
+            180
+          ],
+          "matching_ids": [
+            686,
+            637,
+            533,
+            496,
+            469,
+            464,
+            399,
+            395,
+            383,
+            323,
+            215,
+            153,
+            118,
+            489,
+            465
+          ]
+        },
+        {
+          "meta": {
+            "total": 62,
+            "page": 2,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            147,
+            124,
+            117,
+            107,
+            79,
+            73,
+            56,
+            50,
+            49,
+            44,
+            41,
+            40
+          ],
+          "matching_ids": []
+        }
+      ]
+    }
+  },
+  "live_title_policy_cases": {
+    "dragon": {
+      "query": "dragon",
+      "pages": [
+        {
+          "meta": {
+            "total": 87,
+            "page": 1,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            286,
+            44,
+            525,
+            422,
+            388,
+            353,
+            246,
+            243,
+            95,
+            692,
+            690,
+            689,
+            688,
+            687,
+            686,
+            678,
+            677,
+            670,
+            659,
+            657,
+            655,
+            647,
+            643,
+            639,
+            635,
+            631,
+            612,
+            606,
+            605,
+            603,
+            600,
+            599,
+            598,
+            597,
+            595,
+            594,
+            593,
+            584,
+            580,
+            564,
+            551,
+            518,
+            509,
+            504,
+            502,
+            498,
+            493,
+            489,
+            477,
+            476
+          ],
+          "title_like_ids": [
+            286,
+            44,
+            525,
+            422,
+            388,
+            353,
+            246,
+            243,
+            95
+          ],
+          "description_only_ids": [
+            518
+          ]
+        },
+        {
+          "meta": {
+            "total": 87,
+            "page": 2,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            463,
+            457,
+            441,
+            436,
+            421,
+            407,
+            397,
+            383,
+            380,
+            351,
+            287,
+            285,
+            283,
+            282,
+            279,
+            228,
+            209,
+            198,
+            147,
+            124,
+            109,
+            107,
+            100,
+            80,
+            76,
+            59,
+            58,
+            57,
+            56,
+            54,
+            50,
+            49,
+            47,
+            45,
+            41,
+            40,
+            33
+          ],
+          "title_like_ids": [],
+          "description_only_ids": [
+            124,
+            57
+          ]
+        },
+        {
+          "meta": {
+            "total": 87,
+            "page": 3,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [],
+          "title_like_ids": [],
+          "description_only_ids": []
+        },
+        {
+          "meta": {
+            "total": 87,
+            "page": 4,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [],
+          "title_like_ids": [],
+          "description_only_ids": []
+        }
+      ]
+    },
+    "skill": {
+      "query": "skill",
+      "pages": [
+        {
+          "meta": {
+            "total": 62,
+            "page": 1,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            686,
+            637,
+            533,
+            511,
+            496,
+            469,
+            464,
+            399,
+            395,
+            383,
+            323,
+            215,
+            195,
+            153,
+            146,
+            118,
+            489,
+            690,
+            689,
+            676,
+            659,
+            653,
+            647,
+            639,
+            612,
+            606,
+            600,
+            595,
+            594,
+            592,
+            584,
+            580,
+            565,
+            520,
+            518,
+            509,
+            506,
+            502,
+            493,
+            476,
+            475,
+            465,
+            374,
+            310,
+            296,
+            287,
+            285,
+            279,
+            202,
+            180
+          ],
+          "title_like_ids": [
+            686,
+            637,
+            533,
+            511,
+            496,
+            469,
+            464,
+            399,
+            395,
+            383,
+            323,
+            215,
+            195,
+            153,
+            146,
+            118,
+            489
+          ],
+          "description_only_ids": [
+            465
+          ]
+        },
+        {
+          "meta": {
+            "total": 62,
+            "page": 2,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            147,
+            124,
+            117,
+            107,
+            79,
+            73,
+            56,
+            50,
+            49,
+            44,
+            41,
+            40
+          ],
+          "title_like_ids": [],
+          "description_only_ids": []
+        },
+        {
+          "meta": {
+            "total": 62,
+            "page": 3,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [],
+          "title_like_ids": [],
+          "description_only_ids": []
+        }
+      ]
+    },
+    "exact_title": {
+      "query": "I Am Carrying Gold From the Post-Apocalyptic World",
+      "pages": [
+        {
+          "meta": {
+            "total": 36,
+            "page": 1,
+            "limit": 50,
+            "pages": 1
+          },
+          "data_ids": [
+            311,
+            689,
+            688,
+            630,
+            570,
+            560,
+            531,
+            517,
+            511,
+            494,
+            476,
+            455,
+            454,
+            408,
+            407,
+            372,
+            316,
+            281,
+            279,
+            275,
+            272,
+            270,
+            257,
+            240,
+            236,
+            229,
+            190,
+            186,
+            182,
+            177,
+            167,
+            137,
+            125,
+            121,
+            55,
+            42
+          ],
+          "title_like_ids": [
+            311
+          ],
+          "description_only_ids": []
+        }
+      ]
+    },
+    "partial_title": {
+      "query": "apocalypse",
+      "pages": [
+        {
+          "meta": {
+            "total": 24,
+            "page": 1,
+            "limit": 50,
+            "pages": 1
+          },
+          "data_ids": [
+            689,
+            229,
+            189,
+            160,
+            570,
+            279,
+            487,
+            182,
+            50,
+            673,
+            655,
+            630,
+            606,
+            509,
+            476,
+            311,
+            296,
+            186,
+            137,
+            107,
+            100,
+            59,
+            44,
+            42
+          ],
+          "title_like_ids": [
+            689,
+            229,
+            189,
+            160,
+            570,
+            279,
+            487,
+            182,
+            50
+          ],
+          "description_only_ids": []
+        }
+      ]
+    },
+    "arabic": {
+      "query": "ملك",
+      "pages": [
+        {
+          "meta": {
+            "total": 5,
+            "page": 1,
+            "limit": 50,
+            "pages": 1
+          },
+          "data_ids": [
+            41,
+            698,
+            689,
+            519,
+            282
+          ],
+          "title_like_ids": [
+            41
+          ],
+          "description_only_ids": []
+        }
+      ]
+    },
+    "mixed": {
+      "query": "dragon ملك",
+      "pages": [
+        {
+          "meta": {
+            "total": 4,
+            "page": 1,
+            "limit": 50,
+            "pages": 1
+          },
+          "data_ids": [
+            353,
+            282,
+            246,
+            95
+          ],
+          "title_like_ids": [],
+          "description_only_ids": []
+        }
+      ]
+    },
+    "punctuation": {
+      "query": "dragon world",
+      "pages": [
+        {
+          "meta": {
+            "total": 10,
+            "page": 1,
+            "limit": 50,
+            "pages": 1
+          },
+          "data_ids": [
+            654,
+            407,
+            353,
+            334,
+            286,
+            272,
+            267,
+            246,
+            167,
+            95
+          ],
+          "title_like_ids": [],
+          "description_only_ids": [
+            353
+          ]
+        }
+      ]
+    },
+    "no_result": {
+      "query": "zzzzzxqv-no-such-procomic-title",
+      "pages": [
+        {
+          "meta": {
+            "total": 0,
+            "page": 1,
+            "limit": 50,
+            "pages": 0
+          },
+          "data_ids": [],
+          "title_like_ids": [],
+          "description_only_ids": []
+        }
+      ]
+    }
+  },
+  "live_filter_cases": {
+    "manga": {
+      "pages": [
+        {
+          "meta": {
+            "total": 14,
+            "page": 1,
+            "limit": 50,
+            "pages": 1
+          },
+          "data_ids": [
+            670,
+            655,
+            504,
+            489,
+            476,
+            463,
+            457,
+            383,
+            351,
+            287,
+            285,
+            283,
+            282,
+            80
+          ],
+          "types": [
+            "manga"
+          ]
+        }
+      ]
+    },
+    "manhwa": {
+      "pages": [
+        {
+          "meta": {
+            "total": 14,
+            "page": 1,
+            "limit": 50,
+            "pages": 1
+          },
+          "data_ids": [
+            677,
+            657,
+            606,
+            605,
+            603,
+            600,
+            599,
+            598,
+            597,
+            595,
+            594,
+            593,
+            54,
+            47
+          ],
+          "types": [
+            "manhwa"
+          ]
+        }
+      ]
+    },
+    "manhua": {
+      "pages": [
+        {
+          "meta": {
+            "total": 54,
+            "page": 1,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            286,
+            44,
+            422,
+            388,
+            353,
+            246,
+            243,
+            95,
+            692,
+            690,
+            689,
+            688,
+            687,
+            686,
+            678,
+            647,
+            643,
+            639,
+            631,
+            612,
+            584,
+            551,
+            518,
+            509,
+            502,
+            498,
+            493,
+            477,
+            441,
+            436,
+            421,
+            407,
+            397,
+            380,
+            279,
+            228,
+            209,
+            198,
+            147,
+            124,
+            109,
+            107,
+            100,
+            76,
+            59,
+            58,
+            57,
+            56,
+            50,
+            49
+          ],
+          "types": [
+            "manhua"
+          ]
+        },
+        {
+          "meta": {
+            "total": 54,
+            "page": 2,
+            "limit": 50,
+            "pages": 2
+          },
+          "data_ids": [
+            45,
+            41,
+            40,
+            33
+          ],
+          "types": [
+            "manhua"
+          ]
+        }
+      ]
+    },
+    "novel": {
+      "pages": [
+        {
+          "meta": {
+            "total": 5,
+            "page": 1,
+            "limit": 50,
+            "pages": 1
+          },
+          "data_ids": [
+            525,
+            659,
+            635,
+            580,
+            564
+          ],
+          "types": [
+            "novel"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -13,8 +13,10 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
 import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okio.Buffer
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.net.URLEncoder
@@ -30,14 +32,15 @@ import java.net.URLEncoder
  *
  * Architecture: HttpSource with mixed RSC (React Server Components) and public JSON API
  *   contracts. Search, Chapters, Popular, and Latest use verified public JSON endpoints; Details
- *   uses canonical RSC; Reader uses raw HTML with an embedded page-image manifest.
+ *   uses canonical RSC; Reader uses raw chapter responses plus deferred-media/protected-map
+ *   contracts and reconstructs protected tiles through the image interceptor.
  *   RSC requests use the RSC: 1 header and ?_rsc= query parameter and return text/x-component
  *   data containing embedded JSON fragments. No browser-only DOM scraping is used by the parser.
  *
  * Known limitations:
- *   - Chapter pages are limited to publicImageCount (currently 3) for guest users.
- *     This is enforced server-side by cdn2.procomic.pro (nginx 403 for any additional pages).
- *     A login flow would be required to access full chapters — out of scope for this version.
+ *   - Reader responses expose a public image prefix and may defer additional pages through the
+ *     site's public web deferred-media/proxy-plan flow. Server-side security-gated chapters remain
+ *     unavailable without the site's own allowed verification path; no login or bypass is used.
  *   - Novel-type content (light novels) is excluded — Tachiyomi cannot render prose text.
  *   - Search and sort query parameters were confirmed during recon but may shift if the site
  *     updates its routing. Monitor for HTTP 404 or empty RSC responses.
@@ -56,6 +59,11 @@ class ProComic : HttpSource(), ConfigurableSource {
         )
         const val MAX_RESPONSE_BYTES = 2_000_000
         const val MAX_CHAPTER_PAGES = 50
+        const val MAX_READER_DEFERRED_MAPS = 50
+        const val SEARCH_PAGE_LIMIT = 50
+        const val MAX_SEARCH_PAGES_PER_BATCH = 6
+        const val READER_BASE_URL = "https://procomic.pro"
+        val SEARCH_TOKEN_REGEX = Regex("[\\p{L}\\p{N}]+")
     }
 
     private fun readBoundedBody(response: Response): String {
@@ -64,11 +72,17 @@ class ProComic : HttpSource(), ConfigurableSource {
         if (declaredLength > MAX_RESPONSE_BYTES) {
             throw Exception("ProComic: response exceeds ${MAX_RESPONSE_BYTES} bytes")
         }
-        val bytes = body.source().readByteArray(MAX_RESPONSE_BYTES.toLong() + 1L)
-        if (bytes.size > MAX_RESPONSE_BYTES) {
-            throw Exception("ProComic: response exceeds ${MAX_RESPONSE_BYTES} bytes")
+        val source = body.source()
+        val buffer = Buffer()
+        while (buffer.size <= MAX_RESPONSE_BYTES) {
+            val remaining = MAX_RESPONSE_BYTES.toLong() + 1L - buffer.size
+            val read = source.read(buffer, minOf(remaining, 16_384L))
+            if (read == -1L) break
+            if (buffer.size > MAX_RESPONSE_BYTES) {
+                throw Exception("ProComic: response exceeds ${MAX_RESPONSE_BYTES} bytes")
+            }
         }
-        return bytes.toString(StandardCharsets.UTF_8)
+        return buffer.readByteArray().toString(StandardCharsets.UTF_8)
     }
 
     private fun chapterPageFingerprint(data: ProComicChapterListResponse): String =
@@ -77,6 +91,10 @@ class ProComic : HttpSource(), ConfigurableSource {
     // Initialized when Mihon builds the source preference screen. Until then, preserve the
     // historical behavior of showing every normalized chapter.
     private var sourcePreferences: SharedPreferences? = null
+
+    override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor(ProComicImageInterceptor(network.client))
+        .build()
 
     override val name = "ProComic"
     override val baseUrl = "https://procomic.net"
@@ -96,20 +114,35 @@ class ProComic : HttpSource(), ConfigurableSource {
     private fun shouldShowPaidChapters(): Boolean =
         sourcePreferences?.getBoolean(PREF_SHOW_PAID_CHAPTERS, true) ?: true
 
-    // Mobile Chrome UA is required — plain curl UA gets same response, but this
-    // matches what a real Tachiyomi+WebView session would present.
+    /** Map only publication-lifecycle values; access visibility is not a lifecycle status. */
+    private fun mapPublicationStatus(progress: String?, lifecycleStatus: String?): Int {
+        return sequenceOf(progress, lifecycleStatus)
+            .mapNotNull { value ->
+                when (value?.trim()?.lowercase()) {
+                    "ongoing", "مستمر" -> SManga.ONGOING
+                    "completed", "complete", "finished", "مكتمل" -> SManga.COMPLETED
+                    "hiatus", "on hiatus", "متوقف مؤقتا", "متوقف مؤقتًا" -> SManga.ON_HIATUS
+                    "dropped", "cancelled", "canceled", "متوقف" -> SManga.CANCELLED
+                    else -> null
+                }
+            }
+            .firstOrNull() ?: SManga.UNKNOWN
+    }
+
+    // Mobile Chrome UA is required by the current public site contract; plain curl also works,
+    // but this matches the client profile used by Mihon requests.
     private val mobileUserAgent =
         "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 " +
         "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 
     /**
-     * Base headers for ALL requests — including WebView navigation.
-     * RSC-specific headers are intentionally excluded here so that WebView
-     * receives a normal text/html response instead of the RSC wire format.
+     * Base headers for normal HTML, JSON, and image requests.
+     * RSC-specific headers are intentionally excluded here so ordinary requests receive
+     * the normal site representation instead of the RSC wire format.
      *
      * EVIDENCE (Probe P05, 2026-08-01): Without RSC:1, server returns
      * text/html (282651B). With RSC:1, server returns text/x-component (169177B).
-     * User screenshot confirmed WebView displayed raw RSC: '1:"$Sreact.fragment"'.
+     * The site returns the RSC wire format only when the RSC request headers are present.
      */
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", mobileUserAgent)
@@ -117,7 +150,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         .add("Referer", baseUrl)
 
     /**
-     * Headers for RSC data requests ONLY — never used for WebView navigation.
+     * Headers for RSC data requests only; normal page and image requests use [headersBuilder].
      *
      * RSC:1 is the sole required header to trigger text/x-component responses.
      * Next-Router-State-Tree is included for spec conformance but confirmed
@@ -195,14 +228,14 @@ class ProComic : HttpSource(), ConfigurableSource {
     //
     // EVIDENCE: Stage 6 browser network investigation confirmed that procomic.net uses
     // a dedicated server-side search REST endpoint:
-    // GET /api/public/series/search?status=approved&limit=18&page={page}&sort=latest&search={query}
+    // GET /api/public/series/search?status=approved&limit=50&page={page}&sort=latest&search={query}
     //
     // Type filter is supported server-side via &type={manga|manhwa|manhua}.
     //
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = buildString {
             append(baseUrl)
-            append("/api/public/series/search?status=approved&limit=18&page=$page&sort=latest")
+            append("/api/public/series/search?status=approved&limit=$SEARCH_PAGE_LIMIT&page=$page&sort=latest")
 
             val effectiveQuery = query.trim().ifBlank { "a" }
             append("&search=")
@@ -228,26 +261,128 @@ class ProComic : HttpSource(), ConfigurableSource {
         val url = response.request.url.toString()
         ProComicDiag.logResponse("SEARCH", response, body)
 
-        val searchResponse = ProComicUtils.json.decodeFromString<ProComicSearchResponse>(body)
-        val nonNovel = searchResponse.data.filter { it.type != "novel" }
-        val mangas = nonNovel.map { it.toSManga() }
+        val requestedQuery = response.request.url.queryParameter("search")
+            ?.takeUnless { it.equals("a", ignoreCase = true) }
+            .orEmpty()
+        var parsed = parseSearchResponse(body, requestedQuery)
+        val mangas = parsed.mangas.toMutableList()
+        val seenFingerprints = hashSetOf(searchPageFingerprint(parsed.response))
+        var currentPage = parsed.response.meta?.page
+            ?: response.request.url.queryParameter("page")?.toIntOrNull()
+            ?: 1
+        var pagesFetched = 1
+        var exhausted = parsed.response.data.isEmpty() || parsed.response.data.size < SEARCH_PAGE_LIMIT
 
-        val currentPage = searchResponse.meta?.page ?: 1
-        val totalPages = searchResponse.meta?.pages ?: 1
-        val hasNextPage = currentPage < totalPages
+        // The endpoint’s page metadata drifts while the dataset changes, and local relevance
+        // filtering can make an otherwise non-empty server page empty. Consume a bounded batch
+        // inside this parse call so Mihon never receives an empty continuation page after valid
+        // results. Stop on a short/empty page or repeated body; never follow an unbounded cursor.
+        while (!exhausted && pagesFetched < MAX_SEARCH_PAGES_PER_BATCH) {
+            val nextPage = currentPage + 1
+            val nextRequest = response.request.newBuilder()
+                .url(response.request.url.newBuilder().setQueryParameter("page", nextPage.toString()).build())
+                .build()
+            val nextParsed = client.newCall(nextRequest).execute().use { nextResponse ->
+                val nextBody = readBoundedBody(nextResponse)
+                ProComicDiag.logResponse("SEARCH_BATCH", nextResponse, nextBody)
+                parseSearchResponse(nextBody, requestedQuery)
+            }
+            val fingerprint = searchPageFingerprint(nextParsed.response)
+            if (!seenFingerprints.add(fingerprint)) {
+                ProComicDiag.logStage("SEARCH", 98, "batch stopped on repeated page fingerprint")
+                exhausted = true
+                break
+            }
+            mangas += nextParsed.mangas
+            parsed = nextParsed
+            currentPage = nextParsed.response.meta?.page ?: nextPage
+            pagesFetched++
+            exhausted = nextParsed.response.data.isEmpty() || nextParsed.response.data.size < SEARCH_PAGE_LIMIT
+        }
 
+        val uniqueMangas = mangas.distinctBy { it.searchIdentity() }
         ProComicDiag.logStage("SEARCH", 99,
-            "MangasPage: ${mangas.size} items (filtered from ${searchResponse.data.size}), hasNextPage=$hasNextPage (page $currentPage of $totalPages)")
-
-        return MangasPage(mangas, hasNextPage = hasNextPage)
+            "MangasPage: ${uniqueMangas.size} items, hasNextPage=false (batchPages=$pagesFetched, exhausted=$exhausted)")
+        return MangasPage(uniqueMangas, hasNextPage = false)
     }
+
+    private data class ParsedSearchResponse(
+        val response: ProComicSearchResponse,
+        val mangas: List<SManga>,
+    )
+
+    private fun parseSearchResponse(body: String, query: String): ParsedSearchResponse {
+        val parsed = ProComicUtils.json.decodeFromString<ProComicSearchResponse>(body)
+        val mangas = parsed.data
+            .filter { it.type != "novel" }
+            .filter { it.matchesSearchQuery(query) }
+            .sortedByDescending { it.searchMatchQuality(query) }
+            .map { it.toSManga() }
+        return ParsedSearchResponse(parsed, mangas)
+    }
+
+    private fun searchPageFingerprint(response: ProComicSearchResponse): String =
+        response.data.joinToString(",") { it.id.toString() }
+
+    private fun ProComicSeriesDto.matchesSearchQuery(query: String): Boolean =
+        searchMatchQuality(query) > 0
+
+    /**
+     * Rank visible-title matches above original-title/alias matches, and aliases above slug-only
+     * matches. Descriptions are deliberately excluded because they are narrative text, not a
+     * searchable identity field.
+     */
+    private fun ProComicSeriesDto.searchMatchQuality(query: String): Int {
+        val queryTokens = searchTokens(query)
+        if (queryTokens.isEmpty()) return 1
+
+        val titleMatches = queryTokens.all { it in searchTokens(title) }
+        if (titleMatches) return 3
+
+        val originalTitleMatches = queryTokens.all { it in searchTokens(metadata?.originalTitle.orEmpty()) }
+        val aliasMatches = metadata?.altTitles.orEmpty().any { alias ->
+            queryTokens.all { it in searchTokens(alias) }
+        }
+        if (originalTitleMatches || aliasMatches) return 2
+
+        return if (queryTokens.all { it in searchTokens(slug) }) 1 else 0
+    }
+
+    private fun SManga.searchIdentity(): String {
+        val slug = url.trim('/').split('/').lastOrNull().orEmpty()
+        return "${title.trim().lowercase()}|${slug.lowercase()}"
+    }
+
+    private fun searchTokens(value: String): Set<String> =
+        SEARCH_TOKEN_REGEX.findAll(value.lowercase())
+            .map { it.value }
+            .filter { it.length > 1 }
+            .toSet()
 
     // ---- Series Detail ----
     // manga.url remains "/ar/series/{type}/{id}/{slug}" for chapter REST parsing.
     // The live canonical Details route is "/ar/series/{slug}-{id}".
+    private data class RestrictedMangaFallback(
+        val thumbnailUrl: String?,
+        val description: String?,
+        val author: String?,
+        val genre: String?,
+        val status: Int,
+    )
+
     override fun mangaDetailsRequest(manga: SManga): Request {
         val detailsPath = canonicalDetailsPath(manga.url)
+        val fallback = RestrictedMangaFallback(
+            thumbnailUrl = manga.thumbnail_url,
+            description = manga.description,
+            author = manga.author,
+            genre = manga.genre,
+            status = manga.status,
+        )
         return GET("$baseUrl$detailsPath?_rsc=det", rscHeaders())
+            .newBuilder()
+            .tag(RestrictedMangaFallback::class.java, fallback)
+            .build()
     }
 
     private fun canonicalDetailsPath(mangaUrl: String): String {
@@ -267,6 +402,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         val url = response.request.url.toString()
         ProComicDiag.logResponse("DETAIL", response, body)
         val (expectedId, expectedSlug) = detailsIdentity(url)
+        val restrictedFallback = response.request.tag(RestrictedMangaFallback::class.java)
         return when (val result = ProComicUtils.extractSeriesDetail(
             body,
             diagTag = "DETAIL",
@@ -275,18 +411,24 @@ class ProComic : HttpSource(), ConfigurableSource {
             expectedSlug = expectedSlug,
         )) {
             is ProComicDetailsResult.Complete -> result.series.toSManga()
-            is ProComicDetailsResult.Restricted -> result.details.toSManga()
+            is ProComicDetailsResult.Restricted -> result.details.toSManga(restrictedFallback)
             null -> throw Exception("ProComic: could not parse series details from RSC response")
         }
     }
 
-    private fun ProComicRestrictedDetails.toSManga(): SManga = SManga.create().apply {
+    private fun ProComicRestrictedDetails.toSManga(
+        fallback: RestrictedMangaFallback?,
+    ): SManga = SManga.create().apply {
         url = "/ar/series/$type/$id/$slug"
         title = this@toSManga.title
         thumbnail_url = coverImage?.takeIf { it.startsWith("http") }
+            ?: fallback?.thumbnailUrl
         description = description?.takeIf { it.isNotBlank() }
-        genre = type.replaceFirstChar { it.uppercase() }
-        status = SManga.UNKNOWN
+            ?: fallback?.description?.takeIf { it.isNotBlank() }
+        author = fallback?.author?.takeIf { it.isNotBlank() }
+        genre = fallback?.genre?.takeIf { it.isNotBlank() }
+            ?: type.replaceFirstChar { it.uppercase() }
+        status = fallback?.status ?: SManga.UNKNOWN
     }
 
     private fun detailsIdentity(url: String): Pair<Int?, String?> {
@@ -344,12 +486,13 @@ class ProComic : HttpSource(), ConfigurableSource {
         var page = 2
         var hasMore = firstPage.hasMore
         while (hasMore) {
-            val next = client.newCall(
+            val nextData = client.newCall(
                 GET("$baseUrl/api/chapters?contentId=$contentId&page=$page", headers)
-            ).execute()
-            val nextData = ProComicUtils.json.decodeFromString<ProComicChapterListResponse>(
-                readBoundedBody(next)
-            )
+            ).execute().use { next ->
+                ProComicUtils.json.decodeFromString<ProComicChapterListResponse>(
+                    readBoundedBody(next)
+                )
+            }
             val fingerprint = chapterPageFingerprint(nextData)
             ProComicDiag.logStage("CHAPTERS", page,
                 "page=$page: ${nextData.chapters.size} chapters, hasMore=${nextData.hasMore}")
@@ -433,17 +576,110 @@ class ProComic : HttpSource(), ConfigurableSource {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val body = response.body!!.string()
+        val body = readBoundedBody(response)
         val url = response.request.url.toString()
         ProComicDiag.logResponse("PAGES", response, body)
 
-        val images = ProComicUtils.extractPageImages(body, "PAGES", url)
-        ProComicDiag.logStage("PAGES", 99, "images found: ${images.size}")
-
-        return images.mapIndexed { index, imageUrl ->
+        val publicImages = ProComicUtils.extractPageImages(body, "PAGES", url)
+        val pages = publicImages.mapIndexed { index, imageUrl ->
             Page(index, imageUrl = imageUrl)
+        }.toMutableList()
+        val protection = ProComicUtils.extractReaderProtection(body, "PAGES", url)
+        // Current Reader RSC emits deferredMedia as a sibling of protectionV2. Keep the nested
+        // fallback for older captures/variants while preferring the current sibling contract.
+        val deferred = ProComicUtils.extractReaderDeferredMedia(body, "PAGES", url)
+            ?: protection?.deferredMedia
+        val deferredToken = deferred?.token
+        val deferredSplitIndex = deferred?.splitIndex
+        val chapterId = Regex("-(\\d+)$").find(response.request.url.pathSegments.lastOrNull().orEmpty())
+            ?.groupValues?.getOrNull(1)?.toIntOrNull()
+
+        if (deferredToken.isNullOrBlank() || deferredSplitIndex == null || chapterId == null) {
+            ProComicDiag.logStage(
+                "PAGES",
+                99,
+                "public images=${pages.size}, deferred media unavailable; protection=${protection?.version ?: 0}",
+            )
+            return pages
+        }
+        if (deferred.requireTurnstile || deferred.turnstileMode != null) {
+            ProComicDiag.logStage(
+                "PAGES",
+                98,
+                "deferred media requires server security verification; public images=${pages.size}",
+            )
+            return pages
+        }
+
+        val deferredData = fetchDeferredMedia(
+            chapterId = chapterId,
+            token = deferredToken,
+            splitIndex = deferredSplitIndex,
+            referer = url,
+        )
+        val directDeferred = deferredData.images
+            .filter { ProComicUtils.isAllowedPageImageUrl(it) }
+            .filterNot(publicImages::contains)
+            .distinct()
+        if (directDeferred.isNotEmpty()) {
+            pages += directDeferred.mapIndexed { index, imageUrl ->
+                Page(pages.size + index, imageUrl = imageUrl)
+            }
+        }
+
+        val mapStartIndex = deferredData.splitIndex ?: deferred.splitIndex
+        val protectedMaps = deferredData.maps.take(MAX_READER_DEFERRED_MAPS)
+        if (protectedMaps.size != deferredData.maps.size) {
+            ProComicDiag.logStage(
+                "PAGES",
+                97,
+                "deferred map count exceeded bound=${MAX_READER_DEFERRED_MAPS}; truncated=${deferredData.maps.size - protectedMaps.size}",
+            )
+        }
+        protectedMaps.forEachIndexed { index, mapToken ->
+            pages += Page(
+                pages.size,
+                imageUrl = ProComicUtils.encodeProtectedPageUrl(
+                    ProComicProtectedPagePayload(
+                        chapterId = chapterId,
+                        token = mapToken.token,
+                        method = mapToken.method,
+                        cdnPath = ProComicUtils.extractReaderCdnPath(body) ?: "cdn2",
+                        pageIndex = mapStartIndex + index,
+                    ),
+                ),
+            )
+        }
+        ProComicDiag.logStage(
+            "PAGES",
+            99,
+            "public=${publicImages.size}, deferredImages=${directDeferred.size}, protectedMaps=${deferredData.maps.size}, total=${pages.size}",
+        )
+        return pages
+    }
+
+    private fun fetchDeferredMedia(
+        chapterId: Int,
+        token: String,
+        splitIndex: Int,
+        referer: String,
+    ): ProComicDeferredMediaData {
+        val request = GET(
+            "$READER_BASE_URL/chapter-deferred-media/$chapterId?token=${URLEncoder.encode(token, "UTF-8")}&split=$splitIndex",
+            headersBuilder()
+                .set("Accept", "application/json")
+                .set("Referer", referer)
+                .build(),
+        )
+        return client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw Exception("ProComic Reader: deferred media request failed (${response.code})")
+            }
+            ProComicUtils.json.decodeFromString<ProComicDeferredMediaResponse>(readBoundedBody(response)).data
+                ?: throw Exception("ProComic Reader: deferred media response has no data")
         }
     }
+
 
     // ---- Image URL ----
     // Images are directly embedded in pageListParse, so this is unused.
@@ -455,7 +691,9 @@ class ProComic : HttpSource(), ConfigurableSource {
     override fun imageRequest(page: Page): Request {
         // headersBuilder() no longer contains RSC headers, so no removeAll() needed.
         val imageUrl = page.imageUrl ?: throw Exception("ProComic Reader: image URL is missing")
-        if (!ProComicUtils.isAllowedPageImageUrl(imageUrl)) {
+        val allowed = ProComicUtils.isAllowedPageImageUrl(imageUrl) ||
+            ProComicUtils.isProtectedPageImageUrl(imageUrl)
+        if (!allowed) {
             ProComicDiag.logStage("PAGES", 98, "rejected unrecognized image host")
             throw Exception("ProComic Reader: unrecognized image host")
         }
@@ -467,9 +705,10 @@ class ProComic : HttpSource(), ConfigurableSource {
     }
 
     // ---- Filters ----
+    // The current Search endpoint honors type but ignores the tested genre parameter.
+    // Do not advertise a filter that cannot change the server result set.
     override fun getFilterList() = FilterList(
         TypeFilter(),
-        GenreFilter(),
     )
 
     // ---- DTO → Model conversion helpers ----
@@ -481,21 +720,24 @@ class ProComic : HttpSource(), ConfigurableSource {
         genre = this@toLatestSManga.type
             .takeIf { it.isNotBlank() }
             ?.replaceFirstChar { it.uppercase() }
-        status = when (this@toLatestSManga.status?.lowercase()) {
-            "ongoing", "مستمر" -> SManga.ONGOING
-            "completed", "مكتمل" -> SManga.COMPLETED
-            "dropped", "متوقف" -> SManga.CANCELLED
-            "hiatus", "متوقف مؤقتا", "متوقف مؤقتًا" -> SManga.ON_HIATUS
-            else -> SManga.UNKNOWN
-        }
+        status = mapPublicationStatus(
+            progress = null,
+            lifecycleStatus = this@toLatestSManga.status,
+        )
     }
 
     private fun ProComicPopularContent.toPopularSManga(): SManga = SManga.create().apply {
         url = "/ar/series/$type/$id/$slug"
         title = this@toPopularSManga.title
         thumbnail_url = this@toPopularSManga.thumbnail?.takeIf { it.startsWith("http") }
-            ?: this@toPopularSManga.thumbnail?.let { "$baseUrl$it" }
+            ?: this@toPopularSManga.coverImageApp?.desktop?.takeIf { it.startsWith("http") }
             ?: this@toPopularSManga.metadata?.coverImage?.takeIf { it.startsWith("http") }
+            ?: this@toPopularSManga.thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }
+                ?.let { path ->
+                    this@toPopularSManga.cdnPath
+                        ?.takeIf { it.matches(Regex("cdn\\d+")) }
+                        ?.let { cdn -> "https://$cdn.procomic.net$path" }
+                }
         description = this@toPopularSManga.metadata?.descriptions?.ar
             ?: this@toPopularSManga.metadata?.descriptions?.en
             ?: this@toPopularSManga.description
@@ -509,13 +751,10 @@ class ProComic : HttpSource(), ConfigurableSource {
             this@toPopularSManga.metadata?.author,
             this@toPopularSManga.metadata?.artist,
         ).distinct().joinToString(", ").ifBlank { null }
-        status = when (this@toPopularSManga.metadata?.viewStatus?.lowercase()) {
-            "exclusive" -> SManga.ONGOING
-            "completed" -> SManga.COMPLETED
-            "dropped" -> SManga.CANCELLED
-            "hiatus" -> SManga.ON_HIATUS
-            else -> SManga.UNKNOWN
-        }
+        status = mapPublicationStatus(
+            progress = this@toPopularSManga.progress,
+            lifecycleStatus = this@toPopularSManga.status,
+        )
     }
 
     private fun ProComicSeriesDto.toSManga(): SManga = SManga.create().apply {
@@ -524,7 +763,12 @@ class ProComic : HttpSource(), ConfigurableSource {
         title = this@toSManga.title
         thumbnail_url = this@toSManga.coverImage?.takeIf { it.startsWith("http") }
             ?: this@toSManga.thumbnail?.takeIf { it.startsWith("http") }
-            ?: this@toSManga.thumbnail?.let { "https://app.procomic.net$it" }
+            ?: this@toSManga.thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }
+                ?.let { path ->
+                    this@toSManga.cdnPath
+                        ?.takeIf { it.matches(Regex("cdn\\d+")) }
+                        ?.let { cdn -> "https://$cdn.procomic.net$path" }
+                }
             ?: this@toSManga.coverImage
 
         // Use Arabic description if available, then English, then direct description field
@@ -547,16 +791,12 @@ class ProComic : HttpSource(), ConfigurableSource {
             this@toSManga.metadata?.artist,
         ).distinct().joinToString(", ").ifBlank { null }
 
-        // Status: the site's 'status' field is 'approved' for all active series.
-        // Real ongoing/completed status is in metadata.viewStatus ('exclusive', 'free', etc.)
-        // Map based on viewStatus until a confirmed mapping is available.
-        status = when (this@toSManga.metadata?.viewStatus?.lowercase()) {
-            "exclusive" -> SManga.ONGOING   // Exclusive = actively being published
-            "completed" -> SManga.COMPLETED
-            "dropped" -> SManga.CANCELLED
-            "hiatus" -> SManga.ON_HIATUS
-            else -> SManga.UNKNOWN
-        }
+        // The top-level progress field carries publication lifecycle; top-level status is
+        // approval/access metadata and is used only as a fallback for known lifecycle values.
+        status = mapPublicationStatus(
+            progress = this@toSManga.progress,
+            lifecycleStatus = this@toSManga.status,
+        )
     }
 
     private fun ProComicNormalizedChapter.toSChapter(mangaUrl: String): SChapter = SChapter.create().apply {

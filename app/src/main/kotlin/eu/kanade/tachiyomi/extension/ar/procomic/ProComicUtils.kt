@@ -1,13 +1,18 @@
 package eu.kanade.tachiyomi.extension.ar.procomic
 
+import android.util.Base64
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.net.URI
+import java.nio.charset.StandardCharsets
 
 /**
- * RSC (React Server Components) wire-format parser for procomic.pro.
+ * RSC (React Server Components) wire-format parser for the canonical procomic.net site.
+ * The Reader retains evidence-derived procomic.pro media endpoints where the live contract
+ * requires them.
  *
  * Architecture confirmed by Stage 3C+5 live recon (2026-07-26/27):
  *
@@ -33,7 +38,14 @@ object ProComicUtils {
     private const val MAX_RSC_CANDIDATES = 8
     private const val MAX_RSC_CANDIDATE_BYTES = 1_000_000
     private val allowedPageImageHosts = setOf("app.procomic.pro")
+    private val allowedProtectedTileHosts = setOf(
+        "img1.procomic.pro",
+        "img2.procomic.pro",
+        "img3.procomic.pro",
+        "img4.procomic.pro",
+    )
     private val allowedPageImageExtensions = setOf("avif", "webp", "jpg", "jpeg", "png")
+    private const val PROTECTED_PAGE_FRAGMENT_PREFIX = "procomic-protected-page-v1:"
 
     /**
      * Reader evidence confirms successful public page downloads only on
@@ -51,6 +63,84 @@ object ProComicUtils {
             path.startsWith("/chapters/") &&
             allowedPageImageExtensions.any { path.lowercase().endsWith(".$it") }
     }.getOrDefault(false)
+
+    fun isAllowedProtectedTileUrl(url: String): Boolean = runCatching {
+        val parsed = URI(url)
+        val path = parsed.path ?: return@runCatching false
+        parsed.scheme.equals("https", ignoreCase = true) &&
+            parsed.host?.lowercase() in allowedProtectedTileHosts &&
+            parsed.query == null &&
+            parsed.fragment == null &&
+            path.startsWith("/i/") &&
+            path.length > "/i/".length
+    }.getOrDefault(false)
+
+    fun isProtectedPageImageUrl(url: String): Boolean =
+        url.startsWith("https://procomic.pro/__protected_page__#") &&
+            url.substringAfter('#').startsWith(PROTECTED_PAGE_FRAGMENT_PREFIX)
+
+    fun encodeProtectedPageUrl(payload: ProComicProtectedPagePayload): String {
+        val encoded = Base64.encodeToString(
+            json.encodeToString(payload).toByteArray(StandardCharsets.UTF_8),
+            Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING,
+        )
+        return "https://procomic.pro/__protected_page__#$PROTECTED_PAGE_FRAGMENT_PREFIX$encoded"
+    }
+
+    fun decodeProtectedPagePayload(fragment: String): ProComicProtectedPagePayload? {
+        if (!fragment.startsWith(PROTECTED_PAGE_FRAGMENT_PREFIX)) return null
+        val encoded = fragment.removePrefix(PROTECTED_PAGE_FRAGMENT_PREFIX)
+        return runCatching {
+            val bytes = Base64.decode(encoded, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+            json.decodeFromString<ProComicProtectedPagePayload>(bytes.toString(StandardCharsets.UTF_8))
+        }.getOrNull()
+    }
+
+    fun extractReaderProtection(
+        body: String,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): ProComicProtection? {
+        val protectionJson = extractJsonObjectAfterKey(body, "protectionV2") ?: return null
+        return runCatching {
+            json.decodeFromString<ProComicProtection>(normalizeRscJson(protectionJson))
+        }.onFailure {
+            if (diagTag.isNotEmpty()) {
+                ProComicDiag.logException(diagTag, "decode protectionV2", diagUrl, it)
+            }
+        }.getOrNull()
+    }
+
+    /**
+     * Extract the current Reader's sibling `deferredMedia` prop.
+     *
+     * The live Reader payload serializes `deferredMedia` beside `protectionV2`, not inside it.
+     * Keep this separate from [extractReaderProtection] so the parser follows the current RSC
+     * component boundary while older nested-deferred payloads remain supported by the caller.
+     */
+    fun extractReaderDeferredMedia(
+        body: String,
+        diagTag: String = "",
+        diagUrl: String = "",
+    ): ProComicDeferredMedia? {
+        val deferredJson = extractJsonObjectAfterKey(body, "deferredMedia") ?: return null
+        return runCatching {
+            json.decodeFromString<ProComicDeferredMedia>(normalizeRscJson(deferredJson))
+        }.onFailure {
+            if (diagTag.isNotEmpty()) {
+                ProComicDiag.logException(diagTag, "decode sibling deferredMedia", diagUrl, it)
+            }
+        }.getOrNull()?.takeIf { deferred ->
+            deferred.token?.isNotBlank() == true &&
+                (deferred.splitIndex == null || deferred.splitIndex >= 0)
+        }
+    }
+
+    fun extractReaderCdnPath(body: String): String? {
+        val match = Regex("""cdnPath[^A-Za-z0-9]+(cdn\d+)""")
+            .find(body.replace("\\\"", "\""))
+        return match?.groupValues?.getOrNull(1)
+    }
 
     // ---- Series List Extraction ----
 
@@ -548,7 +638,7 @@ object ProComicUtils {
         if (appImagesJson != null) {
             if (diag) ProComicDiag.logStage(diagTag, 2, "appImagesJson extracted: len=${appImagesJson.length}")
             try {
-                val decoded = json.decodeFromString<List<ProComicAppImage>>(appImagesJson)
+                val decoded = json.decodeFromString<List<ProComicAppImage>>(normalizeRscJson(appImagesJson))
                 val urls = decoded.mapNotNull { item ->
                     (item.desktop?.takeIf { it.isNotBlank() } ?: item.mobile?.takeIf { it.isNotBlank() })
                         ?.takeIf { it.startsWith("http") }
@@ -584,7 +674,14 @@ object ProComicUtils {
         // 3. Explicit Failure
         val reason = when {
             body.isBlank() -> "Response body was empty (0 bytes)"
-            !body.contains("appImages") -> "No 'appImages' manifest found in response"
+            body.contains("Safe Browsing Required", ignoreCase = true) ||
+                body.contains("Log in and disable Safe Browsing", ignoreCase = true) ->
+                "Reader access requires login or Safe Browsing to be disabled in ProComic settings"
+            body.contains("Premium chapter", ignoreCase = true) ||
+                body.contains("\\\"options\\\":{\\\"coins\\\"", ignoreCase = false) ->
+                "This chapter is premium or locked by the server and has no public image manifest"
+            !body.contains("appImages") && !body.contains("\\\"appImages\\\"", ignoreCase = false) ->
+                "No 'appImages' manifest found in response"
             else -> "Failed to decode valid chapter images from 'appImages' manifest"
         }
         throw Exception("ProComic Reader: $reason (bodyLength=${body.length}, url=$diagUrl)")
@@ -597,11 +694,22 @@ object ProComicUtils {
      * The canonical Details response embeds the DTO under `"series"`.
      */
     private fun extractJsonObjectAfterKey(body: String, key: String): String? {
-        val keyPattern = "\"$key\":"
+        val keyPatterns = listOf(
+            "\"$key\":",
+            "\\\"$key\\\":" ,
+        )
         var searchFrom = 0
         repeat(MAX_RSC_CANDIDATES) {
-            val keyIndex = body.indexOf(keyPattern, searchFrom)
-            if (keyIndex < 0) return null
+            val match = keyPatterns
+                .mapNotNull { pattern ->
+                    body.indexOf(pattern, searchFrom)
+                        .takeIf { it >= 0 }
+                        ?.let { it to pattern }
+                }
+                .minByOrNull { it.first }
+                ?: return null
+            val keyIndex = match.first
+            val keyPattern = match.second
             val valueStart = skipJsonWhitespace(body, keyIndex + keyPattern.length)
             if (valueStart < body.length && body[valueStart] == '{') {
                 val candidate = extractJsonObject(body, valueStart)
@@ -617,18 +725,32 @@ object ProComicUtils {
      * Uses a bracket-counting approach to find the matching closing bracket.
      */
     private fun extractJsonArrayAfterKey(body: String, key: String): String? {
-        val keyPattern = "\"$key\":["
+        val keyPatterns = listOf(
+            "\"$key\":[",
+            "\\\"$key\\\":[",
+        )
         var searchFrom = 0
         repeat(MAX_RSC_CANDIDATES) {
-            val start = body.indexOf(keyPattern, searchFrom)
-            if (start < 0) return null
-            val arrStart = start + keyPattern.length - 1 // position of '['
+            val match = keyPatterns
+                .mapNotNull { pattern ->
+                    body.indexOf(pattern, searchFrom)
+                        .takeIf { it >= 0 }
+                        ?.let { it to pattern }
+                }
+                .minByOrNull { it.first }
+                ?: return null
+            val start = match.first
+            val pattern = match.second
+            val arrStart = start + pattern.length - 1 // position of '['
             val candidate = extractJsonArray(body, arrStart)
             if (candidate != null && candidate.length <= MAX_RSC_CANDIDATE_BYTES) return candidate
-            searchFrom = start + keyPattern.length
+            searchFrom = start + pattern.length
         }
         return null
     }
+
+    private fun normalizeRscJson(value: String): String =
+        value.replace("\\\"", "\"")
 
     /**
      * Starting at [startPos] (which must be '['), walk through the body counting
@@ -647,6 +769,13 @@ object ProComicUtils {
 
         while (pos < body.length && pos - startPos <= MAX_RSC_CANDIDATE_BYTES) {
             val c = body[pos]
+            // Next.js RSC may serialize JSON property quotes as backslash-quote outside a
+            // normal JSON string. Treat that pair as literal data so it cannot toggle the
+            // scanner’s string state and cause the array boundary to overrun into `protectionV2`.
+            if (!inString && c == '\\' && pos + 1 < body.length && body[pos + 1] == '"') {
+                pos += 2
+                continue
+            }
             when {
                 escaped -> escaped = false
                 c == '\\' && inString -> escaped = true
@@ -676,9 +805,12 @@ object ProComicUtils {
 
         while (pos < body.length && pos - startPos <= MAX_RSC_CANDIDATE_BYTES) {
             val c = body[pos]
-            if (escaped) {
-                escaped = false
-            } else when {
+            if (!inString && c == '\\' && pos + 1 < body.length && body[pos + 1] == '"') {
+                pos += 2
+                continue
+            }
+            when {
+                escaped -> escaped = false
                 c == '\\' && inString -> escaped = true
                 c == '"' -> inString = !inString
                 !inString && c == '{' -> depth++

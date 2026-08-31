@@ -1,0 +1,13 @@
+{
+  "ongoing_ar": {"progress": "مستمر", "status": "approved", "viewStatus": "public", "expected": "ONGOING"},
+  "completed_ar": {"progress": "مكتمل", "status": "approved", "viewStatus": "exclusive", "expected": "COMPLETED"},
+  "ongoing_en": {"progress": "ongoing", "status": "approved", "viewStatus": "free", "expected": "ONGOING"},
+  "completed_en": {"progress": "completed", "status": "approved", "viewStatus": "public", "expected": "COMPLETED"},
+  "hiatus_en": {"progress": "hiatus", "status": "approved", "viewStatus": "public", "expected": "ON_HIATUS"},
+  "dropped_en": {"progress": "dropped", "status": "approved", "viewStatus": "public", "expected": "CANCELLED"},
+  "access_only": {"progress": null, "status": "approved", "viewStatus": "exclusive", "expected": "UNKNOWN"},
+  "approval_only": {"progress": null, "status": "approved", "viewStatus": null, "expected": "UNKNOWN"},
+  "missing": {"progress": null, "status": null, "viewStatus": null, "expected": "UNKNOWN"},
+  "unknown_progress_valid_status": {"progress": "not-a-lifecycle", "status": "completed", "viewStatus": "public", "expected": "COMPLETED"},
+  "conflicting_lifecycle": {"progress": "ongoing", "status": "completed", "viewStatus": "public", "expected": "ONGOING"}
+}

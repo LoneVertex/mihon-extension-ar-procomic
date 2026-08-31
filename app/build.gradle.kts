@@ -82,7 +82,7 @@ dependencies {
 
     // Jsoup (provided by Tachiyomi app at runtime, needed for interface compliance)
     // 1.23.1 includes the published security fix for malformed raw-text element handling.
-    compileOnly("org.jsoup:jsoup:1.23.1")
+    compileOnly("org.jsoup:jsoup:1.23.2")
 
     // Official AOMedia AVIF decoder for protected Reader tiles. It explicitly supports still AVIF
     // across 8/10/12-bit and YUV 420/422/444/monochrome variants and ships all four ABIs.

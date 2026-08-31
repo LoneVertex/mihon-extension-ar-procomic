@@ -38,6 +38,18 @@ object ProComicUtils {
     private const val MAX_RSC_CANDIDATES = 8
     private const val MAX_RSC_CANDIDATE_BYTES = 1_000_000
     private val allowedPageImageHosts = setOf("app.procomic.pro")
+    private val allowedThumbnailHosts = setOf(
+        "app.procomic.net",
+        "app.procomic.pro",
+        "cdn1.procomic.net",
+        "cdn2.procomic.net",
+        "cdn3.procomic.net",
+        "cdn4.procomic.net",
+        "cdn1.procomic.pro",
+        "cdn2.procomic.pro",
+        "cdn3.procomic.pro",
+        "cdn4.procomic.pro",
+    )
     private val allowedProtectedTileHosts = setOf(
         "img1.procomic.pro",
         "img2.procomic.pro",
@@ -46,6 +58,9 @@ object ProComicUtils {
     )
     private val allowedPageImageExtensions = setOf("avif", "webp", "jpg", "jpeg", "png")
     private const val PROTECTED_PAGE_FRAGMENT_PREFIX = "procomic-protected-page-v1:"
+    private const val MAX_PROTECTED_TOKEN_LENGTH = 8_192
+    private const val MAX_PROTECTED_PAGE_INDEX = 10_000
+    private val allowedCdnPaths = setOf("cdn1", "cdn2", "cdn3", "cdn4")
 
     /**
      * Reader evidence confirms successful public page downloads only on
@@ -72,16 +87,56 @@ object ProComicUtils {
             parsed.query == null &&
             parsed.fragment == null &&
             path.startsWith("/i/") &&
-            path.length > "/i/".length
+            path.length > "/i/".length &&
+            path.split('/').none { it == "." || it == ".." }
     }.getOrDefault(false)
 
-    fun isProtectedPageImageUrl(url: String): Boolean =
-        url.startsWith("https://procomic.pro/__protected_page__#") &&
-            url.substringAfter('#').startsWith(PROTECTED_PAGE_FRAGMENT_PREFIX)
+    fun isAllowedThumbnailUrl(url: String): Boolean = runCatching {
+        val parsed = URI(url)
+        parsed.scheme.equals("https", ignoreCase = true) &&
+            parsed.host?.lowercase() in allowedThumbnailHosts &&
+            parsed.userInfo == null &&
+            parsed.fragment == null &&
+            parsed.path?.isNotBlank() == true
+    }.getOrDefault(false)
+
+    fun isAllowedCdnPath(value: String): Boolean = value in allowedCdnPaths
+
+    fun isAllowedReaderUrl(url: String): Boolean = runCatching {
+        val parsed = URI(url)
+        val path = parsed.path.orEmpty()
+        val segments = path.split('/').filter(String::isNotEmpty)
+        parsed.scheme.equals("https", ignoreCase = true) &&
+            parsed.host.equals("procomic.pro", ignoreCase = true) &&
+            parsed.userInfo == null &&
+            parsed.query == null &&
+            parsed.fragment == null &&
+            (path.startsWith("/en/chapter/") || path.startsWith("/ar/chapter/")) &&
+            segments.size >= 3 &&
+            segments.none { it == "." || it == ".." }
+    }.getOrDefault(false)
+
+    fun isProtectedPageImageUrl(url: String): Boolean = runCatching {
+        val parsed = URI(url)
+        parsed.scheme.equals("https", ignoreCase = true) &&
+            parsed.host.equals("procomic.pro", ignoreCase = true) &&
+            parsed.path == "/__protected_page__" &&
+            parsed.userInfo == null &&
+            parsed.query == null &&
+            decodeProtectedPagePayload(parsed.fragment.orEmpty()) != null
+    }.getOrDefault(false)
 
     fun encodeProtectedPageUrl(payload: ProComicProtectedPagePayload): String {
+        require(payload.kind == "procomic-protected-page-v1")
+        require(payload.chapterId > 0)
+        require(payload.token.isNotBlank() && payload.token.length <= MAX_PROTECTED_TOKEN_LENGTH)
+        require(payload.method == "browser_session")
+        require(payload.cdnPath in allowedCdnPaths)
+        require(payload.pageIndex in 0..MAX_PROTECTED_PAGE_INDEX)
+        val jsonPayload = json.encodeToString(payload)
+        require(jsonPayload.toByteArray(StandardCharsets.UTF_8).size <= MAX_PROTECTED_TOKEN_LENGTH * 2)
         val encoded = Base64.encodeToString(
-            json.encodeToString(payload).toByteArray(StandardCharsets.UTF_8),
+            jsonPayload.toByteArray(StandardCharsets.UTF_8),
             Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING,
         )
         return "https://procomic.pro/__protected_page__#$PROTECTED_PAGE_FRAGMENT_PREFIX$encoded"
@@ -90,10 +145,18 @@ object ProComicUtils {
     fun decodeProtectedPagePayload(fragment: String): ProComicProtectedPagePayload? {
         if (!fragment.startsWith(PROTECTED_PAGE_FRAGMENT_PREFIX)) return null
         val encoded = fragment.removePrefix(PROTECTED_PAGE_FRAGMENT_PREFIX)
+        if (encoded.isBlank() || encoded.length > MAX_PROTECTED_TOKEN_LENGTH * 2) return null
         return runCatching {
             val bytes = Base64.decode(encoded, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
             json.decodeFromString<ProComicProtectedPagePayload>(bytes.toString(StandardCharsets.UTF_8))
-        }.getOrNull()
+        }.getOrNull()?.takeIf { payload ->
+            payload.kind == "procomic-protected-page-v1" &&
+                payload.chapterId > 0 &&
+                payload.token.isNotBlank() && payload.token.length <= MAX_PROTECTED_TOKEN_LENGTH &&
+                payload.method == "browser_session" &&
+                payload.cdnPath in allowedCdnPaths &&
+                payload.pageIndex in 0..MAX_PROTECTED_PAGE_INDEX
+        }
     }
 
     fun extractReaderProtection(
@@ -132,14 +195,15 @@ object ProComicUtils {
             }
         }.getOrNull()?.takeIf { deferred ->
             deferred.token?.isNotBlank() == true &&
-                (deferred.splitIndex == null || deferred.splitIndex >= 0)
+                deferred.token.length <= MAX_PROTECTED_TOKEN_LENGTH &&
+                (deferred.splitIndex == null || deferred.splitIndex in 0..MAX_PROTECTED_PAGE_INDEX)
         }
     }
 
     fun extractReaderCdnPath(body: String): String? {
-        val match = Regex("""cdnPath[^A-Za-z0-9]+(cdn\d+)""")
+        val match = Regex("""cdnPath[^A-Za-z0-9]+(cdn\d+)(?![A-Za-z0-9])""")
             .find(body.replace("\\\"", "\""))
-        return match?.groupValues?.getOrNull(1)
+        return match?.groupValues?.getOrNull(1)?.takeIf { it in allowedCdnPaths }
     }
 
     // ---- Series List Extraction ----
@@ -195,7 +259,7 @@ object ProComicUtils {
                 "extractJsonArray OK: jsonLen=${seriesJson.length}, " +
                 "sha256=${ProComicDiag.sha256(seriesJson)}")
             ProComicDiag.logStage(diagTag, 3,
-                "json first 200: ${seriesJson.take(200)}")
+                "seriesJsonLength=${seriesJson.length} seriesJsonSha256=${ProComicDiag.sha256(seriesJson)}")
         }
 
         return try {
@@ -428,11 +492,10 @@ object ProComicUtils {
         if (keyIndex < 0) return emptyList()
         val valueStart = skipJsonWhitespace(body, keyIndex + marker.length)
         if (valueStart >= body.length || body[valueStart] != '[') return emptyList()
-        val end = body.indexOf(']', valueStart)
-        if (end < 0) return emptyList()
-        return Regex("\\\"([^\\\"]*)\\\"").findAll(body.substring(valueStart, end + 1))
-            .map { it.groupValues[1] }
-            .toList()
+        val arrayJson = extractJsonArray(body, valueStart) ?: return emptyList()
+        return runCatching {
+            json.decodeFromString<List<String>>(normalizeRscJson(arrayJson))
+        }.getOrDefault(emptyList())
     }
 
     private fun skipJsonWhitespace(body: String, start: Int): Int {
@@ -523,7 +586,8 @@ object ProComicUtils {
                 source = chapter,
                 languageCode = normalizeLanguageCode(chapter.language),
                 languageDisplay = languageDisplayName(chapter.language),
-                numericNumber = chapter.chapterNumber.toFloatOrNull(),
+                numericNumber = chapter.chapterNumber.toFloatOrNull()
+                    ?.takeIf { it.isFinite() && it >= 0f },
                 gate = chapter.toGateState(),
             )
         }
@@ -641,7 +705,7 @@ object ProComicUtils {
                 val decoded = json.decodeFromString<List<ProComicAppImage>>(normalizeRscJson(appImagesJson))
                 val urls = decoded.mapNotNull { item ->
                     (item.desktop?.takeIf { it.isNotBlank() } ?: item.mobile?.takeIf { it.isNotBlank() })
-                        ?.takeIf { it.startsWith("http") }
+                        ?.takeIf(::isAllowedPageImageUrl)
                 }.distinct()
 
                 // Filter to chapter-scoped CDN URLs if present
@@ -663,6 +727,7 @@ object ProComicUtils {
         val chapterRegex = Regex(""""(https://app\.procomic\.(pro|net)/chapters/[^"]+\.(avif|webp|jpg|jpeg|png))"""")
         val fallbackUrls = chapterRegex.findAll(body)
             .map { it.groupValues[1] }
+            .filter(::isAllowedPageImageUrl)
             .distinct()
             .toList()
 

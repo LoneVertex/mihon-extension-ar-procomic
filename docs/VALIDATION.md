@@ -18,7 +18,7 @@
 
 ## Software Gate
 
-The audit-remediation gate passed all 12 suites, `git diff --check`, protected-path checks, and clean debug/release builds. The final implementation branch is 37 commits ahead of unchanged `main`, including the generic Reader follow-up; the stacked PRs remain open.
+The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. The final implementation branch is 37 commits ahead of unchanged `main`, including the generic Reader follow-up; the stacked PRs remain open.
 
 | Gate | Result | Evidence |
 |---|---|---|
@@ -34,10 +34,11 @@ The audit-remediation gate passed all 12 suites, `git diff --check`, protected-p
 | Reader contract | PASS | `testdata/reader/test_reader_contract.py` |
 | Official icon contract | PASS | `testdata/icon/test_icon_contract.py` |
 | Lifecycle status mapping | PASS | `testdata/status/test_status_mapping.py` |
+| Adversarial chaos boundaries | PASS | `testdata/adversarial/test_chaos_boundaries.py` |
 | `git diff --check` | PASS | Final software gate |
 | Protected-path checks | PASS | Final software gate |
 | Debug APK build | PASS | CI and local gate evidence |
-| Release APK build | PASS | CI and local gate evidence |
+| Release APK build | PASS | CI and local gate evidence; final local artifact is intentionally unsigned |
 | Protected Reader fallback and bounded response reads | PASS | Source-remediation commit `affbcf3`; Reader regression and local/CI builds passed |
 | CI contract-suite coverage and permissions | PASS | Audit commit `0bda7ea`; corrected by pinned Pillow follow-up `f3f4290` |
 | CI action modernization | PASS | Earlier action-only remediation commit `1285213d`; both current workflow runs passed |
@@ -49,6 +50,7 @@ for test in $(find testdata -type f -name 'test_*.py' | sort); do
   python3 "$test" || exit 1
 done
 git diff --check
+./gradlew :app:lint --no-daemon --stacktrace
 ```
 
 The build command is:
@@ -78,7 +80,7 @@ The current audit-remediation CI history is:
 | [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) | Source-remediation branch push | `affbcf3` | PASS |
 | [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) | Source-remediation pull request | `affbcf3` | PASS |
 
-The corrected runs execute the pinned Pillow install, all 12 deterministic suites, `git diff --check`, and debug/release APK builds. The workflow uses `permissions: contents: read`, `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence.
+The corrected runs execute the pinned Pillow install, all 12 suites that were present in the published CI revisions, `git diff --check`, and debug/release APK builds. The new adversarial suite is additionally verified locally on the unpushed hardening worktree. The workflow uses `permissions: contents: read`, `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence.
 
 ## APK Identity
 
@@ -122,7 +124,7 @@ The Reader validation evidence must distinguish the chapter route, Mihon Reader 
 
 ## Current Limitations
 
-Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release build also uses the debug keystore for sideload/testing; a production release requires maintainer-owned signing credentials and explicit release authorization.
+Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release build in the hardened worktree is intentionally unsigned; a production release requires maintainers to apply controlled signing credentials and explicit release authorization.
 
 ## Approval-Gated Follow-ups
 

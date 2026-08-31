@@ -173,7 +173,7 @@ def test_source_and_dto_match_the_safe_contract() -> None:
     matcher = source[matcher_start:matcher_end]
 
     assert 'thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }' in mapping
-    assert 'Regex("cdn\\\\d+")' in mapping
+    assert "isAllowedCdnPath" in mapping
     assert 'https://app.procomic.net$it' not in mapping
     assert "matchesSearchQuery" in source
     assert "SEARCH_PAGE_LIMIT = 50" in source

@@ -93,7 +93,7 @@ def test_source_uses_dedicated_latest_contract() -> None:
     latest_start = source.index("override fun latestUpdatesRequest")
     search_start = source.index("// ---- Search ----")
     latest_block = source[latest_start:search_start]
-    assert "/api/public/content/latest-updates?limit=18&category=all&page=$page" in latest_block
+    assert "page=${page.coerceAtLeast(1)}" in latest_block
     assert "ProComicLatestResponse" in latest_block
     assert "extractSeriesList(body, \"LATEST\"" not in latest_block
     assert "hasNextPage = hasNextPage" in latest_block

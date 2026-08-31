@@ -60,6 +60,8 @@ class ProComic : HttpSource(), ConfigurableSource {
         const val MAX_RESPONSE_BYTES = 2_000_000
         const val MAX_CHAPTER_PAGES = 50
         const val MAX_READER_DEFERRED_MAPS = 50
+        const val MAX_READER_TOKEN_LENGTH = 8_192
+        const val MAX_READER_PAGE_INDEX = 10_000
         const val SEARCH_PAGE_LIMIT = 50
         const val MAX_SEARCH_PAGES_PER_BATCH = 6
         const val READER_BASE_URL = "https://procomic.pro"
@@ -90,6 +92,7 @@ class ProComic : HttpSource(), ConfigurableSource {
 
     // Initialized when Mihon builds the source preference screen. Until then, preserve the
     // historical behavior of showing every normalized chapter.
+    @Volatile
     private var sourcePreferences: SharedPreferences? = null
 
     override val client: OkHttpClient = network.client.newBuilder()
@@ -198,7 +201,10 @@ class ProComic : HttpSource(), ConfigurableSource {
     // Page values are authoritative, pages are server-ordered and disjoint in captures, and
     // an empty data array is the only observed termination signal. Short pages continue.
     override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/api/public/content/latest-updates?limit=18&category=all&page=$page", headers)
+        GET(
+            "$baseUrl/api/public/content/latest-updates?limit=18&category=all&page=${page.coerceAtLeast(1)}",
+            headers,
+        )
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val body = readBoundedBody(response)
@@ -235,7 +241,10 @@ class ProComic : HttpSource(), ConfigurableSource {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = buildString {
             append(baseUrl)
-            append("/api/public/series/search?status=approved&limit=$SEARCH_PAGE_LIMIT&page=$page&sort=latest")
+            append("/api/public/series/search?status=approved&limit=$SEARCH_PAGE_LIMIT&sort=latest")
+
+            val effectivePage = page.coerceAtLeast(1)
+            append("&page=$effectivePage")
 
             val effectiveQuery = query.trim().ifBlank { "a" }
             append("&search=")
@@ -421,8 +430,8 @@ class ProComic : HttpSource(), ConfigurableSource {
     ): SManga = SManga.create().apply {
         url = "/ar/series/$type/$id/$slug"
         title = this@toSManga.title
-        thumbnail_url = coverImage?.takeIf { it.startsWith("http") }
-            ?: fallback?.thumbnailUrl
+        thumbnail_url = coverImage?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
+            ?: fallback?.thumbnailUrl?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
         description = description?.takeIf { it.isNotBlank() }
             ?: fallback?.description?.takeIf { it.isNotBlank() }
         author = fallback?.author?.takeIf { it.isNotBlank() }
@@ -456,7 +465,9 @@ class ProComic : HttpSource(), ConfigurableSource {
     //
     // manga.url is embedded as &_u= so chapterListParse can build chapter URLs.
     override fun chapterListRequest(manga: SManga): Request {
-        val seriesId = manga.url.split("/").getOrNull(4) ?: ""
+        val seriesId = manga.url.trim('/').split('/').getOrNull(3)?.toIntOrNull()
+            ?.takeIf { it > 0 }
+            ?: throw Exception("ProComic: malformed manga URL")
         val encodedMangaUrl = java.net.URLEncoder.encode(manga.url, "UTF-8")
         return GET(
             "$baseUrl/api/chapters?contentId=$seriesId&_u=$encodedMangaUrl",
@@ -550,27 +561,34 @@ class ProComic : HttpSource(), ConfigurableSource {
     override fun pageListRequest(chapter: SChapter): Request {
         val chapterUrl = chapter.url.trim()
         val canonicalUrl = when {
-            chapterUrl.startsWith("http") -> chapterUrl
+            chapterUrl.startsWith("http", ignoreCase = true) ->
+                chapterUrl.takeIf(ProComicUtils::isAllowedReaderUrl)
+                    ?: throw Exception("ProComic Reader: unrecognized chapter host or URL")
             chapterUrl.startsWith("/en/chapter/") || chapterUrl.startsWith("/ar/chapter/") -> {
                 "https://procomic.pro$chapterUrl"
             }
             else -> {
                 // chapter.url format: /ar/series/{type}/{seriesId}/{slug}/{chapterId}/{chapterNumber}
                 val parts = chapterUrl.trim('/').split('/')
-                if (parts.size >= 7) {
-                    val slug = parts[4]
-                    val chapterId = parts[5]
-                    val chapterNumber = parts[6]
-                    "https://procomic.pro/en/chapter/$slug-$chapterNumber-$chapterId"
-                } else if (parts.size >= 6) {
-                    val slug = parts[3]
-                    val chapterId = parts[4]
-                    val chapterNumber = parts[5]
-                    "https://procomic.pro/en/chapter/$slug-$chapterNumber-$chapterId"
-                } else {
-                    "https://procomic.pro$chapterUrl"
+                when {
+                    parts.size >= 7 && parts[0] == "ar" && parts[1] == "series" -> {
+                        val slug = parts[4]
+                        val chapterId = parts[5]
+                        val chapterNumber = parts[6]
+                        "https://procomic.pro/en/chapter/$slug-$chapterNumber-$chapterId"
+                    }
+                    parts.size >= 6 && parts[0] == "ar" && parts[1] == "series" -> {
+                        val slug = parts[3]
+                        val chapterId = parts[4]
+                        val chapterNumber = parts[5]
+                        "https://procomic.pro/en/chapter/$slug-$chapterNumber-$chapterId"
+                    }
+                    else -> throw Exception("ProComic Reader: malformed chapter URL")
                 }
             }
+        }
+        if (!ProComicUtils.isAllowedReaderUrl(canonicalUrl)) {
+            throw Exception("ProComic Reader: unrecognized chapter host or URL")
         }
         return GET(canonicalUrl, headers)
     }
@@ -593,6 +611,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         val deferredSplitIndex = deferred?.splitIndex
         val chapterId = Regex("-(\\d+)$").find(response.request.url.pathSegments.lastOrNull().orEmpty())
             ?.groupValues?.getOrNull(1)?.toIntOrNull()
+            ?.takeIf { it > 0 }
 
         if (deferredToken.isNullOrBlank() || deferredSplitIndex == null || chapterId == null) {
             ProComicDiag.logStage(
@@ -611,12 +630,21 @@ class ProComic : HttpSource(), ConfigurableSource {
             return pages
         }
 
-        val deferredData = fetchDeferredMedia(
-            chapterId = chapterId,
-            token = deferredToken,
-            splitIndex = deferredSplitIndex,
-            referer = url,
-        )
+        val deferredData = try {
+            fetchDeferredMedia(
+                chapterId = chapterId,
+                token = deferredToken,
+                splitIndex = deferredSplitIndex,
+                referer = url,
+            )
+        } catch (error: Exception) {
+            ProComicDiag.logException("PAGES", "fetch deferred media", url, error)
+            return pages
+        }
+        if (deferredData.chapterId != null && deferredData.chapterId != chapterId) {
+            ProComicDiag.logStage("PAGES", 98, "deferred media chapter identity mismatch")
+            return pages
+        }
         val directDeferred = deferredData.images
             .filter { ProComicUtils.isAllowedPageImageUrl(it) }
             .filterNot(publicImages::contains)
@@ -627,7 +655,14 @@ class ProComic : HttpSource(), ConfigurableSource {
             }
         }
 
-        val mapStartIndex = deferredData.splitIndex ?: deferred.splitIndex
+        val mapStartIndex = (deferredData.splitIndex ?: deferred.splitIndex)
+            .takeIf { it in 0..MAX_READER_PAGE_INDEX }
+            ?: run {
+                if (deferredData.maps.isNotEmpty()) {
+                    ProComicDiag.logStage("PAGES", 98, "deferred map start index is invalid")
+                }
+                return pages
+            }
         val protectedMaps = deferredData.maps.take(MAX_READER_DEFERRED_MAPS)
         if (protectedMaps.size != deferredData.maps.size) {
             ProComicDiag.logStage(
@@ -636,20 +671,27 @@ class ProComic : HttpSource(), ConfigurableSource {
                 "deferred map count exceeded bound=${MAX_READER_DEFERRED_MAPS}; truncated=${deferredData.maps.size - protectedMaps.size}",
             )
         }
-        protectedMaps.forEachIndexed { index, mapToken ->
-            pages += Page(
-                pages.size,
-                imageUrl = ProComicUtils.encodeProtectedPageUrl(
-                    ProComicProtectedPagePayload(
-                        chapterId = chapterId,
-                        token = mapToken.token,
-                        method = mapToken.method,
-                        cdnPath = ProComicUtils.extractReaderCdnPath(body) ?: "cdn2",
-                        pageIndex = mapStartIndex + index,
+        val cdnPath = ProComicUtils.extractReaderCdnPath(body) ?: "cdn2"
+        protectedMaps
+            .filter { mapToken ->
+                mapToken.token.isNotBlank() &&
+                    mapToken.token.length <= MAX_READER_TOKEN_LENGTH &&
+                    mapToken.method == "browser_session"
+            }
+            .forEachIndexed { index, mapToken ->
+                pages += Page(
+                    pages.size,
+                    imageUrl = ProComicUtils.encodeProtectedPageUrl(
+                        ProComicProtectedPagePayload(
+                            chapterId = chapterId,
+                            token = mapToken.token,
+                            method = mapToken.method,
+                            cdnPath = cdnPath,
+                            pageIndex = mapStartIndex + index,
+                        ),
                     ),
-                ),
-            )
-        }
+                )
+            }
         ProComicDiag.logStage(
             "PAGES",
             99,
@@ -675,8 +717,13 @@ class ProComic : HttpSource(), ConfigurableSource {
             if (!response.isSuccessful) {
                 throw Exception("ProComic Reader: deferred media request failed (${response.code})")
             }
-            ProComicUtils.json.decodeFromString<ProComicDeferredMediaResponse>(readBoundedBody(response)).data
-                ?: throw Exception("ProComic Reader: deferred media response has no data")
+            val parsed = ProComicUtils.json.decodeFromString<ProComicDeferredMediaResponse>(
+                readBoundedBody(response),
+            )
+            if (parsed.success == false) {
+                throw Exception("ProComic Reader: deferred media response returned success=false")
+            }
+            parsed.data ?: throw Exception("ProComic Reader: deferred media response has no data")
         }
     }
 
@@ -716,7 +763,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     private fun ProComicLatestSeries.toLatestSManga(): SManga = SManga.create().apply {
         url = "/ar/series/$type/$mangaId/$mangaSlug"
         title = this@toLatestSManga.mangaTitle
-        thumbnail_url = this@toLatestSManga.coverImage?.takeIf { it.startsWith("http") }
+        thumbnail_url = this@toLatestSManga.coverImage?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
         genre = this@toLatestSManga.type
             .takeIf { it.isNotBlank() }
             ?.replaceFirstChar { it.uppercase() }
@@ -729,13 +776,13 @@ class ProComic : HttpSource(), ConfigurableSource {
     private fun ProComicPopularContent.toPopularSManga(): SManga = SManga.create().apply {
         url = "/ar/series/$type/$id/$slug"
         title = this@toPopularSManga.title
-        thumbnail_url = this@toPopularSManga.thumbnail?.takeIf { it.startsWith("http") }
-            ?: this@toPopularSManga.coverImageApp?.desktop?.takeIf { it.startsWith("http") }
-            ?: this@toPopularSManga.metadata?.coverImage?.takeIf { it.startsWith("http") }
+        thumbnail_url = this@toPopularSManga.thumbnail?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
+            ?: this@toPopularSManga.coverImageApp?.desktop?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
+            ?: this@toPopularSManga.metadata?.coverImage?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
             ?: this@toPopularSManga.thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }
                 ?.let { path ->
                     this@toPopularSManga.cdnPath
-                        ?.takeIf { it.matches(Regex("cdn\\d+")) }
+                        ?.takeIf(ProComicUtils::isAllowedCdnPath)
                         ?.let { cdn -> "https://$cdn.procomic.net$path" }
                 }
         description = this@toPopularSManga.metadata?.descriptions?.ar
@@ -761,12 +808,12 @@ class ProComic : HttpSource(), ConfigurableSource {
         // URL pattern: /ar/series/{type}/{id}/{slug}
         url = "/ar/series/$type/$id/$slug"
         title = this@toSManga.title
-        thumbnail_url = this@toSManga.coverImage?.takeIf { it.startsWith("http") }
-            ?: this@toSManga.thumbnail?.takeIf { it.startsWith("http") }
+        thumbnail_url = this@toSManga.coverImage?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
+            ?: this@toSManga.thumbnail?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
             ?: this@toSManga.thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }
                 ?.let { path ->
                     this@toSManga.cdnPath
-                        ?.takeIf { it.matches(Regex("cdn\\d+")) }
+                        ?.takeIf(ProComicUtils::isAllowedCdnPath)
                         ?.let { cdn -> "https://$cdn.procomic.net$path" }
                 }
             ?: this@toSManga.coverImage

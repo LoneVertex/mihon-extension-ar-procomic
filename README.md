@@ -51,11 +51,11 @@ The persistent preference `show_paid_chapters` defaults to `true`. When disabled
 
 ## Validation Status
 
-The deterministic software gate passes all 12 repository test suites, `git diff --check`, protected-path checks, and clean debug/release APK builds. The workflow provisions Android API 35, installs `Pillow==12.3.0` from `requirements-test.txt`, sets `permissions: contents: read`, and uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. The first suite-enabled runs failed because Pillow was absent on the runner ([32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071), [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639)); the corrected push and PR runs passed ([32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810), [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137)). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+The deterministic software gate passes all 13 repository test suites, `git diff --check`, protected-path checks, and clean debug/release APK builds. The workflow provisions Android API 35, installs `Pillow==12.3.0` from `requirements-test.txt`, sets `permissions: contents: read`, and uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. The first suite-enabled runs failed because Pillow was absent on the runner ([32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071), [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639)); the corrected push and PR runs passed ([32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810), [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137)). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, trust-transition/native-loading failure, and `Unknown` publication status. The exact series-387/chapter-19273 failure is now covered by a redacted fixture proving two protected maps, nine valid AVIF tiles, YUV444 characteristics, and the AOMedia decode path. Live public probing confirmed the exact deferred-media/proxy-plan contract; direct Android-device rendering of the new APK is still **NOT VERIFIED** here.
 
-The version 1.2 release APK is approximately 2.09 MB and the debug APK approximately 2.26 MB because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release build is debug-keystore signed for sideload/testing; a production release requires maintainer-owned signing credentials.
+The version 1.2 release APK is approximately 2.09 MB and the debug APK approximately 2.26 MB because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release build is intentionally unsigned; a production release requires maintainers to apply controlled signing credentials.
 
 ## Known Limitations
 
@@ -81,11 +81,12 @@ for test in $(find testdata -type f -name 'test_*.py' | sort); do
   python3 "$test" || exit 1
 done
 git diff --check
+./gradlew :app:lint --no-daemon --stacktrace
 ```
 
 ## Documentation and Handoff
 
-[`docs/PROCOMIC_SYSTEM.md`](docs/PROCOMIC_SYSTEM.md) is the current engineering reference. [`docs/VALIDATION.md`](docs/VALIDATION.md) contains the complete software gate and evidence record. [`docs/HANDOFF.md`](docs/HANDOFF.md) is the current operational handoff. [`docs/BRANCH_TOPOLOGY.md`](docs/BRANCH_TOPOLOGY.md) records the live 36-commit stack and PR topology. [`docs/HANDOFF_FINAL.md`](docs/HANDOFF_FINAL.md), [`autonomous-extension-fix-prompt.md`](autonomous-extension-fix-prompt.md), and [`docs/research/procomic-recon.md`](docs/research/procomic-recon.md) are retained historical artifacts and are not current implementation instructions.
+[`docs/PROCOMIC_SYSTEM.md`](docs/PROCOMIC_SYSTEM.md) is the current engineering reference. [`docs/VALIDATION.md`](docs/VALIDATION.md) contains the complete software gate and evidence record. [`docs/HANDOFF.md`](docs/HANDOFF.md) is the current operational handoff. [`docs/BRANCH_TOPOLOGY.md`](docs/BRANCH_TOPOLOGY.md) records the live 36-commit stack and PR topology. [`docs/HANDOFF_FINAL.md`](docs/HANDOFF_FINAL.md) and [`docs/research/procomic-recon.md`](docs/research/procomic-recon.md) are retained historical artifacts and are not current implementation instructions.
 
 ## Contribution and Release Workflow
 

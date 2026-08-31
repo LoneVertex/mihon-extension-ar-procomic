@@ -29,6 +29,9 @@ SENSITIVE_QUERY_KEY = re.compile(
 ASSIGNMENT = re.compile(
     r"(?i)(\b(?:authorization|cookie|set-cookie|proxy-authorization|x-csrf-token|csrf|api[_-]?key|password|pass|secret|session(?:[_-]?id)?|token|signature|sig)\b\s*[:=]\s*)(?:\"[^\"]*\"|'[^']*'|[^,;\s}]+)"
 )
+COMPOUND_ASSIGNMENT = re.compile(
+    r"(?i)(\b[A-Za-z0-9_-]*(?:api[_-]?key|auth(?:orization)?|csrf|nonce|pass(?:word)?|secret|session(?:[_-]?id)?|sig(?:nature)?|token)[A-Za-z0-9_-]*\b\s*[:=]\s*)(?:\"[^\"]*\"|'[^']*'|[^,;\s}]+)"
+)
 BEARER = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
 ABSOLUTE_URL = re.compile(r"https?://[^\s\"'<>]+", re.IGNORECASE)
 
@@ -43,6 +46,7 @@ def sanitize_text(value: str | None) -> str:
     result = ABSOLUTE_URL.sub(lambda m: redact_url(m.group(0)), value)
     result = BEARER.sub("Bearer <redacted>", result)
     result = ASSIGNMENT.sub(lambda m: f"{m.group(1)}<redacted>", result)
+    result = COMPOUND_ASSIGNMENT.sub(lambda m: f"{m.group(1)}<redacted>", result)
     return result[:512]
 
 
@@ -55,13 +59,15 @@ def test_url_redaction() -> None:
 def test_text_redaction() -> None:
     text = (
         'url=https://example.test/path?token=secret; Authorization=Bearer abc; '
-        'Cookie=session=private; signature=xyz; id=695'
+        'Cookie=session=private; access_token=compound-secret; refresh_token=refresh-secret; signature=xyz; id=695'
     )
     redacted = sanitize_text(text)
     assert "https://example.test/path" in redacted
     assert "?token=secret" not in redacted
     assert "Bearer abc" not in redacted
     assert "session=private" not in redacted
+    assert "compound-secret" not in redacted
+    assert "refresh-secret" not in redacted
     assert "signature=xyz" not in redacted
     assert "id=695" in redacted
 
@@ -85,6 +91,7 @@ def test_source_has_no_raw_logging_paths() -> None:
         assert f"fun {name}" in source
     assert "requestHeaderNames=" in source
     assert "bodySha256=" in source
+    assert "compoundSensitiveAssignment" in source
 
 
 def test_no_direct_loggers_elsewhere() -> None:

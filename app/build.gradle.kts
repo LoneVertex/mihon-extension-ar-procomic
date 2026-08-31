@@ -75,7 +75,7 @@ dependencies {
     // end up in classes3.dex instead of classes.dex, making Mihon's ChildFirstPathClassLoader
     // unable to find them. Use compileOnly so Mihon's runtime provides these at load time.
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")
-    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
     // OkHttp (provided by Tachiyomi app at runtime, not bundled)
     compileOnly("com.squareup.okhttp3:okhttp:4.12.0")

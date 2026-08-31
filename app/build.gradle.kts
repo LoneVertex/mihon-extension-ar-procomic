@@ -78,7 +78,7 @@ dependencies {
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
     // OkHttp (provided by Tachiyomi app at runtime, not bundled)
-    compileOnly("com.squareup.okhttp3:okhttp:4.12.0")
+    compileOnly("com.squareup.okhttp3:okhttp:5.5.0")
 
     // Jsoup (provided by Tachiyomi app at runtime, needed for interface compliance)
     // 1.23.1 includes the published security fix for malformed raw-text element handling.

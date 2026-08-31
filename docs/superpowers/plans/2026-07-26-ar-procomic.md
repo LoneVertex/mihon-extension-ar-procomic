@@ -1,5 +1,7 @@
 # ar.procomic Tachiyomi Extension — Implementation Plan
 
+> **HISTORICAL / SUPERSEDED:** This dated implementation plan describes an earlier pre-remediation design. Preserve it as history; do not use it as current implementation guidance. Consult [`docs/PROCOMIC_SYSTEM.md`](../../PROCOMIC_SYSTEM.md) for the current system.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a working standalone Tachiyomi/Mihon extension for procomic.pro that returns Popular, Latest, Search, series detail, chapter list, and page list (3 pages/chapter for guests).
@@ -11,7 +13,7 @@
 ## Global Constraints
 
 - `baseUrl = "https://procomic.pro"`
-- `lang = "ar"` 
+- `lang = "ar"`
 - `name = "ProComic"` (display name in Tachiyomi)
 - `versionId = 1`, `extVersionCode = 1`
 - `nsfw = false` (guests always have safe-browsing ON — confirmed by recon)
@@ -118,7 +120,7 @@ class ProComic : HttpSource() {
 }
 ```
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
 Expected: BUILD SUCCESSFUL (though not functional)
 
 - [ ] **Step 5: Commit**
@@ -208,7 +210,7 @@ data class ProComicProtection(
 
 - [ ] **Step 3: Verify serialization compiles**
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
 Expected: BUILD SUCCESSFUL
 
 - [ ] **Step 4: Commit**
@@ -227,7 +229,7 @@ git commit -m "feat(ar/procomic): add DTO data classes"
 
 **Interfaces:**
 - Consumes: `Response` from OkHttp (RSC response body as String)
-- Produces: 
+- Produces:
   - `fun extractSeriesList(body: String): List<ProComicSeriesDto>`
   - `fun extractSeriesDetail(body: String): ProComicSeriesDto?`
   - `fun extractChapterList(body: String): List<ProComicChapterDto>`
@@ -340,7 +342,7 @@ object ProComicUtils {
 
 - [ ] **Step 2: Verify compiles**
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
 Expected: BUILD SUCCESSFUL
 
 - [ ] **Step 3: Commit**
@@ -539,7 +541,7 @@ fun extractSeriesDetail(body: String): ProComicSeriesDto? {
 
 - [ ] **Step 3: Build and verify**
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
 Expected: BUILD SUCCESSFUL
 
 - [ ] **Step 4: Functional check — Popular**
@@ -578,7 +580,7 @@ echo "Search result size: $(wc -c < /tmp/search_test.txt) bytes"
 grep -c '"slug"' /tmp/search_test.txt
 ```
 
-Expected: Non-zero number of slug matches = search works.  
+Expected: Non-zero number of slug matches = search works.
 If zero: try `q=`, `query=`, `keyword=` parameter names until one works.
 
 - [ ] **Step 2: Update searchMangaRequest if param name differs**
@@ -593,8 +595,8 @@ override fun searchMangaRequest(page: Int, query: String, filters: FilterList): 
 
 - [ ] **Step 3: Build and functional test**
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
-Functional test: Open Tachiyomi → Browse → ProComic → Search → type "hunter"  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
+Functional test: Open Tachiyomi → Browse → ProComic → Search → type "hunter"
 Expected: Returns relevant results
 
 - [ ] **Step 4: Commit**
@@ -649,16 +651,16 @@ override fun chapterListParse(response: Response): List<SChapter> {
 
 - [ ] **Step 2: Build**
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
 Expected: BUILD SUCCESSFUL
 
 - [ ] **Step 3: Functional test**
 
-Open Tachiyomi → Browse → ProComic → tap any series  
+Open Tachiyomi → Browse → ProComic → tap any series
 Expected:
-- Title, description, cover populated  
-- Genres listed  
-- Chapter list shows at least 1 chapter  
+- Title, description, cover populated
+- Genres listed
+- Chapter list shows at least 1 chapter
 - Chapter names formatted as "Chapter 4"
 
 - [ ] **Step 4: Commit**
@@ -705,8 +707,8 @@ override fun imageRequest(page: Page): Request {
 
 - [ ] **Step 3: Build and test**
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
-Install APK and test reading a chapter.  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
+Install APK and test reading a chapter.
 Expected: 3 pages load successfully (or 403 error displayed — see escalation note)
 
 **If still 403:** This is a confirmed escalation point (CDN requires authenticated session). Implement fallback: return the RSC reader URL as the page URL so Tachiyomi can open in browser:
@@ -790,7 +792,7 @@ override fun getFilterList() = FilterList(
 override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
     var typeParam = ""
     var genreParam = ""
-    
+
     filters.forEach { filter ->
         when (filter) {
             is TypeFilter -> {
@@ -806,7 +808,7 @@ override fun searchMangaRequest(page: Int, query: String, filters: FilterList): 
             else -> {}
         }
     }
-    
+
     val searchParam = if (query.isNotBlank()) "&search=${query.trim().encodeURL()}" else ""
     val url = "$baseUrl/ar/series?page=$page$searchParam$typeParam$genreParam&_rsc=${page + 300}"
     return Request.Builder().url(url).headers(baseHeaders).build()
@@ -815,20 +817,20 @@ override fun searchMangaRequest(page: Int, query: String, filters: FilterList): 
 
 - [ ] **Step 3: Build and verify**
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
 Expected: BUILD SUCCESSFUL
 
 - [ ] **Step 4: Functional test**
 
-Open Tachiyomi → Browse → ProComic → Filter → select "Manhwa"  
+Open Tachiyomi → Browse → ProComic → Filter → select "Manhwa"
 Expected: Results show only manhwa type
 
 - [ ] **Step 5: Full integration build**
 
-Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`  
+Run: `./gradlew :extensions:individual:ar:procomic:assembleDebug`
 Run full functional checklist:
 - [ ] Popular returns ≥1 result
-- [ ] Latest returns ≥1 result  
+- [ ] Latest returns ≥1 result
 - [ ] Search "hunter" returns relevant results
 - [ ] Series detail has title + cover + description
 - [ ] Chapter list has ≥1 chapter

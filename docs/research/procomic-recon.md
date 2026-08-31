@@ -1,7 +1,9 @@
+> **AUDIT ARTIFACT / HISTORICAL:** This report preserves dated reconnaissance evidence from 2026-07-26. Some endpoint, CDN, and architecture claims were later superseded. Consult [`docs/PROCOMIC_SYSTEM.md`](../PROCOMIC_SYSTEM.md) for the current system.
+
 # ProComic.pro Recon Report — Stage 3C Evidence
 
-**Date:** 2026-07-26  
-**Investigator:** Antigravity Agent  
+**Date:** 2026-07-26
+**Investigator:** Antigravity Agent
 **Target domains:** procomic.pro, procomic.net, app.procomic.net/app
 
 ---
@@ -65,12 +67,12 @@
   ```
 
 **Required headers for RSC requests:**
-- `User-Agent: Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 ...`  
-- `RSC: 1`  
-- `Accept-Language: ar,en;q=0.9`  
+- `User-Agent: Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 ...`
+- `RSC: 1`
+- `Accept-Language: ar,en;q=0.9`
 - `Next-Router-State-Tree: %5B%22%22%2C%7B%7D%5D` (optional, helps for navigation)
 
-### 3.2 Direct JSON API  
+### 3.2 Direct JSON API
 **Finding:** No `/api/*` routes exist (all returned 404). The backend API is **internal to the Next.js server** and not exposed publicly as a REST API.
 
 ### 3.3 Image CDN
@@ -99,7 +101,7 @@ This means one of:
 
 ### Series Listing RSC (`/ar/series?_rsc=1`)
 ```
-Fields: id (int), title (string), slug (string), type (string: "manga"|"manhwa"|"manhua"|"novel"), 
+Fields: id (int), title (string), slug (string), type (string: "manga"|"manhwa"|"manhua"|"novel"),
         status (string: "approved"), thumbnail (URL from app.procomic.pro)
 ```
 

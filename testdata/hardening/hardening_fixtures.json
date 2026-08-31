@@ -1,0 +1,36 @@
+{
+  "allowed_image_urls": [
+    "https://app.procomic.pro/chapters/690/50821/p1/1785188000210-bp3wk0x3m06-4086df2c7bf6-desktop.avif",
+    "https://app.procomic.pro/chapters/693/51606/p3/1786163402639-jprlt13y49-39dbe021f4fa-desktop.avif"
+  ],
+  "rejected_image_urls": [
+    "http://app.procomic.pro/chapters/690/50821/p1/page.avif",
+    "https://app.procomic.net/chapters/690/50821/p1/page.avif",
+    "https://cdn2.procomic.pro/690/50821/page.avif",
+    "https://evil.example/chapters/690/50821/page.avif",
+    "https://app.procomic.pro/assets/cover.avif",
+    "https://app.procomic.pro/chapters/690/50821/p1/page.svg",
+    "https://app.procomic.pro/chapters/690/50821/p1/page.avif?token=ignored-by-path-policy"
+  ],
+  "response_limits": {
+    "max_response_bytes": 2000000,
+    "max_rsc_candidate_bytes": 1000000,
+    "max_rsc_candidates": 8,
+    "max_chapter_pages": 50
+  },
+  "chapter_pages": {
+    "normal": [
+      {"ids": [1001, 1002], "hasMore": true},
+      {"ids": [1003], "hasMore": false}
+    ],
+    "repeated": [
+      {"ids": [1001, 1002], "hasMore": true},
+      {"ids": [1001, 1002], "hasMore": true},
+      {"ids": [1003], "hasMore": false}
+    ],
+    "empty_continuation": [
+      {"ids": [1001], "hasMore": true},
+      {"ids": [], "hasMore": true}
+    ]
+  }
+}

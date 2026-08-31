@@ -58,6 +58,12 @@ private object StringOrListSerializer : KSerializer<String?> {
  */
 
 @Serializable
+data class ProComicAppImage(
+    val mobile: String? = null,
+    val desktop: String? = null,
+)
+
+@Serializable
 data class ProComicSearchResponse(
     val data: List<ProComicSeriesDto> = emptyList(),
     val meta: ProComicSearchMeta? = null,
@@ -77,6 +83,80 @@ data class ProComicSeriesListResponse(
     val total: Int = 0,
 )
 
+/**
+ * Public Popular feed: `/api/public/content/popular-new?limit=N`.
+ * Unlike Search/Details, each row wraps the series in `content` and exposes `viewCount`
+ * as a string. The response has no observed continuation metadata.
+ */
+@Serializable
+data class ProComicPopularResponse(
+    val success: Boolean = false,
+    val data: List<ProComicPopularItem> = emptyList(),
+)
+
+@Serializable
+data class ProComicPopularItem(
+    val content: ProComicPopularContent,
+    val viewCount: String? = null,
+)
+
+@Serializable
+data class ProComicPopularContent(
+    val id: Int,
+    val title: String,
+    val slug: String,
+    val description: String? = null,
+    val type: String,
+    val status: String? = null,
+    val thumbnail: String? = null,
+    val metadata: ProComicSeriesMetadata? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
+/**
+ * Public Latest feed: `/api/public/content/latest-updates?limit=18&category=all&page=N`.
+ * This schema is intentionally separate from Popular: series fields are flat and the
+ * latest chapter summaries carry their own language, timestamp, and gate metadata.
+ */
+@Serializable
+data class ProComicLatestResponse(
+    val success: Boolean = false,
+    val data: List<ProComicLatestSeries> = emptyList(),
+)
+
+@Serializable
+data class ProComicLatestSeries(
+    val mangaId: Int,
+    val mangaSlug: String,
+    val mangaTitle: String,
+    val coverImage: String? = null,
+    @SerialName("cdn_path") val cdnPath: String? = null,
+    val type: String,
+    val origin: String? = null,
+    val status: String? = null,
+    val isBlockedSeries: Boolean = false,
+    val isSensitiveImage: Boolean = false,
+    val viewStatus: String? = null,
+    val supportStatus: String? = null,
+    val chapters: List<ProComicLatestChapterSummary> = emptyList(),
+)
+
+@Serializable
+data class ProComicLatestChapterSummary(
+    val id: Int,
+    val slug: String? = null,
+    val number: String,
+    val language: String,
+    val publishedAt: String? = null,
+    val supportMode: String? = null,
+    val coinsRequired: Int? = null,
+    val hasShortlink: Boolean? = null,
+    val lockedForever: Boolean? = null,
+    val lockedByCoins: Boolean? = null,
+    val lockedByExclusive: Boolean? = null,
+)
+
 @Serializable
 data class ProComicSeriesDto(
     val id: Int,
@@ -92,10 +172,51 @@ data class ProComicSeriesDto(
     @SerialName("updated_at") val updatedAt: String? = null,
 )
 
+sealed interface ProComicDetailsResult {
+    data class Complete(val series: ProComicSeriesDto) : ProComicDetailsResult
+    data class Restricted(val details: ProComicRestrictedDetails) : ProComicDetailsResult
+}
+
+@Serializable
+data class ProComicRestrictedDetails(
+    val id: Int,
+    val title: String,
+    val type: String,
+    val slug: String,
+    val restricted: Boolean,
+    val coverImage: String? = null,
+    val description: String? = null,
+    val totalChapters: Int? = null,
+    val latestChapterNumber: String? = null,
+    val latestChapterDate: String? = null,
+    val readHref: String? = null,
+    val readIsExternal: Boolean? = null,
+    val originalSources: List<String> = emptyList(),
+)
+
+@Serializable
+data class ProComicRestrictedParams(
+    val type: String,
+    val id: String,
+    val slug: String,
+)
+
+data class ProComicRestrictedSummary(
+    val coverImage: String? = null,
+    val description: String? = null,
+    val totalChapters: Int? = null,
+    val latestChapterNumber: String? = null,
+    val latestChapterDate: String? = null,
+    val readHref: String? = null,
+    val readIsExternal: Boolean? = null,
+    val originalSources: List<String> = emptyList(),
+)
+
 @Serializable
 data class ProComicSeriesMetadata(
     val originalTitle: String? = null,
     val altTitles: List<String>? = null,
+    val coverImage: String? = null,
     @Serializable(with = StringOrListSerializer::class)
     val author: String? = null,
     @Serializable(with = StringOrListSerializer::class)
@@ -145,6 +266,15 @@ data class ProComicChapterDto(
     @SerialName("cdn_path") val cdnPath: String? = null,
     val metadata: ProComicChapterMetadata? = null,
     @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("published_at") val publishedAt: String? = null,
+    val supportMode: String? = null,
+    @SerialName("coins_unlocks") val coinsUnlocks: Int = 0,
+    @SerialName("shortlink_unlocks") val shortlinkUnlocks: Int = 0,
+    val coinsRequired: Int? = null,
+    val hasShortlink: Boolean? = null,
+    val lockedForever: Boolean? = null,
+    val lockedByCoins: Boolean? = null,
+    val lockedByExclusive: Boolean? = null,
 )
 
 /**
@@ -159,6 +289,43 @@ data class ProComicChapterListResponse(
     val chapters: List<ProComicChapterDto> = emptyList(),
     val total: Int? = null,      // server currently returns null, not an int
     val hasMore: Boolean = false,
+)
+
+data class ProComicChapterGate(
+    val supportMode: String?,
+    val coinsUnlocks: Int,
+    val shortlinkUnlocks: Int,
+    val coinsRequired: Int?,
+    val hasShortlink: Boolean?,
+    val lockedForever: Boolean?,
+    val lockedByCoins: Boolean?,
+    val lockedByExclusive: Boolean?,
+    val publicImageCount: Int?,
+)
+
+/**
+ * Conservative access classification for a chapter.
+ *
+ * [RESTRICTED_AUTH_REQUIRED] is a content-access state, not a paid state. It must never be
+ * inferred from a denied/restricted response and must remain visible when paid chapters are hidden.
+ */
+enum class ProComicGateState {
+    FREE,
+    COIN_LOCKED,
+    EXCLUSIVE,
+    SHORTLINK_UNLOCK,
+    PERMANENTLY_LOCKED,
+    RESTRICTED_AUTH_REQUIRED,
+    UNKNOWN,
+}
+
+data class ProComicNormalizedChapter(
+    val source: ProComicChapterDto,
+    val languageCode: String,
+    val languageDisplay: String,
+    val numericNumber: Float?,
+    val gate: ProComicChapterGate,
+    val isEnglishFallback: Boolean = false,
 )
 
 @Serializable

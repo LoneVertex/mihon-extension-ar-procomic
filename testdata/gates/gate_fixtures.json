@@ -1,0 +1,220 @@
+{
+  "states": [
+    {
+      "name": "free",
+      "id": 9001,
+      "chapter_number": "1",
+      "language": "AR",
+      "lockedForever": false,
+      "lockedByCoins": false,
+      "lockedByExclusive": false,
+      "hasShortlink": false,
+      "coinsRequired": null,
+      "coins_unlocks": 0,
+      "shortlink_unlocks": 0,
+      "expected": "FREE"
+    },
+    {
+      "name": "coin_locked",
+      "id": 9002,
+      "chapter_number": "2",
+      "language": "AR",
+      "lockedForever": false,
+      "lockedByCoins": true,
+      "lockedByExclusive": false,
+      "hasShortlink": false,
+      "coinsRequired": 2,
+      "coins_unlocks": 2,
+      "shortlink_unlocks": 0,
+      "expected": "COIN_LOCKED"
+    },
+    {
+      "name": "exclusive",
+      "id": 9003,
+      "chapter_number": "3",
+      "language": "AR",
+      "lockedForever": false,
+      "lockedByCoins": false,
+      "lockedByExclusive": true,
+      "hasShortlink": false,
+      "coinsRequired": null,
+      "coins_unlocks": 0,
+      "shortlink_unlocks": 0,
+      "expected": "EXCLUSIVE"
+    },
+    {
+      "name": "shortlink_unlock",
+      "id": 9004,
+      "chapter_number": "4",
+      "language": "AR",
+      "lockedForever": false,
+      "lockedByCoins": false,
+      "lockedByExclusive": false,
+      "hasShortlink": true,
+      "coinsRequired": null,
+      "coins_unlocks": 0,
+      "shortlink_unlocks": 1,
+      "expected": "SHORTLINK_UNLOCK"
+    },
+    {
+      "name": "permanently_locked",
+      "id": 9005,
+      "chapter_number": "5",
+      "language": "AR",
+      "lockedForever": true,
+      "lockedByCoins": false,
+      "lockedByExclusive": false,
+      "hasShortlink": false,
+      "coinsRequired": null,
+      "coins_unlocks": 0,
+      "shortlink_unlocks": 0,
+      "expected": "PERMANENTLY_LOCKED"
+    },
+    {
+      "name": "conflicting_locks",
+      "id": 9006,
+      "chapter_number": "6",
+      "language": "AR",
+      "lockedForever": false,
+      "lockedByCoins": true,
+      "lockedByExclusive": true,
+      "hasShortlink": false,
+      "coinsRequired": 2,
+      "coins_unlocks": 2,
+      "shortlink_unlocks": 0,
+      "expected": "UNKNOWN"
+    },
+    {
+      "name": "missing_gate_fields",
+      "id": 9007,
+      "chapter_number": "7",
+      "language": "AR",
+      "lockedForever": null,
+      "lockedByCoins": null,
+      "lockedByExclusive": null,
+      "hasShortlink": null,
+      "coinsRequired": null,
+      "coins_unlocks": 0,
+      "shortlink_unlocks": 0,
+      "expected": "UNKNOWN"
+    },
+    {
+      "name": "cost_without_lock",
+      "id": 9008,
+      "chapter_number": "8",
+      "language": "AR",
+      "lockedForever": false,
+      "lockedByCoins": false,
+      "lockedByExclusive": false,
+      "hasShortlink": false,
+      "coinsRequired": 3,
+      "coins_unlocks": 0,
+      "shortlink_unlocks": 0,
+      "expected": "UNKNOWN"
+    },
+    {
+      "name": "restricted_content",
+      "id": 9009,
+      "chapter_number": "9",
+      "language": "AR",
+      "restricted": true,
+      "lockedForever": false,
+      "lockedByCoins": false,
+      "lockedByExclusive": false,
+      "hasShortlink": false,
+      "coinsRequired": null,
+      "coins_unlocks": 0,
+      "shortlink_unlocks": 0,
+      "expected": "FREE",
+      "retained_state_when_hiding_paid": "RESTRICTED_AUTH_REQUIRED"
+    }
+  ],
+  "language_pairs": [
+    {
+      "name": "arabic_paid_wins_then_hides_without_english_resurrection",
+      "records": [
+        {
+          "id": 9101,
+          "chapter_number": "10",
+          "language": "EN",
+          "published_at": "2026-08-10T00:00:00Z",
+          "lockedForever": false,
+          "lockedByCoins": false,
+          "lockedByExclusive": false,
+          "hasShortlink": false,
+          "coinsRequired": null,
+          "coins_unlocks": 0,
+          "shortlink_unlocks": 0
+        },
+        {
+          "id": 9102,
+          "chapter_number": "10",
+          "language": "AR",
+          "published_at": "2026-08-09T00:00:00Z",
+          "lockedForever": false,
+          "lockedByCoins": true,
+          "lockedByExclusive": false,
+          "hasShortlink": false,
+          "coinsRequired": 1,
+          "coins_unlocks": 1,
+          "shortlink_unlocks": 0
+        }
+      ],
+      "normalized_ids": [9102],
+      "visible_when_hiding_paid": []
+    },
+    {
+      "name": "arabic_free_wins_over_english_paid",
+      "records": [
+        {
+          "id": 9201,
+          "chapter_number": "11",
+          "language": "EN",
+          "published_at": "2026-08-11T00:00:00Z",
+          "lockedForever": false,
+          "lockedByCoins": true,
+          "lockedByExclusive": false,
+          "hasShortlink": false,
+          "coinsRequired": 1,
+          "coins_unlocks": 1,
+          "shortlink_unlocks": 0
+        },
+        {
+          "id": 9202,
+          "chapter_number": "11",
+          "language": "AR",
+          "published_at": "2026-08-10T00:00:00Z",
+          "lockedForever": false,
+          "lockedByCoins": false,
+          "lockedByExclusive": false,
+          "hasShortlink": false,
+          "coinsRequired": null,
+          "coins_unlocks": 0,
+          "shortlink_unlocks": 0
+        }
+      ],
+      "normalized_ids": [9202],
+      "visible_when_hiding_paid": [9202]
+    },
+    {
+      "name": "unknown_language_remains_visible",
+      "records": [
+        {
+          "id": 9301,
+          "chapter_number": "bonus",
+          "language": "JP",
+          "published_at": "2026-08-12T00:00:00Z",
+          "lockedForever": null,
+          "lockedByCoins": null,
+          "lockedByExclusive": null,
+          "hasShortlink": null,
+          "coinsRequired": null,
+          "coins_unlocks": 0,
+          "shortlink_unlocks": 0
+        }
+      ],
+      "normalized_ids": [9301],
+      "visible_when_hiding_paid": [9301]
+    }
+  ]
+}

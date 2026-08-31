@@ -1,5 +1,7 @@
 # ProComic Debug Instrumentation Implementation Plan
 
+> **AUDIT ARTIFACT / HISTORICAL:** This dated instrumentation plan records an earlier diagnostic phase. It is retained for provenance and is not current implementation guidance; consult [`docs/PROCOMIC_SYSTEM.md`](../../PROCOMIC_SYSTEM.md) for the current system.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add complete runtime instrumentation to the RSC parse pipeline so every stage between OkHttp response receipt and `MangasPage` construction is observable via logcat — proving exactly where execution diverges from the curl baseline.

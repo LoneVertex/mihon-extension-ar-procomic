@@ -1,4 +1,6 @@
 # ProComic Extension Recovery — Revised Roadmap
+> **AUDIT ARTIFACT / HISTORICAL:** This recovery roadmap preserves dated evidence and superseded hypotheses from 2026-08-01. It is not current implementation guidance; consult [`docs/PROCOMIC_SYSTEM.md`](../../PROCOMIC_SYSTEM.md) for the current system.
+
 # Evidence gathered: 2026-08-01T21:48–21:55 UTC+3
 # All claims classified per Autonomous Engineering Execution Contract
 

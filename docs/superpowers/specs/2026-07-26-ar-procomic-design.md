@@ -1,5 +1,7 @@
 # ar.procomic Extension Design Spec
-**Date:** 2026-07-26  
+> **HISTORICAL / SUPERSEDED:** This dated design specification describes the pre-remediation architecture and hypotheses. It is retained for historical context and is not current implementation guidance; consult [`docs/PROCOMIC_SYSTEM.md`](../../PROCOMIC_SYSTEM.md) for the current system.
+
+**Date:** 2026-07-26
 **Status:** Approved (autonomously, per prompt directive)
 
 ---

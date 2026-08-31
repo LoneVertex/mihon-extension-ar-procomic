@@ -7,116 +7,111 @@ import java.security.MessageDigest
 /**
  * INSTRUMENTATION-ONLY — remove before publishing to keiyoushi repo.
  *
- * Runtime diagnostic helper for the ProComic RSC parse pipeline.
- *
- * Filter logcat with:
- *   adb logcat -s ProComicDiag
- *
- * Stages logged:
- *   HTTP: URL, status, all request+response headers, body size, SHA-256, snippets
- *   Parser: key search, array extraction, deserialization, filter, item count
- *   Exceptions: type, message, full stack trace, stage, URL
+ * Runtime diagnostic helper for the ProComic parse pipeline. Diagnostics are deliberately
+ * metadata-only: request/response header values and raw response bodies are never logged.
  */
 object ProComicDiag {
 
     const val TAG = "ProComicDiag"
 
     private const val SEP = "══════════════════════════════════════════════"
+    private const val REDACTED = "<redacted>"
 
-    // ── SHA-256 ──────────────────────────────────────────────────────────────
+    private val sensitiveHeaderNames = setOf(
+        "authorization",
+        "cookie",
+        "proxy-authorization",
+        "set-cookie",
+        "x-csrf-token",
+        "csrf-token",
+    )
+
+    private val sensitiveQueryKey = Regex(
+        "(?i)(?:^|[_-])(api[_-]?key|auth|authorization|code|csrf|key|nonce|pass(?:word)?|secret|session|sig(?:nature)?|token)(?:$|[_-])",
+    )
+
+    private val sensitiveAssignment = Regex(
+        "(?i)(\\b(?:authorization|cookie|set-cookie|proxy-authorization|x-csrf-token|csrf|api[_-]?key|password|pass|secret|session(?:[_-]?id)?|token|signature|sig)\\b\\s*[:=]\\s*)(?:\\\"[^\\\"]*\\\"|'[^']*'|[^,;\\s}]+)",
+    )
+
+    private val bearerToken = Regex("(?i)\\bBearer\\s+[^\\s,;]+")
+    private val absoluteUrl = Regex("https?://[^\\s\\\"'<>]+", RegexOption.IGNORE_CASE)
 
     fun sha256(s: String): String = try {
         MessageDigest.getInstance("SHA-256")
             .digest(s.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
     } catch (e: Exception) {
-        "SHA256_ERROR:${e.message}"
+        "SHA256_ERROR"
     }
+
+    /** Return only the URL path, removing all query and fragment material. */
+    fun redactUrl(url: String): String = url
+        .substringBefore('?')
+        .substringBefore('#')
+        .ifBlank { "(empty-url)" }
+
+    /** Redact credentials, tokens, signed URLs, and URL-like values from free text. */
+    fun sanitizeText(value: String?): String {
+        if (value.isNullOrBlank()) return "(none)"
+        var sanitized = value
+        sanitized = absoluteUrl.replace(sanitized) { redactUrl(it.value) }
+        sanitized = bearerToken.replace(sanitized, "Bearer $REDACTED")
+        sanitized = sensitiveAssignment.replace(sanitized) { "${it.groupValues[1]}$REDACTED" }
+        return sanitized.take(512)
+    }
+
+    /** Redact a header value while retaining the fact that the header was present. */
+    fun redactHeaderValue(name: String, value: String): String =
+        if (name.lowercase() in sensitiveHeaderNames) REDACTED else sanitizeText(value)
+
+    private fun safeHeaderNames(response: Response): String =
+        response.request.headers.names()
+            .sorted()
+            .joinToString(",")
+            .ifBlank { "(none)" }
+
+    private fun safeResponseHeader(response: Response, name: String): String =
+        response.header(name)?.let { sanitizeText(it) } ?: "(absent)"
 
     // ── HTTP Response Logger ──────────────────────────────────────────────────
 
     /**
-     * Log every observable HTTP property of [response] together with the
-     * already-decoded [body] string.  Call immediately after
-     * `response.body!!.string()` in each parse method.
-     *
-     * Captures:
-     * - Request URL (exactly what OkHttp sent)
-     * - HTTP status code
-     * - All request headers (confirms RSC:1 presence)
-     * - All response headers (Content-Type, Content-Encoding, cf-* etc.)
-     * - Declared Content-Length header vs actual decoded body length (detects gzip)
-     * - Body SHA-256 (compare against curl baseline: /tmp/ondevice_rsc.txt)
-     * - Body first 500 chars (detect HTML vs RSC wire format vs Cloudflare page)
-     * - Body last 200 chars
+     * Log safe HTTP metadata only. Header names are retained for request-shape diagnostics,
+     * while all header values and raw response body content are excluded or sanitized.
      */
     fun logResponse(tag: String, response: Response, body: String) {
-        val url              = response.request.url.toString()
-        val status           = response.code
-        val contentType      = response.header("Content-Type")      ?: "(absent)"
-        val contentEncoding  = response.header("Content-Encoding")  ?: "(absent)"
-        val transferEncoding = response.header("Transfer-Encoding") ?: "(absent)"
-        val contentLenHdr    = response.header("Content-Length")    ?: "(absent)"
-        val cfCacheStatus    = response.header("cf-cache-status")   ?: "(absent)"
-        val cfRay            = response.header("cf-ray")            ?: "(absent)"
-        val xPoweredBy       = response.header("x-powered-by")      ?: "(absent)"
-        val bodyLen          = body.length
-        val bodyHash         = sha256(body)
-        val bodyFirst500     = body.take(500).replace("\n", "↵").replace("\r", "")
-        val bodyLast200      = body.takeLast(200).replace("\n", "↵").replace("\r", "")
+        val safeUrl = redactUrl(response.request.url.toString())
+        val bodyLen = body.length
 
         Log.d(TAG, SEP)
-        Log.d(TAG, "[$tag] ── HTTP RESPONSE ──")
-        Log.d(TAG, "[$tag] URL: $url")
-        Log.d(TAG, "[$tag] Status: $status")
-        Log.d(TAG, "[$tag] Content-Type: $contentType")
-        Log.d(TAG, "[$tag] Content-Encoding: $contentEncoding")
-        Log.d(TAG, "[$tag] Transfer-Encoding: $transferEncoding")
-        Log.d(TAG, "[$tag] Content-Length (header): $contentLenHdr")
-        Log.d(TAG, "[$tag] Body length (post-decompress): $bodyLen")
-        Log.d(TAG, "[$tag] Body SHA-256: $bodyHash")
-        Log.d(TAG, "[$tag] cf-cache-status: $cfCacheStatus")
-        Log.d(TAG, "[$tag] cf-ray: $cfRay")
-        Log.d(TAG, "[$tag] x-powered-by: $xPoweredBy")
-
-        Log.d(TAG, "[$tag] ── REQUEST HEADERS ──")
-        response.request.headers.forEach { (name, value) ->
-            Log.d(TAG, "[$tag]   req> $name: $value")
-        }
-
-        Log.d(TAG, "[$tag] ── RESPONSE HEADERS ──")
-        response.headers.forEach { (name, value) ->
-            Log.d(TAG, "[$tag]   res> $name: $value")
-        }
-
-        Log.d(TAG, "[$tag] ── BODY SNIPPETS ──")
-        Log.d(TAG, "[$tag] first500: $bodyFirst500")
-        Log.d(TAG, "[$tag] last200:  $bodyLast200")
+        Log.d(TAG, "[$tag] HTTP method=${response.request.method} url=$safeUrl")
+        Log.d(TAG, "[$tag] status=${response.code} contentType=${safeResponseHeader(response, "Content-Type")}")
+        Log.d(TAG, "[$tag] contentEncoding=${safeResponseHeader(response, "Content-Encoding")} " +
+            "transferEncoding=${safeResponseHeader(response, "Transfer-Encoding")}")
+        Log.d(TAG, "[$tag] contentLength=${safeResponseHeader(response, "Content-Length")} bodyLength=$bodyLen")
+        Log.d(TAG, "[$tag] bodySha256=${sha256(body)}")
+        Log.d(TAG, "[$tag] cache=${safeResponseHeader(response, "cf-cache-status")} " +
+            "ray=${safeResponseHeader(response, "cf-ray")} " +
+            "poweredBy=${safeResponseHeader(response, "x-powered-by")}")
+        Log.d(TAG, "[$tag] requestHeaderNames=${safeHeaderNames(response)}")
         Log.d(TAG, SEP)
     }
 
     // ── Parser Stage Logger ────────────────────────────────────────────────────
 
     fun logStage(tag: String, stage: Int, message: String) {
-        Log.d(TAG, "[$tag][S$stage] $message")
+        Log.d(TAG, "[$tag][S$stage] ${sanitizeText(message)}")
     }
 
     // ── Exception Logger ──────────────────────────────────────────────────────
 
-    /**
-     * Log a caught exception with full context.  Does NOT rethrow — the caller
-     * must still handle it (return emptyList, null, etc.) exactly as before.
-     */
+    /** Log exception type and sanitized context without raw stack traces or body content. */
     fun logException(tag: String, stage: String, url: String, e: Throwable) {
-        Log.e(TAG, "[$tag] *** EXCEPTION ***  stage=$stage")
-        Log.e(TAG, "[$tag]   url=$url")
-        Log.e(TAG, "[$tag]   type=${e.javaClass.name}")
-        Log.e(TAG, "[$tag]   message=${e.message}")
-        val cause = e.cause
-        if (cause != null) {
-            Log.e(TAG, "[$tag]   cause.type=${cause.javaClass.name}")
-            Log.e(TAG, "[$tag]   cause.msg=${cause.message}")
+        Log.e(TAG, "[$tag] exception stage=${sanitizeText(stage)} url=${redactUrl(url)}")
+        Log.e(TAG, "[$tag] type=${e.javaClass.name} message=${sanitizeText(e.message)}")
+        e.cause?.let { cause ->
+            Log.e(TAG, "[$tag] causeType=${cause.javaClass.name}")
         }
-        Log.e(TAG, "[$tag]   stacktrace:", e)
     }
 }

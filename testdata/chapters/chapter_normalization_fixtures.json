@@ -1,0 +1,83 @@
+{
+  "series_690": [
+    {"id": 52268, "chapter_number": "6", "language": "EN", "published_at": "2026-08-13T03:21:37Z", "coins_unlocks": 0},
+    {"id": 52265, "chapter_number": "6", "language": "AR", "published_at": "2026-08-13T03:20:00Z", "coins_unlocks": 0},
+    {"id": 51489, "chapter_number": "5", "language": "EN", "published_at": "2026-06-05T01:00:00Z", "coins_unlocks": 0},
+    {"id": 51488, "chapter_number": "5", "language": "AR", "published_at": "2026-06-05T00:59:00Z", "coins_unlocks": 0},
+    {"id": 51013, "chapter_number": "3", "language": "EN", "published_at": "2026-05-01T01:00:00Z", "coins_unlocks": 0},
+    {"id": 50825, "chapter_number": "3", "language": "AR", "published_at": "2026-05-01T00:59:00Z", "coins_unlocks": 0},
+    {"id": 51012, "chapter_number": "2", "language": "EN", "published_at": "2026-04-01T01:00:00Z", "coins_unlocks": 0},
+    {"id": 50824, "chapter_number": "2", "language": "AR", "published_at": "2026-04-01T00:59:00Z", "coins_unlocks": 0},
+    {"id": 51011, "chapter_number": "1", "language": "EN", "published_at": "2026-03-01T01:00:00Z", "coins_unlocks": 0},
+    {"id": 50822, "chapter_number": "1", "language": "AR", "published_at": "2026-03-01T00:59:00Z", "coins_unlocks": 0},
+    {"id": 51010, "chapter_number": "0", "language": "EN", "published_at": "2026-02-01T01:00:00Z", "coins_unlocks": 0},
+    {"id": 50821, "chapter_number": "0", "language": "AR", "published_at": "2026-02-01T00:59:00Z", "coins_unlocks": 0},
+    {"id": 51009, "chapter_number": "4", "language": "EN", "published_at": "2026-04-15T01:00:00Z", "coins_unlocks": 0},
+    {"id": 51008, "chapter_number": "4", "language": "AR", "published_at": "2026-04-15T00:59:00Z", "coins_unlocks": 0}
+  ],
+  "series_693": [
+    {"id": 51606, "chapter_number": "2", "language": "EN", "published_at": "2026-08-08T04:41:44Z", "coins_unlocks": 0},
+    {"id": 51592, "chapter_number": "2", "language": "AR", "published_at": "2026-08-08T04:28:36Z", "coins_unlocks": 0},
+    {"id": 51605, "chapter_number": "3", "language": "EN", "published_at": "2026-08-08T04:41:00Z", "coins_unlocks": 0},
+    {"id": 51593, "chapter_number": "3", "language": "AR", "published_at": "2026-08-08T04:29:10Z", "coins_unlocks": 0},
+    {"id": 51604, "chapter_number": "4", "language": "EN", "published_at": "2026-08-08T04:40:00Z", "coins_unlocks": 0},
+    {"id": 51594, "chapter_number": "4", "language": "AR", "published_at": "2026-08-08T04:29:46Z", "coins_unlocks": 5},
+    {"id": 51603, "chapter_number": "5", "language": "EN", "published_at": "2026-08-08T04:39:00Z", "coins_unlocks": 0},
+    {"id": 51595, "chapter_number": "5", "language": "AR", "published_at": "2026-08-08T04:30:14Z", "coins_unlocks": 2},
+    {"id": 51602, "chapter_number": "6", "language": "EN", "published_at": "2026-08-08T04:39:19Z", "coins_unlocks": 0},
+    {"id": 51596, "chapter_number": "6", "language": "AR", "published_at": "2026-08-08T04:30:49Z", "coins_unlocks": 0},
+    {"id": 51601, "chapter_number": "7", "language": "EN", "published_at": "2026-08-08T04:38:43Z", "coins_unlocks": 0},
+    {"id": 51597, "chapter_number": "7", "language": "AR", "published_at": "2026-08-08T04:31:20Z", "coins_unlocks": 2},
+    {"id": 51600, "chapter_number": "8", "language": "EN", "published_at": "2026-08-08T04:38:10Z", "coins_unlocks": 0},
+    {"id": 51598, "chapter_number": "8", "language": "AR", "published_at": "2026-08-08T04:31:51Z", "coins_unlocks": 2},
+    {"id": 51599, "chapter_number": "1", "language": "EN", "published_at": "2026-08-08T04:37:38Z", "coins_unlocks": 0},
+    {"id": 51591, "chapter_number": "1", "language": "AR", "published_at": "2026-08-08T04:27:55Z", "coins_unlocks": 0}
+  ],
+  "series_678": [
+    {"id": 46607, "chapter_number": "4", "language": "EN", "published_at": "2026-06-05T14:44:55Z", "coins_unlocks": 0},
+    {"id": 46606, "chapter_number": "4", "language": "AR", "published_at": "2026-06-05T14:43:20Z", "coins_unlocks": 0},
+    {"id": 46604, "chapter_number": "3", "language": "EN", "published_at": "2026-06-05T01:31:28Z", "coins_unlocks": 0},
+    {"id": 46601, "chapter_number": "3", "language": "AR", "published_at": "2026-06-05T01:30:00Z", "coins_unlocks": 0},
+    {"id": 46603, "chapter_number": "2", "language": "EN", "published_at": "2026-06-05T01:29:00Z", "coins_unlocks": 0},
+    {"id": 46600, "chapter_number": "2", "language": "AR", "published_at": "2026-06-05T01:28:42Z", "coins_unlocks": 0},
+    {"id": 46602, "chapter_number": "1", "language": "EN", "published_at": "2026-06-05T01:28:00Z", "coins_unlocks": 0},
+    {"id": 46599, "chapter_number": "1", "language": "AR", "published_at": "2026-06-05T01:27:00Z", "coins_unlocks": 0}
+  ],
+  "ar_fallback": [
+    {"id": 7001, "chapter_number": "1", "language": "EN", "published_at": "2026-08-01T00:00:00Z"},
+    {"id": 7002, "chapter_number": "2", "language": "EN", "published_at": "2026-08-02T00:00:00Z"}
+  ],
+  "unknown_language": [
+    {"id": 8001, "chapter_number": "1", "language": "JP", "published_at": "2026-08-01T00:00:00Z"}
+  ],
+  "special_number": [
+    {"id": 8101, "chapter_number": "bonus", "language": "AR", "published_at": "2026-08-01T00:00:00Z"},
+    {"id": 8102, "chapter_number": "2", "language": "AR", "published_at": "2026-08-02T00:00:00Z"}
+  ],
+  "gate_metadata": [
+    {"id": 8201, "chapter_number": "1", "language": "AR", "published_at": "2026-08-01T00:00:00Z", "supportMode": "default", "coins_unlocks": 5, "shortlink_unlocks": 12, "lockedByCoins": true}
+  ],
+  "same_language_duplicate": [
+    {"id": 8301, "chapter_number": "3", "language": "AR", "published_at": "2026-08-01T00:00:00Z", "translator": "old"},
+    {"id": 8302, "chapter_number": "3", "language": "AR", "published_at": "2026-08-02T00:00:00Z", "translator": "newer"},
+    {"id": 8303, "chapter_number": "3", "language": "AR", "published_at": "2026-08-02T00:00:00Z", "translator": "same-time-higher-id"}
+  ],
+  "timestamp_tie": [
+    {"id": 8401, "chapter_number": "4", "language": "AR", "published_at": "2026-08-03T00:00:00Z"},
+    {"id": 8402, "chapter_number": "4", "language": "AR", "published_at": "2026-08-03T00:00:00Z"}
+  ],
+  "decimal_and_unusual": [
+    {"id": 8501, "chapter_number": "1.5", "language": "AR", "published_at": "2026-08-01T00:00:00Z"},
+    {"id": 8502, "chapter_number": " 2.0 ", "language": "AR", "published_at": "2026-08-02T00:00:00Z"},
+    {"id": 8503, "chapter_number": "1", "language": "AR", "published_at": "2026-07-31T00:00:00Z"}
+  ],
+  "special_labels": [
+    {"id": 8601, "chapter_number": " Prologue ", "language": "AR", "published_at": "2026-08-01T00:00:00Z"},
+    {"id": 8602, "chapter_number": "S1", "language": "AR", "published_at": "2026-08-02T00:00:00Z"},
+    {"id": 8603, "chapter_number": "bonus", "language": "AR", "published_at": "2026-08-03T00:00:00Z"}
+  ],
+  "unknown_variants": [
+    {"id": 8701, "chapter_number": "1", "language": "", "published_at": "2026-08-01T00:00:00Z"},
+    {"id": 8702, "chapter_number": "2", "language": " xx ", "published_at": "2026-08-02T00:00:00Z"}
+  ]
+}

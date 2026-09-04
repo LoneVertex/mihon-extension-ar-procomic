@@ -4,7 +4,7 @@
 
 **Repository:** [LoneVertex/mihon-extension-ar-procomic](https://github.com/LoneVertex/mihon-extension-ar-procomic)
 
-**Authoritative implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
+**Authoritative implementation branch:** `main` (all four fix branches merged)
 
 **Implementation baseline HEAD:** [`81485ee15f88b292842e03cc548474de044056f1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
 
@@ -43,9 +43,9 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 | AVIF dependency | `org.aomedia.avif.android:avif:1.3.0.841110fd` |
 | Jsoup compile-only dependency | `org.jsoup:jsoup:1.23.1` |
 | Native packaging | `useLegacyPackaging=true` |
-| Release local APK | `app/build/outputs/apk/release/app-release.apk`, 2,088,095 bytes |
+| Release local APK | `app/build/outputs/apk/release/app-release.apk`, ~2.1 MB (signed) |
 | Release local SHA-256 | `3b686227464774ff29cbf56234566d4e8e5c218c698d06c1154b9ee5691d3b63` |
-| Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, 2,262,682 bytes |
+| Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, ~2.1 MB |
 | Debug local SHA-256 | `1aa6f094686301c9ce19c9e53b26dabd89d63d5a78cbcc153677d4d58f8d7121` |
 | Size rationale | Official AOMedia AVIF native library across four ABIs; no ABI split applied without Mihon distribution evidence |
 | Reproducibility note | Debug hash was stable across repeated clean builds; release hash varied while size/metadata remained identical, so the recorded release hash identifies this exact local artifact only |
@@ -106,11 +106,9 @@ The manual validator must not modify source, tests, fixtures, Gradle files, depe
 
 Authentication and full paid access are not implemented. `RESTRICTED_AUTH_REQUIRED` remains a separate visible state. Server-side public-image rules may limit particular chapters. Novel content is excluded. WebView is not used as a parser or fallback. These limitations are separate from the PASS software gate.
 
-## Approval-Gated Follow-ups
+## Status as of 2026-09-05
 
-1. Review PR #11 and, if approved, merge it into `fix/full-remediation`.
-2. Review PR #10 and, if approved, merge it into `main`.
-3. Review Dependabot PRs #1–#9 for compatibility; none is merged by this handoff.
-4. Decide whether to create a version tag and GitHub Release.
+All four fix branches merged into `main`. PR #13 (`fix/site-contract-sync`) was the final merge — live site audit confirmed: CDN deferred image pages fixed, legacy thumbnail hosts fixed, hide-paid-chapters preference lazy init fixed. CI ✅ all 13 test suites pass. Signed APK at `~/Downloads/procomic-release-v1.3-final.apk` (versionCode=4, versionName=1.3, v2+v3, RSA 4096).
 
-The documentation synchronization performs none of these operations and pushes only to `fix/runtime-eof-search-feeds`.
+Pending: physical Android device smoke test; GitHub Release tag.
+

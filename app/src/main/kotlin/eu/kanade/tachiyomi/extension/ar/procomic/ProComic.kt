@@ -90,10 +90,18 @@ class ProComic : HttpSource(), ConfigurableSource {
     private fun chapterPageFingerprint(data: ProComicChapterListResponse): String =
         data.chapters.joinToString(",") { it.id.toString() }
 
-    // Initialized when Mihon builds the source preference screen. Until then, preserve the
-    // historical behavior of showing every normalized chapter.
-    @Volatile
-    private var sourcePreferences: SharedPreferences? = null
+    // SharedPreferences initialized the first time shouldShowPaidChapters() is called after
+    // setupPreferenceScreen sets appContext. This is the safe two-step pattern for extensions
+    // that cannot use Injekt directly: Mihon calls setupPreferenceScreen before any network
+    // request that would trigger preference reads in practice.
+    @Volatile private var appContext: android.content.Context? = null
+    @Volatile private var sourcePreferences: SharedPreferences? = null
+
+    private fun getSourcePreferences(): SharedPreferences? {
+        sourcePreferences?.let { return it }
+        val ctx = appContext ?: return null
+        return ctx.getSharedPreferences("source_$id", 0).also { sourcePreferences = it }
+    }
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addInterceptor(ProComicImageInterceptor(network.client))
@@ -105,7 +113,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     override val supportsLatest = true
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        sourcePreferences = screen.context.applicationContext.getSharedPreferences("source_$id", 0)
+        appContext = screen.context.applicationContext
         SwitchPreferenceCompat(screen.context).apply {
             key = PREF_SHOW_PAID_CHAPTERS
             title = "عرض الفصول المدفوعة"
@@ -115,7 +123,8 @@ class ProComic : HttpSource(), ConfigurableSource {
     }
 
     private fun shouldShowPaidChapters(): Boolean =
-        sourcePreferences?.getBoolean(PREF_SHOW_PAID_CHAPTERS, true) ?: true
+        getSourcePreferences()?.getBoolean(PREF_SHOW_PAID_CHAPTERS, true) ?: true
+
 
     /** Map only publication-lifecycle values; access visibility is not a lifecycle status. */
     private fun mapPublicationStatus(progress: String?, lifecycleStatus: String?): Int {

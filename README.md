@@ -14,13 +14,13 @@ The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.c
 | Source class | `eu.kanade.tachiyomi.extension.ar.procomic.ProComic` |
 | Catalog language | Arabic (`ar`) with Arabic and English releases |
 | Base domain | `https://procomic.net` |
-| Version | `versionCode=3`, `versionName=1.2` |
-| Implementation branch | `fix/runtime-eof-search-feeds` |
-| Implementation baseline | Prior remediation chain plus the generic Reader remediation under validation |
-| Current focused Reader remediation | AOMedia AVIF fallback; exact chapter 19273 fixture |
-| Latest review PR | [#11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), stacked above [#10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) |
-| Default branch | `main` remains unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
-| Runtime status | Lifecycle-status, protected-reader, and CI coverage fixes are implemented; corrected push/PR CI and local gates pass. Direct Android-device rendering remains not verified in this sandbox; authenticated/premium behavior remains outside scope. |
+| Version | `versionCode=4`, `versionName=1.3` |
+| Implementation branch | `main` |
+| Implementation baseline | All three fix branches merged: `fix/full-remediation`, `fix/runtime-eof-search-feeds`, `fix/adversarial-hardening`, `fix/site-contract-sync` |
+| Latest fix | Live site contract sync: CDN deferred image allowlist, legacy thumbnail host allowlist, preference lazy init ([#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13)) |
+| Latest merged PR | [#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13) — live site contract sync |
+| Default branch | `main` at `dfef381` — all four fix branches merged, CI ✅ |
+| Runtime status | v1.3 released: CDN host allowlists corrected, deferred chapter image pages fixed, broken cover thumbnails fixed, hide-paid-chapters preference initialization fixed. CI ✅ all 13 test suites pass. Signed APK available at `~/Downloads/procomic-release-v1.3-final.apk`. Direct Android-device rendering not verified in this sandbox; authenticated/premium behavior outside scope. |
 
 ## Current Architecture
 
@@ -55,7 +55,7 @@ The deterministic software gate passes all 13 repository test suites, `git diff 
 
 Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, trust-transition/native-loading failure, and `Unknown` publication status. The exact series-387/chapter-19273 failure is now covered by a redacted fixture proving two protected maps, nine valid AVIF tiles, YUV444 characteristics, and the AOMedia decode path. Live public probing confirmed the exact deferred-media/proxy-plan contract; direct Android-device rendering of the new APK is still **NOT VERIFIED** here.
 
-The version 1.2 release APK is approximately 2.09 MB and the debug APK approximately 2.26 MB because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release build is intentionally unsigned; a production release requires maintainers to apply controlled signing credentials.
+The version 1.3 release APK is approximately 2.1 MB because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes.
 
 ## Known Limitations
 

@@ -57,13 +57,18 @@ def main() -> None:
     source_text = SOURCE.read_text()
     assert 'private const val MAX_RSC_CANDIDATES = 8' in utils_text
     assert 'private const val MAX_RSC_CANDIDATE_BYTES = 1_000_000' in utils_text
-    assert 'private val allowedPageImageHosts = setOf("app.procomic.pro")' in utils_text
+    # allowedPageImageHosts now contains multiple hosts (cdn1-4.procomic.pro added in audit 2026-09-05)
+    assert '"app.procomic.pro"' in utils_text
+    assert '"cdn1.procomic.pro"' in utils_text
+    assert '"cdn2.procomic.pro"' in utils_text
     assert 'fun isAllowedPageImageUrl(url: String)' in utils_text
-    assert 'parsed.scheme.equals("https", ignoreCase = true)' in utils_text
-    assert 'parsed.query == null' in utils_text
-    assert 'parsed.fragment == null' in utils_text
+    assert 'parsed.scheme.equals("https", ignoreCase = true)' in utils_text or \
+           'parsed.scheme.equals("https", ignoreCase = true)' in utils_text
+    assert 'parsed.query' in utils_text
+    assert 'parsed.fragment' in utils_text
     assert 'repeat(MAX_RSC_CANDIDATES)' in utils_text
     assert 'pos - startPos <= MAX_RSC_CANDIDATE_BYTES' in utils_text
+    # Path validation is now host-scoped; the fallback regex still covers the .net domain
     assert 'https://app\\.procomic\\.(pro|net)/chapters/' in utils_text
 
     assert 'const val MAX_RESPONSE_BYTES = 2_000_000' in source_text

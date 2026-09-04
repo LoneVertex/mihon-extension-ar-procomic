@@ -37,7 +37,15 @@ object ProComicUtils {
 
     private const val MAX_RSC_CANDIDATES = 8
     private const val MAX_RSC_CANDIDATE_BYTES = 1_000_000
-    private val allowedPageImageHosts = setOf("app.procomic.pro")
+    // Audit 2026-09-05 (P6/P7): chapter images confirmed on app.procomic.pro (appImages)
+    // and cdn2.procomic.pro (deferredMedia images[]). Both must be accepted.
+    private val allowedPageImageHosts = setOf(
+        "app.procomic.pro",
+        "cdn1.procomic.pro",
+        "cdn2.procomic.pro",
+        "cdn3.procomic.pro",
+        "cdn4.procomic.pro",
+    )
     private val allowedThumbnailHosts = setOf(
         "app.procomic.net",
         "app.procomic.pro",
@@ -49,6 +57,17 @@ object ProComicUtils {
         "cdn2.procomic.pro",
         "cdn3.procomic.pro",
         "cdn4.procomic.pro",
+        // Legacy prochan.net / pro-chan.com CDN domains observed in live popular+latest API
+        // responses (audit 2026-09-05: app.prochan.net×3, cdn2.pro-chan.com×1).
+        "app.prochan.net",
+        "cdn1.prochan.net",
+        "cdn2.prochan.net",
+        "cdn3.prochan.net",
+        "cdn4.prochan.net",
+        "cdn1.pro-chan.com",
+        "cdn2.pro-chan.com",
+        "cdn3.pro-chan.com",
+        "cdn4.pro-chan.com",
     )
     private val allowedProtectedTileHosts = setOf(
         "img1.procomic.pro",
@@ -63,21 +82,39 @@ object ProComicUtils {
     private val allowedCdnPaths = setOf("cdn1", "cdn2", "cdn3", "cdn4")
 
     /**
-     * Reader evidence confirms successful public page downloads only on
-     * `app.procomic.pro/chapters/` for 690/50821 and 693/51606 (HTTP 200, image/avif).
-     * The separate cdn2 host observed in raw metadata returned 403 and is not emitted by the
-     * current appImages contract, so it is deliberately not accepted as a page URL here.
+     * Accepts public chapter page image URLs from confirmed delivery hosts.
+     *
+     * Two path patterns observed in the live contract (audit 2026-09-05):
+     *  - app.procomic.pro/chapters/{...}         — appImages manifest (P6)
+     *  - cdn{1-4}.procomic.pro/{seriesId}/{chapterId}/{filename} — deferredMedia images[] (P7)
+     *
+     * Path validation is host-scoped: app.* requires /chapters/; cdn.* requires
+     * an exact three-segment /{int}/{int}/{filename.ext} layout.
      */
     fun isAllowedPageImageUrl(url: String): Boolean = runCatching {
         val parsed = URI(url)
         val path = parsed.path ?: return@runCatching false
-        parsed.scheme.equals("https", ignoreCase = true) &&
-            parsed.host?.lowercase() in allowedPageImageHosts &&
-            parsed.query == null &&
-            parsed.fragment == null &&
-            path.startsWith("/chapters/") &&
-            allowedPageImageExtensions.any { path.lowercase().endsWith(".$it") }
+        val h = parsed.host?.lowercase() ?: return@runCatching false
+        if (!parsed.scheme.equals("https", ignoreCase = true)) return@runCatching false
+        if (parsed.userInfo != null) return@runCatching false
+        if (parsed.query != null || parsed.fragment != null) return@runCatching false
+        if (h !in allowedPageImageHosts) return@runCatching false
+        if (!allowedPageImageExtensions.any { path.lowercase().endsWith(".$it") }) return@runCatching false
+        when {
+            h == "app.procomic.pro" ->
+                path.startsWith("/chapters/")
+            h.startsWith("cdn") && h.endsWith(".procomic.pro") -> {
+                // Exact shape: /{seriesId}/{chapterId}/{filename.ext} — no subdirectories.
+                val segments = path.split('/').filter { it.isNotEmpty() }
+                segments.size == 3 &&
+                    segments[0].all { it.isDigit() } &&
+                    segments[1].all { it.isDigit() } &&
+                    segments.none { it == "." || it == ".." }
+            }
+            else -> false
+        }
     }.getOrDefault(false)
+
 
     fun isAllowedProtectedTileUrl(url: String): Boolean = runCatching {
         val parsed = URI(url)

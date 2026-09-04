@@ -25,8 +25,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Incremented so Mihon/Android cannot retain the previously installed failing APK.
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         applicationId = "eu.kanade.tachiyomi.extension.ar.procomic"
 

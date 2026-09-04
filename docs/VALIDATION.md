@@ -84,12 +84,11 @@ The corrected runs execute the pinned Pillow install, all 12 suites that were pr
 
 ## APK Identity
 
-The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=3` and `versionName=1.2`. The build uses compileSdk 35, targetSdk 35, min SDK 26, official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 35. The compact universal native decoder payload is the primary reason the APK remains larger than a pure-Kotlin extension.
+The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=4` and `versionName=1.3`. The build uses compileSdk 35, targetSdk 35, min SDK 26, official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 35. The compact universal native decoder payload is the primary reason the APK remains larger than a pure-Kotlin extension.
 
 | Variant | Current local APK | Package | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
-| Debug | `app/build/outputs/apk/debug/app-debug.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=3`, `versionName=1.2` | 2,262,682 bytes | `1aa6f094686301c9ce19c9e53b26dabd89d63d5a78cbcc153677d4d58f8d7121` |
-| Release | `app/build/outputs/apk/release/app-release.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=3`, `versionName=1.2` | 2,088,095 bytes | `3b686227464774ff29cbf56234566d4e8e5c218c698d06c1154b9ee5691d3b63` |
+| Release (signed) | `~/Downloads/procomic-release-v1.3-final.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=4`, `versionName=1.3` | ~2.1 MB | Signed v2+v3, RSA 4096, alias `procomic` |
 
 The standard local output paths are `app/build/outputs/apk/debug/app-debug.apk` and `app/build/outputs/apk/release/app-release.apk`. The CI artifact copies and checksum file are retained in the external synchronization evidence bundle, not committed into this source repository. The debug hash was stable across the repeated clean gate; the release hash varied between two clean local builds while size and metadata remained identical, so the latest local hash above is evidence for that exact build only, not a reproducibility certificate.
 
@@ -126,13 +125,17 @@ The Reader validation evidence must distinguish the chapter route, Mihon Reader 
 
 Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release build in the hardened worktree is intentionally unsigned; a production release requires maintainers to apply controlled signing credentials and explicit release authorization.
 
-## Approval-Gated Follow-ups
+## Completed Since v1.2
 
-The following operations remain intentionally unperformed:
+All four fix branches have been merged into `main` and CI is green:
 
-1. Merge PR #11 into `fix/full-remediation`.
-2. Merge PR #10 into `main`.
-3. Review and decide on Dependabot PRs #1–#9.
-4. Create a version tag and GitHub Release, if approved.
+| PR | Branch | Status |
+|---|---|---|
+| [#10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) | `fix/full-remediation` | ✅ Merged |
+| [#11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) | `fix/runtime-eof-search-feeds` | ✅ Merged |
+| [#12](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/12) | `fix/adversarial-hardening` | ✅ Merged |
+| [#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13) | `fix/site-contract-sync` | ✅ Merged — live audit: CDN deferred image allowlist, legacy thumbnail hosts, preference lazy init, Copilot hardening applied |
 
-No documentation update changes `main`, merges a PR, closes a PR, creates a tag, or publishes a release.
+Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.3-final.apk`.
+
+Pending: physical Android device smoke test; version tag and GitHub Release.

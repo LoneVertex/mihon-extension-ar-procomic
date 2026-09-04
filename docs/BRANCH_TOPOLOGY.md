@@ -12,7 +12,7 @@
 
 **Default branch:** `main`
 
-**Authoritative remote implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
+**Authoritative remote implementation branch:** `main` at `dfef381` (all four fix branches merged: PR #10, #11, #12, #13)
 
 **Documentation snapshot parent HEAD:** [`90234e2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/90234e2)
 
@@ -24,12 +24,12 @@ The snapshot parent includes the pushed Reader remediation and the compile-only 
 
 **Local checkout:** The verified local checkout uses branch `procomic-ready-to-test`, which tracks `origin/fix/runtime-eof-search-feeds`. Pushes use an explicit `HEAD:fix/runtime-eof-search-feeds` refspec.
 
-**Default branch baseline:** `main` remains unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73`.
+**Default branch baseline:** `main` at `dfef38187731926548bc5ae6bd7d52dd5d2b15ef` — all four fix branches merged.
 
 ## Current topology
 
 ```text
-main  76c8ed49ee81d066d30cebe6e412040db2d43a73
+main  dfef38187731926548bc5ae6bd7d52dd5d2b15ef
   |
   | 81de09d3  chore(version): bump extension to 1.1
   | 7f8fe084  fix(reader): align page loading with canonical ProComic chapter route
@@ -122,9 +122,9 @@ The code-validation snapshot parent is 37 commits ahead of `main`; `400556d` and
 
 | Item | Verified state and relationship |
 |---|---|
-| PR #10 | Open; `fix/full-remediation` → `main`; head `1ce41bb6ab4968dfa7f1862572171333a9129f38`; no merge or close performed |
-| PR #11 | Open; `fix/runtime-eof-search-feeds` → `fix/full-remediation`; code-validation head `400556d`; this document refresh is docs-only and follows it |
-| `main` | Default branch; unchanged at `76c8ed49ee81d066d30cebe6e412040db2d43a73` |
+| PR #10 | ✅ Merged into `main` (2026-08-31) — `fix/full-remediation` |
+| PR #11 | ✅ Merged into `main` (2026-08-31) — `fix/runtime-eof-search-feeds` |
+| `main` | Default branch; `dfef381` — all four fix branches merged, CI ✅ |
 | `fix/full-remediation` | PR #10 head remains `1ce41bb6ab4968dfa7f1862572171333a9129f38` |
 | `fix/runtime-eof-search-feeds` | Code-validation head is `400556d`; this document refresh is a documentation-only child |
 | Local `procomic-ready-to-test` | Clean checkout tracking `origin/fix/runtime-eof-search-feeds` |

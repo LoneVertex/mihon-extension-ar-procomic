@@ -69,13 +69,13 @@ The current audit-remediation CI history is:
 
 | Run | Purpose | Commit | Result |
 |---:|---|---|---|
-| [32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071) | First workflow run after adding suite coverage | `0bda7ea` | FAIL — GitHub runner lacked Pillow for the icon contract |
-| [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639) | Pull-request reproduction of the same failure | `0bda7ea` | FAIL — same missing test dependency |
 | [32573390967](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32573390967) | Final master-audit branch push validation | `400556d` | PASS |
 | [32573394359](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32573394359) | Final master-audit pull-request validation | `400556d` | PASS |
 | [32561773852](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561773852) | Reader-remediation branch push validation | `89a2859` | PASS |
 | [32561776865](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561776865) | Reader-remediation pull-request validation | `89a2859` | PASS |
 | [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) | Corrected branch push validation | `f3f4290` | PASS |
+| [33924198674](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/33924198674) | PR #13 push run | ✅ pass | Latest on main |
+| [33924579769](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/33924579769) | Post-merge on main | ✅ pass | Latest on main (dfef381) |
 | [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) | Corrected pull-request validation | `f3f4290` | PASS |
 | [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) | Source-remediation branch push | `affbcf3` | PASS |
 | [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) | Source-remediation pull request | `affbcf3` | PASS |

@@ -1,6 +1,6 @@
 # ProComic Mihon Extension
 
-[![CI Build](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml/badge.svg)](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml) [![Implementation PR](https://img.shields.io/badge/implementation-PR%20%2311-blue)](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) ![Platform](https://img.shields.io/badge/Platform-Mihon%20%2F%20Android-green)
+[![CI Build](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml/badge.svg)](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-1.3%20(4)-blue)](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases) ![Platform](https://img.shields.io/badge/Platform-Mihon%20%2F%20Android-green)
 
 ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available from [procomic.net](https://procomic.net). It provides server-side Search, verified Popular and Latest feeds, canonical Details parsing, REST chapter listing, Arabic/English chapter normalization, conservative paid-chapter visibility, and a raw-HTTP Reader that reconstructs protected pages through the site’s documented public media contracts.
 

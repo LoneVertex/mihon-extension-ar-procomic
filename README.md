@@ -6,7 +6,6 @@ ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available fr
 
 ## Current Repository State
 
-The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds) is the prior remediation chain. The current generic Reader remediation replaces the failing awxkee native path with official AOMedia AVIF decoding, adds exact series-387/chapter-19273 YUV444 coverage, bounded decode diagnostics, and synchronized operational documentation after protected-tile decoding remained reproducible on Android 16 arm64. It is reviewed through stacked [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11), targeting [`fix/full-remediation`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/full-remediation), above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10), which targets `main`. Both PRs remain open; no merge, tag, or GitHub Release is implied by this documentation.
 
 | Property | Value |
 |---|---|
@@ -16,7 +15,7 @@ The implementation baseline on [`fix/runtime-eof-search-feeds`](https://github.c
 | Base domain | `https://procomic.net` |
 | Version | `versionCode=4`, `versionName=1.3` |
 | Implementation branch | `main` |
-| Implementation baseline | All three fix branches merged: `fix/full-remediation`, `fix/runtime-eof-search-feeds`, `fix/adversarial-hardening`, `fix/site-contract-sync` |
+| Implementation baseline | All four fix branches merged: `fix/full-remediation`, `fix/runtime-eof-search-feeds`, `fix/adversarial-hardening`, `fix/site-contract-sync` |
 | Latest fix | Live site contract sync: CDN deferred image allowlist, legacy thumbnail host allowlist, preference lazy init ([#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13)) |
 | Latest merged PR | [#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13) — live site contract sync |
 | Default branch | `main` at `dfef381` — all four fix branches merged, CI ✅ |
@@ -51,11 +50,11 @@ The persistent preference `show_paid_chapters` defaults to `true`. When disabled
 
 ## Validation Status
 
-The deterministic software gate passes all 13 repository test suites, `git diff --check`, protected-path checks, and clean debug/release APK builds. The workflow provisions Android API 35, installs `Pillow==12.3.0` from `requirements-test.txt`, sets `permissions: contents: read`, and uses `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. The first suite-enabled runs failed because Pillow was absent on the runner ([32500306071](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500306071), [32500309639](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500309639)); the corrected push and PR runs passed ([32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810), [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137)). The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+The deterministic software gate passes all 13 repository test suites, `git diff --check`, protected-path checks, and clean debug/release APK builds on every push and PR to `main`. CI ✅ — latest passing run on `main` at commit `dfef381`. The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, trust-transition/native-loading failure, and `Unknown` publication status. The exact series-387/chapter-19273 failure is now covered by a redacted fixture proving two protected maps, nine valid AVIF tiles, YUV444 characteristics, and the AOMedia decode path. Live public probing confirmed the exact deferred-media/proxy-plan contract; direct Android-device rendering of the new APK is still **NOT VERIFIED** here.
 
-The version 1.3 release APK is approximately 2.1 MB because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes.
+The version 1.3 release APK is approximately 2.1 MB (signed v2+v3) because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes.
 
 ## Known Limitations
 

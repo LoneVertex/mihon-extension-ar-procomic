@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Implementation branch:** [`fix/runtime-eof-search-feeds`](https://github.com/LoneVertex/mihon-extension-ar-procomic/tree/fix/runtime-eof-search-feeds)
+**Implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13)
 
 **Implementation baseline HEAD:** [`81485ee15f88b292842e03cc548474de044056f1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
 
@@ -123,9 +123,9 @@ The Reader validation evidence must distinguish the chapter route, Mihon Reader 
 
 ## Current Limitations
 
-Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release build in the hardened worktree is intentionally unsigned; a production release requires maintainers to apply controlled signing credentials and explicit release authorization.
+Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes. Signed APK: `~/Downloads/procomic-release-v1.3-final.apk`.
 
-## Completed Since v1.2
+## Completed Since v1.2 — Current State
 
 All four fix branches have been merged into `main` and CI is green:
 

@@ -4,15 +4,15 @@
 
 **Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13)
 
-**Implementation baseline HEAD:** [`81485ee15f88b292842e03cc548474de044056f1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Implementation baseline HEAD:** [`690548282b85f60dd87f15e63452e1f78e944da0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Documentation snapshot parent HEAD:** [`81485ee`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Documentation snapshot parent HEAD:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Focused Reader source commit:** [`81485ee`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Focused Reader source commit:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
+**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commit [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0) on `main`
 
-**Runtime and release status:** The lifecycle-status and protected-Reader fixes pass the 12-suite local gate, clean builds, and corrected audit-remediation CI. The live public contract probe returns valid deferred maps and AVIF tiles. Direct Android-device rendering, authenticated account validation, paid access, merge, tag, and GitHub Release are not claimed or performed here. The release build remains debug-keystore signed for sideload/testing.
+**Runtime and release status:** The lifecycle-status, protected-Reader fixes, and dual-domain reader engine pass the 13-suite deterministic gate, clean builds, and remote CI run `34592320462`. The signed release APK (`~/Downloads/procomic-release-v1.4.apk`, RSA 4096, v2+v3) is generated and ready for physical device verification before final tag and release publication.
 
 ## Purpose and Scope
 
@@ -113,10 +113,11 @@ The module uses compileSdk 35, targetSdk 35, min SDK 26, `versionCode=5`, and `v
 
 ## Validation Strategy
 
-The deterministic gate runs every `testdata/test_*.py` suite and `git diff --check`. The current Reader fixture set includes exact series 387 / chapter 19273, covering two protected maps, nine valid YUV444 AVIF tiles, and the AOMedia fallback path. The current suite inventory is 12 suites:
+The deterministic gate runs every `testdata/test_*.py` suite and `git diff --check`. The current Reader fixture set includes exact series 387 / chapter 19273, covering two protected maps, nine valid YUV444 AVIF tiles, and the AOMedia fallback path. The current suite inventory is 13 suites:
 
 | Suite | Coverage |
 |---|---|
+| `testdata/adversarial/test_chaos_boundaries.py` | Adversarial URL allowlists, SSRF/path-traversal protection, and boundary validation |
 | `testdata/diagnostics/test_diag_redaction.py` | Redacted diagnostic metadata |
 | `testdata/details/test_details_contract.py` | Complete and restricted Details payloads |
 | `testdata/chapters/test_chapter_normalization.py` | Language preference, deduplication, ordering, and chapter identity |

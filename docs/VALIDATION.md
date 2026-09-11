@@ -4,21 +4,21 @@
 
 **Implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13)
 
-**Implementation baseline HEAD:** [`81485ee15f88b292842e03cc548474de044056f1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Implementation baseline HEAD:** [`690548282b85f60dd87f15e63452e1f78e944da0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Documentation snapshot parent HEAD:** [`81485ee`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Documentation snapshot parent HEAD:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Focused Reader source commit:** [`81485ee`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Focused Reader source commit:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) → `fix/full-remediation` → [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) → `main`
+**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commit [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0) on `main`
 
 **Software-gate status:** PASS for the current implementation and CI evidence.
 
-**Release status:** No tag or GitHub Release exists. Publishing and merging remain separate approval-gated operations.
+**Release status:** Signed release APK generated at `~/Downloads/procomic-release-v1.4.apk`. Physical device smoke testing pending before tag and GitHub Release creation.
 
 ## Software Gate
 
-The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. The final implementation branch is 37 commits ahead of unchanged `main`, including the generic Reader follow-up; the stacked PRs remain open.
+The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. All fix branches (#10, #11, #12, #13) and direct commit `6905482` are integrated into `main`.
 
 | Gate | Result | Evidence |
 |---|---|---|
@@ -69,18 +69,19 @@ The current audit-remediation CI history is:
 
 | Run | Purpose | Commit | Result |
 |---:|---|---|---|
+| [34592320462](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34592320462) | Push validation on main (v1.4, dual delivery failover, 13 suites) | `6905482` | ✅ PASS |
+| [33924579769](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/33924579769) | Post-merge on main | `dfef381` | ✅ PASS |
+| [33924198674](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/33924198674) | PR #13 push run | `dfef381` | ✅ PASS |
 | [32573390967](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32573390967) | Final master-audit branch push validation | `400556d` | PASS |
 | [32573394359](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32573394359) | Final master-audit pull-request validation | `400556d` | PASS |
 | [32561773852](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561773852) | Reader-remediation branch push validation | `89a2859` | PASS |
 | [32561776865](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32561776865) | Reader-remediation pull-request validation | `89a2859` | PASS |
 | [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) | Corrected branch push validation | `f3f4290` | PASS |
-| [33924198674](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/33924198674) | PR #13 push run | ✅ pass | Latest on main |
-| [33924579769](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/33924579769) | Post-merge on main | ✅ pass | Latest on main (dfef381) |
 | [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) | Corrected pull-request validation | `f3f4290` | PASS |
 | [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) | Source-remediation branch push | `affbcf3` | PASS |
 | [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) | Source-remediation pull request | `affbcf3` | PASS |
 
-The corrected runs execute the pinned Pillow install, all 12 suites that were present in the published CI revisions, `git diff --check`, and debug/release APK builds. The new adversarial suite is additionally verified locally on the unpushed hardening worktree. The workflow uses `permissions: contents: read`, `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence.
+The CI runs execute the pinned Pillow install, all 13 contract test suites, `git diff --check`, and debug/release APK builds. The workflow uses `permissions: contents: read`, `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`. Earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence.
 
 ## APK Identity
 
@@ -115,7 +116,7 @@ The current deterministic fixtures cover the final reported failure sequence:
 | Extension icon was incorrect | Official `procomic.net/favicon.svg` is rasterized across the Android density resources |
 | Shared response reads could fail at EOF | Bounded at-most body reads distinguish truncated/empty/oversize responses |
 
-Reported manual Android testing informed these fixes. Live public probing confirmed the exact series-387/chapter-19273 deferred-media/proxy-plan route returns two protected maps and nine valid AVIF tiles with YUV444 characteristics, while the sandbox has no connected Android device or emulator. The software remediation and APK build are verified, but direct Mihon rendering on the user’s Android 16 arm64 device remains **NOT VERIFIED** until version 1.2 is installed and tested. The repository does not claim that every Android version, device, authenticated session, premium chapter, or server-side access state has been exhaustively tested.
+Reported manual Android testing informed these fixes. Live public probing confirmed the exact series-387/chapter-19273 deferred-media/proxy-plan route returns two protected maps and nine valid AVIF tiles with YUV444 characteristics, while the sandbox has no connected Android device or emulator. The software remediation and APK build are verified, but direct Mihon rendering on the user’s Android 16 arm64 device remains **NOT VERIFIED** until version 1.4 is installed and tested. The repository does not claim that every Android version, device, authenticated session, premium chapter, or server-side access state has been exhaustively tested.
 
 ## Runtime and Security Boundaries
 
@@ -127,9 +128,9 @@ The Reader validation evidence must distinguish the chapter route, Mihon Reader 
 
 ## Current Limitations
 
-Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes. Signed APK: `~/Downloads/procomic-release-v1.3-final.apk`.
+Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes. Signed APK: `~/Downloads/procomic-release-v1.4.apk`.
 
-## Completed Since v1.2 — Current State
+## Milestone Progression — Current State
 
 All four fix branches have been merged into `main` and CI is green:
 
@@ -138,8 +139,9 @@ All four fix branches have been merged into `main` and CI is green:
 | [#10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) | `fix/full-remediation` | ✅ Merged |
 | [#11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) | `fix/runtime-eof-search-feeds` | ✅ Merged |
 | [#12](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/12) | `fix/adversarial-hardening` | ✅ Merged |
-| [#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13) | `fix/site-contract-sync` | ✅ Merged — live audit: CDN deferred image allowlist, legacy thumbnail hosts, preference lazy init, Copilot hardening applied |
+| [#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13) | `fix/site-contract-sync` | ✅ Merged — live audit: CDN deferred image allowlist, legacy thumbnail hosts, preference lazy init, hardening applied |
+| Direct commit | `main` (`6905482`) | ✅ Pushed — dual-domain reader failover (`.pro`/`.net`), comics-only latest updates feed, popular cover images, workflow_dispatch |
 
-Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.3-final.apk`.
+Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.4.apk`.
 
 Pending: physical Android device smoke test; version tag and GitHub Release.

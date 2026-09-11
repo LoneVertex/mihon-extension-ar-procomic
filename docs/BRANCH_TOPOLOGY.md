@@ -1,9 +1,9 @@
 # ProComic Branch and Review Topology
 
 > [!NOTE]
-> **Historical document.** This file recorded branch topology at a point during development.
-> As of 2026-09-05: all four fix branches (PR #10, #11, #12, #13) are merged into `main` at `dfef381`.
-> Only `main` branch remains. All PRs are closed. Dependabot disabled.
+> **Historical document.** This file recorded the branch topology and stacked PR development history.
+> Current state: All remediation branches (PR #10, #11, #12, #13) and release v1.4 commit `6905482` are merged and pushed on `main`.
+> Only `main` branch exists. All PRs are closed. Dependabot PR limit is 0.
 
 
 **Status:** CURRENT

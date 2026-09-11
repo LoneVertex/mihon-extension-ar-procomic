@@ -48,11 +48,11 @@ The persistent preference `show_paid_chapters` defaults to `true`. When disabled
 
 ## Validation Status
 
-The deterministic software gate passes all 13 repository test suites, `git diff --check`, protected-path checks, and clean debug/release APK builds on every push and PR to `main`. CI ✅ — latest passing run on `main` at commit `dfef381`. The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+The deterministic software gate passes all 13 repository test suites, `git diff --check`, protected-path checks, and clean debug/release APK builds on every push and PR to `main`. CI ✅ — latest passing run on `main` at commit `6905482`. The exact test inventory and APK identities are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, trust-transition/native-loading failure, and `Unknown` publication status. The exact series-387/chapter-19273 failure is now covered by a redacted fixture proving two protected maps, nine valid AVIF tiles, YUV444 characteristics, and the AOMedia decode path. Live public probing confirmed the exact deferred-media/proxy-plan contract; direct Android-device rendering of the new APK is still **NOT VERIFIED** here.
 
-The version 1.3 release APK is approximately 2.1 MB (signed v2+v3) because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes.
+The version 1.4 release APK is approximately 2.1 MB (signed v2+v3) because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes.
 
 ## Known Limitations
 
@@ -87,8 +87,6 @@ git diff --check
 
 ## Contribution and Release Workflow
 
-Focused implementation, CI, and documentation changes remain independently committed and reviewed through pull requests. PR #11 must not be merged into its stacked base, and PR #10 must not be merged into `main`, without explicit approval for those operations. Dependabot PRs #1–#9 remain open for compatibility review. No tag or GitHub Release currently exists; creating one is a separate release decision.
-
-This audit changed only the approved `fix/runtime-eof-search-feeds` branch; it did not modify `main`, merge or close PRs, create tags/releases, or alter authentication/payment behavior.
+All remediation branches (PR #10, #11, #12, #13) and subsequent fixes are merged into `main`. The codebase is consolidated on `main` with all 13 contract test suites passing in CI. Releases are built and signed with the project keystore (`~/.android/procomic.keystore`, RSA 4096, v2+v3 schemes). GitHub Releases and tags are published following physical Android device smoke testing.
 
 > For detailed architecture, validation evidence, branch state, and remaining approval-gated operations, use the current documents under [`docs/`](docs/).

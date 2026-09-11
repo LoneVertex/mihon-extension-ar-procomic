@@ -4,27 +4,27 @@
 
 **Repository:** [LoneVertex/mihon-extension-ar-procomic](https://github.com/LoneVertex/mihon-extension-ar-procomic)
 
-**Authoritative implementation branch:** `main` (all four fix branches merged)
+**Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13, plus reader domain desync & net/pro dual delivery fix)
 
-**Implementation baseline HEAD:** [`81485ee15f88b292842e03cc548474de044056f1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Implementation baseline HEAD:** [`690548282b85f60dd87f15e63452e1f78e944da0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Documentation snapshot parent HEAD:** [`81485ee`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Documentation snapshot parent HEAD:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Focused Reader source commit:** [`81485ee`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/81485ee15f88b292842e03cc548474de044056f1)
+**Focused Reader source commit:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
 
-**Review path:** [PR #11](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/11) into `fix/full-remediation`, stacked above [PR #10](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/10) into `main`
+**Review path:** All four fix branches merged into `main`; direct commit [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0) on `main`
 
-**Software status:** PASS. All 12 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and corrected audit-remediation CI builds pass. Direct Android-device rendering remains not verified in this sandbox.
+**Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and CI workflow run `34592320462` pass. Direct Android-device rendering remains not verified in this sandbox.
 
-**Release status:** No tag or GitHub Release exists. PR merges and release publication remain approval-gated and were not performed by this documentation synchronization.
+**Release status:** Signed release APK generated at `~/Downloads/procomic-release-v1.4.apk` (`versionCode=5`, `versionName=1.4`, v2+v3 RSA 4096, SHA-256 `fad43b9532c3eedeb0085e0150d77f66c80a833a19599126412b71dff60bd898`). Physical device validation pending before GitHub Release tag.
 
 ## Roles
 
-**The repository maintainer** owns the extension implementation, deterministic tests, software builds, evidence-backed documentation, and GitHub hygiene. The maintainer must preserve the stacked PR structure, must not modify `main`, and must not merge PR #11 or PR #10 without explicit approval.
+**The repository maintainer** owns the extension implementation, deterministic tests, software builds, evidence-backed documentation, and GitHub hygiene. All remediation work is consolidated on `main`.
 
 **The manual validator** reports Android/Mihon behavior using the exact release APK and records reproducible evidence. Reported testing already exposed the Search false-positive issue, the three-page Reader symptom, chapter-131 protected-tile failure, trust-transition/native-loading failure, and `Unknown` publication status; those defects are addressed in the current implementation. Any new extension-side defect becomes a separately approved remediation task.
 
-**The release owner** decides whether to merge the stacked PRs, accept Dependabot updates, create a version tag, and publish a GitHub Release. These are not automatic consequences of a passing software gate.
+**The release owner** decides whether to create a version tag and publish a GitHub Release after physical device smoke testing. These are not automatic consequences of a passing software gate.
 
 ## Exact Build and APK Identity
 
@@ -37,21 +37,21 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 | Item | Value |
 |---|---|
 | Package | `eu.kanade.tachiyomi.extension.ar.procomic` |
-| `versionCode` / `versionName` | `3` / `1.2` |
+| `versionCode` / `versionName` | `5` / `1.4` |
 | Compile/target SDK | `35` / `35` |
 | Minimum SDK | `26` |
 | AVIF dependency | `org.aomedia.avif.android:avif:1.3.0.841110fd` |
 | Jsoup compile-only dependency | `org.jsoup:jsoup:1.23.1` |
 | Native packaging | `useLegacyPackaging=true` |
-| Release local APK | `app/build/outputs/apk/release/app-release.apk`, ~2.1 MB (signed) |
-| Release local SHA-256 | `3b686227464774ff29cbf56234566d4e8e5c218c698d06c1154b9ee5691d3b63` |
+| Signed release APK | `~/Downloads/procomic-release-v1.4.apk`, ~2.1 MB (signed v2+v3 RSA 4096) |
+| Release SHA-256 | `fad43b9532c3eedeb0085e0150d77f66c80a833a19599126412b71dff60bd898` |
+| Release local APK | `app/build/outputs/apk/release/app-release.apk`, ~2.1 MB |
 | Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, ~2.1 MB |
-| Debug local SHA-256 | `1aa6f094686301c9ce19c9e53b26dabd89d63d5a78cbcc153677d4d58f8d7121` |
 | Size rationale | Official AOMedia AVIF native library across four ABIs; no ABI split applied without Mihon distribution evidence |
-| Reproducibility note | Debug hash was stable across repeated clean builds; release hash varied while size/metadata remained identical, so the recorded release hash identifies this exact local artifact only |
-| Release signing | Debug keystore for sideload/testing; production publication requires maintainer-owned signing credentials |
+| Reproducibility note | Debug hash was stable across repeated clean builds; release hash varies with signing timestamps |
+| Release signing | Signed with project keystore `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes |
 
-The current workflow explicitly installs Android API 35 before building because the final extension compileSdk is 35. The first suite-enabled workflow runs failed because the GitHub runner lacked Pillow:  and . After adding pinned `Pillow==12.3.0` in `requirements-test.txt`, corrected push/PR runs [32500561810](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500561810) and [32500566137](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32500566137) passed. The workflow also sets `permissions: contents: read`. Source-remediation runs [32497667085](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497667085) and [32497669824](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32497669824) and earlier implementation runs [32451903381](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451903381) and [32451899341](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/32451899341) remain historical evidence. The current artifact copies and checksum file are retained in the external synchronization evidence bundle. The new APK version is intentionally 3/1.2 so Mihon and Android cannot retain the previously installed failing version.
+The current workflow explicitly installs Android API 35 before building because the final extension compileSdk is 35. The new APK version is intentionally 5/1.4 so Mihon and Android cleanly upgrade any previously installed versions.
 
 ## Completed Implementation Fixes
 
@@ -71,6 +71,7 @@ The current branch includes the following completed and tested work:
 12. Lifecycle status maps top-level `progress` values such as `مستمر` and `مكتمل`; approval/access values are not used as publication status.
 13. Protected map responses and tile bodies use explicit byte bounds; the AOMedia decoder validates tile metadata and dimensions before allocating a bounded bitmap.
 14. CI action versions were updated to `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; workflow permissions are limited to `contents: read`; deterministic suites run after installing pinned `Pillow==12.3.0`; corrected post-remediation CI runs passed.
+15. Reader domain failover supports bidirectional delivery across `procomic.net` and `procomic.pro`, with expanded CDN host allowlisting (`app.procomic.net`, `img*.procomic.net`), comics-only category filter on Latest Updates feed, popular fallback covers, and `workflow_dispatch` manual CI trigger.
 
 No authentication, login, session/cookie bypass, payment bypass, WebView, browser automation, or fabricated premium page behavior was added.
 
@@ -90,7 +91,7 @@ done
 git diff --check
 ```
 
-The 12 suites cover diagnostics, Details, chapters, Popular, Latest, gates/preferences, parser hardening, runtime EOF/body lifecycle, Search, Reader/protected pages, the official icon, and lifecycle status mapping. Confirm the package/version identity, APK sizes, and APK hashes before any future release decision.
+The 13 suites cover diagnostics, Details, chapters, Popular, Latest, gates/preferences, parser hardening, runtime EOF/body lifecycle, Search, Reader/protected pages, the official icon, lifecycle status mapping, and adversarial boundary checks. Confirm the package/version identity, APK sizes, and APK hashes before any future release decision.
 
 ## Manual Android/Mihon Evidence Boundary
 
@@ -106,9 +107,9 @@ The manual validator must not modify source, tests, fixtures, Gradle files, depe
 
 Authentication and full paid access are not implemented. `RESTRICTED_AUTH_REQUIRED` remains a separate visible state. Server-side public-image rules may limit particular chapters. Novel content is excluded. WebView is not used as a parser or fallback. These limitations are separate from the PASS software gate.
 
-## Status as of 2026-09-05
+## Current Status
 
-All four fix branches merged into `main`. PR #13 (`fix/site-contract-sync`) was the final merge — live site audit confirmed: CDN deferred image pages fixed, legacy thumbnail hosts fixed, hide-paid-chapters preference lazy init fixed. CI ✅ all 13 test suites pass. Signed APK at `~/Downloads/procomic-release-v1.3-final.apk` (versionCode=4, versionName=1.3, v2+v3, RSA 4096).
+All four fix branches merged into `main`. Commit `6905482` resolved reader domain desync and added dual delivery support (`procomic.net` and `procomic.pro`), comics-only filter for latest updates, popular fallback covers, and `workflow_dispatch` CI trigger. Remote CI ✅ run `34592320462` passed all 13 test suites and build jobs. Signed APK generated at `~/Downloads/procomic-release-v1.4.apk` (`versionCode=5`, `versionName=1.4`, v2+v3, RSA 4096, SHA-256 `fad43b9532c3eedeb0085e0150d77f66c80a833a19599126412b71dff60bd898`).
 
 Pending: physical Android device smoke test; GitHub Release tag.
 

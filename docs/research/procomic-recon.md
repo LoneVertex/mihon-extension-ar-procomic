@@ -3,7 +3,7 @@
 # ProComic.pro Recon Report — Stage 3C Evidence
 
 **Date:** 2026-07-26
-**Investigator:** Antigravity Agent
+**Investigator:** LoneVertex
 **Target domains:** procomic.pro, procomic.net, app.procomic.net/app
 
 ---

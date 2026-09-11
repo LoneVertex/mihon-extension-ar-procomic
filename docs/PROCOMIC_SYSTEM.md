@@ -18,7 +18,7 @@
 
 This document is the current engineering reference for the Arabic ProComic Mihon extension. It describes the implementation present at the current branch HEAD. Deep probes, raw captures, and investigation history remain retained audit artifacts; they are evidence, not alternate implementation instructions.
 
-The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=4` and `versionName=1.3`. The Android build uses compileSdk 35, targetSdk 35, min SDK 26, and the official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd` decoder for protected AVIF tiles. The compact universal native decoder is the reason the release APK is approximately ~2.1 MB rather than pure-Kotlin size.
+The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=5` and `versionName=1.4`. The Android build uses compileSdk 35, targetSdk 35, min SDK 26, and the official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd` decoder for protected AVIF tiles. The compact universal native decoder is the reason the release APK is approximately ~2.1 MB rather than pure-Kotlin size.
 
 ## System Architecture
 
@@ -109,7 +109,7 @@ The Gradle packaging block sets `useLegacyPackaging=true`, extracting bundled na
 
 The launcher icon is the official ProComic website favicon, sourced from `https://procomic.net/favicon.svg` and rasterized into the required Android density resources. The deterministic icon contract verifies the provenance, launcher reference, resource set, and density hashes.
 
-The module uses compileSdk 35, targetSdk 35, min SDK 26, `versionCode=4`, and `versionName=1.3`. The AVIF native dependency is `org.aomedia.avif.android:avif:1.3.0.841110fd`, and compile-only Jsoup is `org.jsoup:jsoup:1.23.1`; native libraries are packaged with `useLegacyPackaging=true`. The AOMedia artifact ships one 16KB-aligned `libavif_android.so` per supported ABI and has no additional native NEEDED libraries.
+The module uses compileSdk 35, targetSdk 35, min SDK 26, `versionCode=5`, and `versionName=1.4`. The AVIF native dependency is `org.aomedia.avif.android:avif:1.3.0.841110fd`, and compile-only Jsoup is `org.jsoup:jsoup:1.23.1`; native libraries are packaged with `useLegacyPackaging=true`. The AOMedia artifact ships one 16KB-aligned `libavif_android.so` per supported ABI and has no additional native NEEDED libraries.
 
 ## Validation Strategy
 

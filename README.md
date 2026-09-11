@@ -1,8 +1,8 @@
 # ProComic Mihon Extension
 
-[![CI Build](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml/badge.svg)](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-1.3%20(4)-blue)](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases) ![Platform](https://img.shields.io/badge/Platform-Mihon%20%2F%20Android-green)
+[![CI Build](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml/badge.svg)](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-1.4%20(5)-blue)](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases) ![Platform](https://img.shields.io/badge/Platform-Mihon%20%2F%20Android-green)
 
-ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available from [procomic.net](https://procomic.net). It provides server-side Search, verified Popular and Latest feeds, canonical Details parsing, REST chapter listing, Arabic/English chapter normalization, conservative paid-chapter visibility, and a raw-HTTP Reader that reconstructs protected pages through the site’s documented public media contracts.
+ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available from [procomic.net](https://procomic.net). It provides server-side Search, verified Popular and Latest feeds, canonical Details parsing, REST chapter listing, Arabic/English chapter normalization, conservative paid-chapter visibility, and a high-resilience raw-HTTP Reader with automatic dual-domain failover (`procomic.pro` <-> `procomic.net`) that reconstructs protected pages through the site’s documented public media contracts.
 
 ## Current Repository State
 
@@ -13,13 +13,11 @@ ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available fr
 | Source class | `eu.kanade.tachiyomi.extension.ar.procomic.ProComic` |
 | Catalog language | Arabic (`ar`) with Arabic and English releases |
 | Base domain | `https://procomic.net` |
-| Version | `versionCode=4`, `versionName=1.3` |
+| Version | `versionCode=5`, `versionName=1.4` |
 | Implementation branch | `main` |
-| Implementation baseline | All four fix branches merged: `fix/full-remediation`, `fix/runtime-eof-search-feeds`, `fix/adversarial-hardening`, `fix/site-contract-sync` |
-| Latest fix | Live site contract sync: CDN deferred image allowlist, legacy thumbnail host allowlist, preference lazy init ([#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13)) |
-| Latest merged PR | [#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13) — live site contract sync |
-| Default branch | `main` at `dfef381` — all four fix branches merged, CI ✅ |
-| Runtime status | v1.3 released: CDN host allowlists corrected, deferred chapter image pages fixed, broken cover thumbnails fixed, hide-paid-chapters preference initialization fixed. CI ✅ all 13 test suites pass. Signed APK available at `~/Downloads/procomic-release-v1.3-final.apk`. Direct Android-device rendering not verified in this sandbox; authenticated/premium behavior outside scope. |
+| Implementation baseline | Dual-domain hybrid reader engine (`procomic.pro` & `procomic.net`), comics-only latest updates feed, expanded CDN allowlists |
+| Latest fix | Dual-domain reader failover, `app.procomic.net`/`img*.procomic.net` allowlists, latest updates novel flooding fix, popular cover image resolution |
+| Runtime status | v1.4 released: Reader domain desync resolved with bidirectional failover, full chapter image delivery on both `.net` and `.pro`, CI `workflow_dispatch` added. All 13 test suites pass. |
 
 ## Current Architecture
 
@@ -28,11 +26,11 @@ The extension uses normal OkHttp requests through Mihon’s `HttpSource` API. Pu
 | Feature | Current contract and behavior |
 |---|---|
 | Search | `GET /api/public/series/search?status=approved&limit=50&page=N&sort=latest&search=...`, with optional type filtering. The parser consumes a bounded batch of up to six pages, applies title-like relevance filtering, ranks visible-title matches above original-title/alias matches and slug-only matches, collapses duplicate series identities, and returns the collected batch without an unbounded continuation. |
-| Popular | `GET /api/public/content/popular-new?limit=20`; novel rows are filtered, duplicate series IDs are removed, cover URLs are normalized, and no fabricated continuation is reported. |
-| Latest | `GET /api/public/content/latest-updates?limit=18&category=all&page=N`; server order is preserved, short non-empty pages continue, and an empty data array terminates pagination. |
+| Popular | `GET /api/public/content/popular-new?limit=20`; novel rows are filtered, duplicate series IDs are removed, `coverImage`/thumbnail URLs are normalized, and no fabricated continuation is reported. |
+| Latest | `GET /api/public/content/latest-updates?limit=18&category=comics&page=N`; strictly queries comic entries to bypass server novel flooding, server order is preserved, short non-empty pages continue, and an empty data array terminates pagination. |
 | Details | The source’s internal manga URL is converted to the live canonical `/ar/series/{slug}-{id}` RSC route. Complete and restricted response shapes are handled separately. |
 | Chapters | `GET /api/chapters?contentId={seriesId}&_u=...`, followed by authoritative `hasMore` pagination, approval filtering, Arabic preference, English fallback, deduplication, and deterministic descending ordering. |
-| Reader | The canonical chapter route is requested as raw HTTP. Public manifests commonly expose three direct pages; sibling `deferredMedia` is fetched from the chapter-deferred-media contract, direct deferred images are appended, and protected-page placeholders are resolved through the chapter-map proxy-plan contract, tile reconstruction, and JPEG synthesis. Observed chapters can therefore expose the remaining protected pages rather than stopping at three. |
+| Reader | The canonical chapter route is requested as raw HTTP with automatic bidirectional domain fallback (`procomic.pro` / `procomic.net`). Public manifests expose initial pages from `app.procomic.pro` or `app.procomic.net`; sibling `deferredMedia` is fetched from the chapter-deferred-media contract, direct deferred images are appended, and protected-page placeholders are resolved through the chapter-map proxy-plan contract, tile reconstruction, and JPEG synthesis. |
 | Lifecycle status | The site’s top-level `progress` field is mapped to Mihon `ONGOING`, `COMPLETED`, `ON_HIATUS`, or `CANCELLED`; `status=approved` and `metadata.viewStatus=public/exclusive` are not treated as publication lifecycle values. |
 | Icon | The launcher resources use the official ProComic favicon from `https://procomic.net/favicon.svg`, rasterized across the required Android density resources. |
 

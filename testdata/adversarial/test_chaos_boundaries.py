@@ -16,8 +16,17 @@ ROOT = Path(__file__).parents[2]
 UTILS = ROOT / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/ProComicUtils.kt"
 SOURCE = ROOT / "app/src/main/kotlin/eu/kanade/tachiyomi/extension/ar/procomic/ProComic.kt"
 
-ALLOWED_PAGE_HOSTS = {"app.procomic.pro"}
-ALLOWED_TILE_HOSTS = {"img1.procomic.pro", "img2.procomic.pro", "img3.procomic.pro", "img4.procomic.pro"}
+ALLOWED_PAGE_HOSTS = {"app.procomic.pro", "app.procomic.net"}
+ALLOWED_TILE_HOSTS = {
+    "img1.procomic.pro",
+    "img2.procomic.pro",
+    "img3.procomic.pro",
+    "img4.procomic.pro",
+    "img1.procomic.net",
+    "img2.procomic.net",
+    "img3.procomic.net",
+    "img4.procomic.net",
+}
 ALLOWED_CDN_PATHS = {"cdn1", "cdn2", "cdn3", "cdn4"}
 MAX_TOKEN = 8192
 MAX_PAGE_INDEX = 10_000
@@ -42,7 +51,7 @@ def allowed_reader_url(value: str) -> bool:
     parsed = urlsplit(value)
     return (
         parsed.scheme.lower() == "https"
-        and parsed.hostname == "procomic.pro"
+        and parsed.hostname in {"procomic.pro", "procomic.net"}
         and parsed.username is None
         and parsed.password is None
         and parsed.query == ""
@@ -107,6 +116,7 @@ def encoded_payload(**overrides: object) -> str:
 
 def test_page_url_boundaries() -> None:
     assert allowed_page_url("https://app.procomic.pro/chapters/690/53081/p1.avif")
+    assert allowed_page_url("https://app.procomic.net/chapters/692/53156/p1.avif")
     for value in (
         "http://app.procomic.pro/chapters/690/p1.avif",
         "https://evil.example/chapters/690/p1.avif",
@@ -120,10 +130,13 @@ def test_page_url_boundaries() -> None:
 
 def test_reader_and_tile_url_boundaries() -> None:
     assert allowed_reader_url("https://procomic.pro/en/chapter/title-1-53081")
+    assert allowed_reader_url("https://procomic.net/en/chapter/title-1-53081")
     assert allowed_tile_url("https://img2.procomic.pro/i/signed-piece.avif")
+    assert allowed_tile_url("https://img2.procomic.net/i/signed-piece.avif")
     for value in (
         "https://evil.example/en/chapter/title-1-53081",
         "http://procomic.pro/en/chapter/title-1-53081",
+        "http://procomic.net/en/chapter/title-1-53081",
         "https://procomic.pro/en/chapter/title-1-53081?token=secret",
         "https://user:pass@procomic.pro/en/chapter/title-1-53081",
         "https://img5.procomic.pro/i/piece.avif",

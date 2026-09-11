@@ -37,14 +37,19 @@ object ProComicUtils {
 
     private const val MAX_RSC_CANDIDATES = 8
     private const val MAX_RSC_CANDIDATE_BYTES = 1_000_000
-    // Audit 2026-09-05 (P6/P7): chapter images confirmed on app.procomic.pro (appImages)
-    // and cdn2.procomic.pro (deferredMedia images[]). Both must be accepted.
+    // Audit 2026-09-05 (P6/P7) & 2026-09-11 (dual-domain): chapter images confirmed on app.procomic.pro / app.procomic.net
+    // and cdn{1-4}.procomic.pro / cdn{1-4}.procomic.net (deferredMedia images[]). Both domains must be accepted.
     private val allowedPageImageHosts = setOf(
         "app.procomic.pro",
+        "app.procomic.net",
         "cdn1.procomic.pro",
         "cdn2.procomic.pro",
         "cdn3.procomic.pro",
         "cdn4.procomic.pro",
+        "cdn1.procomic.net",
+        "cdn2.procomic.net",
+        "cdn3.procomic.net",
+        "cdn4.procomic.net",
     )
     private val allowedThumbnailHosts = setOf(
         "app.procomic.net",
@@ -74,6 +79,10 @@ object ProComicUtils {
         "img2.procomic.pro",
         "img3.procomic.pro",
         "img4.procomic.pro",
+        "img1.procomic.net",
+        "img2.procomic.net",
+        "img3.procomic.net",
+        "img4.procomic.net",
     )
     private val allowedPageImageExtensions = setOf("avif", "webp", "jpg", "jpeg", "png")
     private const val PROTECTED_PAGE_FRAGMENT_PREFIX = "procomic-protected-page-v1:"
@@ -84,9 +93,9 @@ object ProComicUtils {
     /**
      * Accepts public chapter page image URLs from confirmed delivery hosts.
      *
-     * Two path patterns observed in the live contract (audit 2026-09-05):
-     *  - app.procomic.pro/chapters/{...}         — appImages manifest (P6)
-     *  - cdn{1-4}.procomic.pro/{seriesId}/{chapterId}/{filename} — deferredMedia images[] (P7)
+     * Two path patterns observed in the live contract (audit 2026-09-05 / 2026-09-11):
+     *  - app.procomic.(pro|net)/chapters/{...}         — appImages manifest (P6)
+     *  - cdn{1-4}.procomic.(pro|net)/{seriesId}/{chapterId}/{filename} — deferredMedia images[] (P7)
      *
      * Path validation is host-scoped: app.* requires /chapters/; cdn.* requires
      * an exact three-segment /{int}/{int}/{filename.ext} layout.
@@ -101,9 +110,9 @@ object ProComicUtils {
         if (h !in allowedPageImageHosts) return@runCatching false
         if (!allowedPageImageExtensions.any { path.lowercase().endsWith(".$it") }) return@runCatching false
         when {
-            h == "app.procomic.pro" ->
+            h == "app.procomic.pro" || h == "app.procomic.net" ->
                 path.startsWith("/chapters/")
-            h.startsWith("cdn") && h.endsWith(".procomic.pro") -> {
+            h.startsWith("cdn") && (h.endsWith(".procomic.pro") || h.endsWith(".procomic.net")) -> {
                 // Exact shape: /{seriesId}/{chapterId}/{filename.ext} — no subdirectories.
                 val segments = path.split('/').filter { it.isNotEmpty() }
                 segments.size == 3 &&
@@ -143,8 +152,9 @@ object ProComicUtils {
         val parsed = URI(url)
         val path = parsed.path.orEmpty()
         val segments = path.split('/').filter(String::isNotEmpty)
+        val host = parsed.host?.lowercase().orEmpty()
         parsed.scheme.equals("https", ignoreCase = true) &&
-            parsed.host.equals("procomic.pro", ignoreCase = true) &&
+            (host == "procomic.pro" || host == "procomic.net") &&
             parsed.userInfo == null &&
             parsed.query == null &&
             parsed.fragment == null &&
@@ -155,28 +165,30 @@ object ProComicUtils {
 
     fun isProtectedPageImageUrl(url: String): Boolean = runCatching {
         val parsed = URI(url)
+        val host = parsed.host?.lowercase().orEmpty()
         parsed.scheme.equals("https", ignoreCase = true) &&
-            parsed.host.equals("procomic.pro", ignoreCase = true) &&
+            (host == "procomic.pro" || host == "procomic.net") &&
             parsed.path == "/__protected_page__" &&
             parsed.userInfo == null &&
             parsed.query == null &&
             decodeProtectedPagePayload(parsed.fragment.orEmpty()) != null
     }.getOrDefault(false)
 
-    fun encodeProtectedPageUrl(payload: ProComicProtectedPagePayload): String {
+    fun encodeProtectedPageUrl(payload: ProComicProtectedPagePayload, host: String = "procomic.pro"): String {
         require(payload.kind == "procomic-protected-page-v1")
         require(payload.chapterId > 0)
         require(payload.token.isNotBlank() && payload.token.length <= MAX_PROTECTED_TOKEN_LENGTH)
         require(payload.method == "browser_session")
         require(payload.cdnPath in allowedCdnPaths)
         require(payload.pageIndex in 0..MAX_PROTECTED_PAGE_INDEX)
+        val targetHost = if (host == "procomic.net") "procomic.net" else "procomic.pro"
         val jsonPayload = json.encodeToString(payload)
         require(jsonPayload.toByteArray(StandardCharsets.UTF_8).size <= MAX_PROTECTED_TOKEN_LENGTH * 2)
         val encoded = Base64.encodeToString(
             jsonPayload.toByteArray(StandardCharsets.UTF_8),
             Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING,
         )
-        return "https://procomic.pro/__protected_page__#$PROTECTED_PAGE_FRAGMENT_PREFIX$encoded"
+        return "https://$targetHost/__protected_page__#$PROTECTED_PAGE_FRAGMENT_PREFIX$encoded"
     }
 
     fun decodeProtectedPagePayload(fragment: String): ProComicProtectedPagePayload? {
@@ -761,7 +773,7 @@ object ProComicUtils {
         }
 
         // 2. Fallback: regex for chapter CDN image URLs directly in the page body
-        val chapterRegex = Regex(""""(https://app\.procomic\.(pro|net)/chapters/[^"]+\.(avif|webp|jpg|jpeg|png))"""")
+        val chapterRegex = Regex("""\\?"(https://app\.procomic\.(pro|net)/chapters/[^"\\\s]+\.(avif|webp|jpg|jpeg|png))\\?""")
         val fallbackUrls = chapterRegex.findAll(body)
             .map { it.groupValues[1] }
             .filter(::isAllowedPageImageUrl)

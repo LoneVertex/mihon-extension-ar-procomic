@@ -145,6 +145,7 @@ data class ProComicPopularContent(
     val status: String? = null,
     val progress: String? = null,
     val thumbnail: String? = null,
+    @SerialName("coverImage") val coverImage: String? = null,
     @SerialName("cdn_path") val cdnPath: String? = null,
     val coverImageApp: ProComicCoverImageApp? = null,
     val metadata: ProComicSeriesMetadata? = null,

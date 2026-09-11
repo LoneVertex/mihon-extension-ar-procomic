@@ -51,33 +51,45 @@ class ProComicImageInterceptor(
         pageRequest: Request,
         payload: ProComicProtectedPagePayload,
     ): ProComicProtectedMap {
-        val body = ProComicUtils.json.encodeToString(
-            ProComicMapProxyRequest(
-                token = payload.token,
-                method = payload.method,
-                cdnPath = payload.cdnPath,
-                pageIndex = payload.pageIndex,
-            ),
-        ).toRequestBody(JSON_MEDIA_TYPE)
-        val request = pageRequest.newBuilder()
-            .url("$READER_BASE_URL/chapter-map-proxy-plan/${payload.chapterId}")
-            .header("Accept", "application/json")
-            .header("Content-Type", "application/json")
-            .post(body)
-            .build()
+        val primaryHost = pageRequest.url.host.takeIf { it == "procomic.net" || it == "procomic.pro" }
+            ?: "procomic.pro"
+        val alternateHost = if (primaryHost == "procomic.pro") "procomic.net" else "procomic.pro"
 
-        return tileClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw IOException("ProComic Reader: protected map request failed (${response.code})")
+        var lastException: Exception? = null
+        for (host in listOf(primaryHost, alternateHost)) {
+            val body = ProComicUtils.json.encodeToString(
+                ProComicMapProxyRequest(
+                    token = payload.token,
+                    method = payload.method,
+                    cdnPath = payload.cdnPath,
+                    pageIndex = payload.pageIndex,
+                ),
+            ).toRequestBody(JSON_MEDIA_TYPE)
+            val request = pageRequest.newBuilder()
+                .url("https://$host/chapter-map-proxy-plan/${payload.chapterId}")
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .post(body)
+                .build()
+
+            try {
+                return tileClient.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw IOException("ProComic Reader: protected map request failed (${response.code})")
+                    }
+                    val parsed = ProComicUtils.json.decodeFromString<ProComicMapProxyResponse>(
+                        readBoundedText(response, MAX_MAP_RESPONSE_BYTES),
+                    )
+                    if (parsed.success == false) {
+                        throw IOException("ProComic Reader: protected map response returned success=false")
+                    }
+                    parsed.data?.map ?: throw IOException("ProComic Reader: protected map response has no map")
+                }
+            } catch (e: Exception) {
+                lastException = e
             }
-            val parsed = ProComicUtils.json.decodeFromString<ProComicMapProxyResponse>(
-                readBoundedText(response, MAX_MAP_RESPONSE_BYTES),
-            )
-            if (parsed.success == false) {
-                throw IOException("ProComic Reader: protected map response returned success=false")
-            }
-            parsed.data?.map ?: throw IOException("ProComic Reader: protected map response has no map")
         }
+        throw lastException ?: IOException("ProComic Reader: protected map request failed")
     }
 
     private fun reconstruct(

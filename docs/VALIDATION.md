@@ -84,13 +84,13 @@ The corrected runs execute the pinned Pillow install, all 12 suites that were pr
 
 ## APK Identity
 
-The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=4` and `versionName=1.3`. The build uses compileSdk 35, targetSdk 35, min SDK 26, official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 35. The compact universal native decoder payload is the primary reason the APK remains larger than a pure-Kotlin extension.
+The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=5` and `versionName=1.4`. The build uses compileSdk 35, targetSdk 35, min SDK 26, official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 35. The compact universal native decoder payload is the primary reason the APK remains larger than a pure-Kotlin extension.
 
 | Variant | Current local APK | Package | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
-| Release (signed) | `~/Downloads/procomic-release-v1.3-final.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=4`, `versionName=1.3` | ~2.1 MB | Signed v2+v3, RSA 4096, alias `procomic` |
+| Release (signed) | `~/Downloads/procomic-release-v1.4.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=5`, `versionName=1.4` | 2.1 MB | `fad43b9532c3eedeb0085e0150d77f66c80a833a19599126412b71dff60bd898` (Signed v2+v3, RSA 4096, alias `procomic`) |
 
-The standard local output paths are `app/build/outputs/apk/debug/app-debug.apk` and `app/build/outputs/apk/release/app-release.apk`. The CI artifact copies and checksum file are retained in the external synchronization evidence bundle, not committed into this source repository. The debug hash was stable across the repeated clean gate; the release hash varied between two clean local builds while size and metadata remained identical, so the latest local hash above is evidence for that exact build only, not a reproducibility certificate.
+The standard local output paths are `app/build/outputs/apk/debug/app-debug.apk` and `app/build/outputs/apk/release/app-release-unsigned.apk`. The CI artifact copies and checksum file are retained in the external synchronization evidence bundle, not committed into this source repository.
 
 ## Regression Coverage Added by the Final Fixes
 
@@ -98,6 +98,10 @@ The current deterministic fixtures cover the final reported failure sequence:
 
 | Reported or discovered issue | Current coverage and implementation result |
 |---|---|
+| Split reader domain desync (`procomic.pro` vs `procomic.net`) | Bidirectional domain fallback in `pageListParse` and `fetchDeferredMedia` automatically attempts the alternate domain whenever a response is redirected away or missing `appImages`; allowlists expanded to accept `app.procomic.net` and `img*.procomic.net` |
+| Latest updates flooded with light novels | `latestUpdatesRequest` queries `category=comics` rather than `category=all`, returning 100% valid comic entries per page |
+| Popular content missing cover images | `ProComicPopularContent` DTO includes `coverImage` field, prioritized during SManga thumbnail resolution |
+| Forked workflow trigger missing | `.github/workflows/ci.yml` includes `workflow_dispatch` trigger |
 | Mihon showed `Unknown` for ordinary series | Top-level `progress` is mapped conservatively; `approved` and `public/exclusive` access fields are no longer mistaken for lifecycle status; `testdata/status/test_status_mapping.py` covers Arabic/English states and conflicts |
 | Search returned unrelated titles | Title-like token filtering excludes description-only false positives |
 | Search results were insufficient or incorrectly continued | `limit=50`, bounded six-page in-parse aggregation, repeated-page detection, and explicit exhaustion |

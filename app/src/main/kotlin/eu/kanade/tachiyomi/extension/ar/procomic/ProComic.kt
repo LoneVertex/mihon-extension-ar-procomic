@@ -211,7 +211,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     // an empty data array is the only observed termination signal. Short pages continue.
     override fun latestUpdatesRequest(page: Int): Request =
         GET(
-            "$baseUrl/api/public/content/latest-updates?limit=18&category=all&page=${page.coerceAtLeast(1)}",
+            "$baseUrl/api/public/content/latest-updates?limit=18&category=comics&page=${page.coerceAtLeast(1)}",
             headers,
         )
 
@@ -603,9 +603,48 @@ class ProComic : HttpSource(), ConfigurableSource {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val body = readBoundedBody(response)
-        val url = response.request.url.toString()
-        ProComicDiag.logResponse("PAGES", response, body)
+        val initialBody = readBoundedBody(response)
+        val initialUrl = response.request.url.toString()
+        val initialHost = response.request.url.host
+        ProComicDiag.logResponse("PAGES", response, initialBody)
+
+        val initialHasImages = initialBody.contains("appImages") || initialBody.contains("\\\"appImages\\\"")
+        val initialRedirectedAway = !response.request.url.encodedPath.contains("/chapter/")
+
+        val (body, url, activeHost) = if (initialHasImages && !initialRedirectedAway) {
+            Triple(initialBody, initialUrl, initialHost)
+        } else {
+            // Attempt fallback to alternate domain (.pro <-> .net)
+            val alternateHost = if (initialHost == "procomic.net") "procomic.pro" else "procomic.net"
+            var rootResp = response
+            while (rootResp.priorResponse != null) {
+                rootResp = rootResp.priorResponse!!
+            }
+            val chapterPath = rootResp.request.url.encodedPath.takeIf { it.contains("/chapter/") }
+                ?: response.request.url.encodedPath.takeIf { it.contains("/chapter/") }
+                ?: ""
+
+            if (chapterPath.isNotBlank()) {
+                ProComicDiag.logStage("PAGES", 10, "Attempting dual-domain fallback to $alternateHost for $chapterPath")
+                val fallbackResult = runCatching {
+                    val fallbackRequest = GET("https://$alternateHost$chapterPath", headers)
+                    client.newCall(fallbackRequest).execute().use { fbResp ->
+                        val fbBody = readBoundedBody(fbResp)
+                        val fbUrl = fbResp.request.url.toString()
+                        val fbHasImages = fbBody.contains("appImages") || fbBody.contains("\\\"appImages\\\"")
+                        val fbRedirected = !fbResp.request.url.encodedPath.contains("/chapter/")
+                        if (fbResp.isSuccessful && fbHasImages && !fbRedirected) {
+                            Triple(fbBody, fbUrl, alternateHost)
+                        } else {
+                            null
+                        }
+                    }
+                }.getOrNull()
+                fallbackResult ?: Triple(initialBody, initialUrl, initialHost)
+            } else {
+                Triple(initialBody, initialUrl, initialHost)
+            }
+        }
 
         val publicImages = ProComicUtils.extractPageImages(body, "PAGES", url)
         val pages = publicImages.mapIndexed { index, imageUrl ->
@@ -618,7 +657,7 @@ class ProComic : HttpSource(), ConfigurableSource {
             ?: protection?.deferredMedia
         val deferredToken = deferred?.token
         val deferredSplitIndex = deferred?.splitIndex
-        val chapterId = Regex("-(\\d+)$").find(response.request.url.pathSegments.lastOrNull().orEmpty())
+        val chapterId = Regex("-(\\d+)$").find(url.substringBefore('?').substringBefore('#').split('/').lastOrNull().orEmpty())
             ?.groupValues?.getOrNull(1)?.toIntOrNull()
             ?.takeIf { it > 0 }
 
@@ -645,6 +684,7 @@ class ProComic : HttpSource(), ConfigurableSource {
                 token = deferredToken,
                 splitIndex = deferredSplitIndex,
                 referer = url,
+                activeHost = activeHost,
             )
         } catch (error: Exception) {
             ProComicDiag.logException("PAGES", "fetch deferred media", url, error)
@@ -691,13 +731,14 @@ class ProComic : HttpSource(), ConfigurableSource {
                 pages += Page(
                     pages.size,
                     imageUrl = ProComicUtils.encodeProtectedPageUrl(
-                        ProComicProtectedPagePayload(
+                        payload = ProComicProtectedPagePayload(
                             chapterId = chapterId,
                             token = mapToken.token,
                             method = mapToken.method,
                             cdnPath = cdnPath,
                             pageIndex = mapStartIndex + index,
                         ),
+                        host = activeHost,
                     ),
                 )
             }
@@ -714,26 +755,38 @@ class ProComic : HttpSource(), ConfigurableSource {
         token: String,
         splitIndex: Int,
         referer: String,
+        activeHost: String = "procomic.pro",
     ): ProComicDeferredMediaData {
-        val request = GET(
-            "$READER_BASE_URL/chapter-deferred-media/$chapterId?token=${URLEncoder.encode(token, "UTF-8")}&split=$splitIndex",
-            headersBuilder()
-                .set("Accept", "application/json")
-                .set("Referer", referer)
-                .build(),
-        )
-        return client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw Exception("ProComic Reader: deferred media request failed (${response.code})")
-            }
-            val parsed = ProComicUtils.json.decodeFromString<ProComicDeferredMediaResponse>(
-                readBoundedBody(response),
+        val primaryHost = if (activeHost == "procomic.net") "procomic.net" else "procomic.pro"
+        val alternateHost = if (primaryHost == "procomic.pro") "procomic.net" else "procomic.pro"
+
+        var lastException: Exception? = null
+        for (host in listOf(primaryHost, alternateHost)) {
+            val request = GET(
+                "https://$host/chapter-deferred-media/$chapterId?token=${URLEncoder.encode(token, "UTF-8")}&split=$splitIndex",
+                headersBuilder()
+                    .set("Accept", "application/json")
+                    .set("Referer", referer)
+                    .build(),
             )
-            if (parsed.success == false) {
-                throw Exception("ProComic Reader: deferred media response returned success=false")
+            try {
+                return client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw Exception("ProComic Reader: deferred media request failed (${response.code})")
+                    }
+                    val parsed = ProComicUtils.json.decodeFromString<ProComicDeferredMediaResponse>(
+                        readBoundedBody(response),
+                    )
+                    if (parsed.success == false) {
+                        throw Exception("ProComic Reader: deferred media response returned success=false")
+                    }
+                    parsed.data ?: throw Exception("ProComic Reader: deferred media response has no data")
+                }
+            } catch (e: Exception) {
+                lastException = e
             }
-            parsed.data ?: throw Exception("ProComic Reader: deferred media response has no data")
         }
+        throw lastException ?: Exception("ProComic Reader: deferred media request failed")
     }
 
 
@@ -785,7 +838,8 @@ class ProComic : HttpSource(), ConfigurableSource {
     private fun ProComicPopularContent.toPopularSManga(): SManga = SManga.create().apply {
         url = "/ar/series/$type/$id/$slug"
         title = this@toPopularSManga.title
-        thumbnail_url = this@toPopularSManga.thumbnail?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
+        thumbnail_url = this@toPopularSManga.coverImage?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
+            ?: this@toPopularSManga.thumbnail?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
             ?: this@toPopularSManga.coverImageApp?.desktop?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
             ?: this@toPopularSManga.metadata?.coverImage?.takeIf(ProComicUtils::isAllowedThumbnailUrl)
             ?: this@toPopularSManga.thumbnail?.takeIf { it.startsWith("/") && !it.startsWith("//") }

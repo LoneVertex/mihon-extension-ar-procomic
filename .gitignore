@@ -27,3 +27,5 @@ local.properties
 *.log
 SESSION_STATE.json
 SESSION_TRANSFER.md
+__pycache__/
+*.pyc

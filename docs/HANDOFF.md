@@ -6,15 +6,15 @@
 
 **Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13, plus v1.5 HTTP 403 / Cloudflare clearance / coin-locked gating fix, official v1.5.0 release)
 
-**Implementation baseline HEAD:** [`bc7636cb83d8976be94b3b33d68dd570e2e941a4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4)
+**Implementation baseline HEAD:** [`774bee4e810b2554be37c32db391494e574a30d7`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
 
-**Documentation snapshot parent HEAD:** [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4)
+**Documentation snapshot parent HEAD:** [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
 
 **Focused Reader source commit:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Review path:** All four fix branches merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), and [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4) on `main`
+**Review path:** All four fix branches merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), and [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7) on `main`
 
-**Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and CI workflow run `34671214722` pass. Direct Android-device rendering remains not verified in this sandbox.
+**Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and CI workflow run `34671593564` pass. Direct Android-device rendering remains not verified in this sandbox.
 
 **Release status:** Official v1.5.0 GitHub Release published at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) with signed release APK asset (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
 

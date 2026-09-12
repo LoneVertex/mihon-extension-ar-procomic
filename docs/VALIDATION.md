@@ -4,13 +4,13 @@
 
 **Implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13)
 
-**Implementation baseline HEAD:** [`bc7636cb83d8976be94b3b33d68dd570e2e941a4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4)
+**Implementation baseline HEAD:** [`774bee4e810b2554be37c32db391494e574a30d7`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
 
-**Documentation snapshot parent HEAD:** [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4)
+**Documentation snapshot parent HEAD:** [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
 
 **Focused Reader source commit:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), and [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4) on `main`
+**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), and [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7) on `main`
 
 **Software-gate status:** PASS for the current implementation and CI evidence.
 
@@ -18,7 +18,7 @@
 
 ## Software Gate
 
-The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. All fix branches (#10, #11, #12, #13) and direct commits `6905482`, `5d2c0a5`, and `bc7636c` are integrated into `main`.
+The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. All fix branches (#10, #11, #12, #13) and direct commits `6905482`, `5d2c0a5`, `7c3eb49`, `bc7636c`, `f3b7708`, and `774bee4` are integrated into `main`.
 
 | Gate | Result | Evidence |
 |---|---|---|
@@ -69,6 +69,8 @@ The current audit-remediation CI history is:
 
 | Run | Purpose | Commit | Result |
 |---:|---|---|---|
+| [34671593564](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34671593564) | Push validation on main (tag reference alignment to v1.5.0) | `774bee4` | ✅ PASS |
+| [34671454419](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34671454419) | Push validation on main (audit finalization and CI synchronization) | `f3b7708` | ✅ PASS |
 | [34671214722](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34671214722) | Push validation on main (release notes and v1.5.0 publication record) | `bc7636c` | ✅ PASS |
 | [34670904451](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34670904451) | Push validation on main (v1.5 docs sync and institutional memory) | `7c3eb49` | ✅ PASS |
 | [34670639461](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34670639461) | Push validation on main (v1.5, HTTP 403 / WebView fix, 13 suites) | `5d2c0a5` | ✅ PASS |
@@ -151,6 +153,8 @@ All four fix branches have been merged into `main` and CI is green:
 | Direct commit | `main` (`5d2c0a5`) | ✅ Pushed — v1.5: HTTP 403 / WebView loop fix, delegate User-Agent, filter broken CDN chapter URLs, coin-locked chapter gating |
 | Direct commit | `main` (`7c3eb49`) | ✅ Pushed — docs: sync v1.5 changes and institutional memory across repository |
 | Direct commit | `main` (`bc7636c`) | ✅ Pushed — docs: record publication of v1.5.0 initial release |
+| Direct commit | `main` (`f3b7708`) | ✅ Pushed — docs: finalize v1.5.0 audit and synchronize CI evidence |
+| Direct commit | `main` (`774bee4`) | ✅ Pushed — docs: align release tag references to v1.5.0 |
 
 Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.5.apk`.
 

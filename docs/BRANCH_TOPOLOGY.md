@@ -2,8 +2,8 @@
 
 > [!NOTE]
 > **Historical document.** This file recorded the branch topology and stacked PR development history.
-> Current state: All remediation branches (PR #10, #11, #12, #13), release v1.4 commit `6905482`, release v1.5 commit `5d2c0a5`, docs sync `7c3eb49`, release docs record `bc7636c`, audit finalization `f3b7708`, and tag reference alignment `774bee4` are merged and pushed on `main`.
-> Only `main` branch exists both locally and remotely. All PRs are closed. Dependabot PR limit is 0. Official v1.5.0 release is published.
+> Current state: All remediation branches (PR #10, #11, #12, #13), release v1.4 commit `6905482`, release v1.5 commit `5d2c0a5`, docs sync `7c3eb49`, release docs record `bc7636c`, audit finalization `f3b7708`, tag reference alignment `774bee4`, synchronization `075f5be`, release v1.5.1 commit `0e3eeef`, and anti-koshary refactor `d2648c2` are merged and pushed on `main`.
+> Only `main` branch exists both locally and remotely. All PRs are closed. Dependabot PR limit is 0. Official v1.5.1 release is published and active.
 
 
 **Status:** CURRENT
@@ -12,7 +12,7 @@
 
 **Default branch:** `main`
 
-**Authoritative remote implementation branch:** `main` at `774bee4` (all four fix branches merged: PR #10, #11, #12, #13, official v1.5.0 release)
+**Authoritative remote implementation branch:** `main` at `d2648c2` (all four fix branches merged: PR #10, #11, #12, #13, official v1.5.0 and v1.5.1 releases)
 
 **Documentation snapshot parent HEAD:** [`90234e2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/90234e2)
 
@@ -131,11 +131,12 @@ The code-validation snapshot parent is 37 commits ahead of `main`; `400556d` and
 
 ## Dependabot pull requests
 
-Dependabot PRs #1–#9 are open and target `main`. They remain available for separate compatibility review; none was merged, closed, deleted, or retargeted by this operation.
+Dependabot PRs #1–#9 are closed and `open-pull-requests-limit: 0` is committed.
 
 ## Tags and releases
 
-Official release [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) is published with signed APK asset `procomic-release-v1.5.apk` (SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`). Cryptographically signed git tag `v1.5.0` points to commit `7c3eb49` on `main`.
+- Official release [`v1.5.1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.1) is published with signed APK asset `procomic-release-v1.5.1.apk` (SHA-256 `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c`). Git tag `v1.5.1` points to commit `0e3eeef` on `main`.
+- Official release [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) is published with signed APK asset `procomic-release-v1.5.apk` (SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`). Cryptographically signed git tag `v1.5.0` points to commit `7c3eb49` on `main`.
 
 ## Review and release path
 

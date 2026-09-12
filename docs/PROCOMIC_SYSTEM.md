@@ -2,15 +2,15 @@
 
 **Status:** CURRENT
 
-**Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13, plus v1.5 HTTP 403 / Cloudflare clearance / coin-locked gating fix, official v1.5.0 release)
+**Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13, plus v1.5 HTTP 403 / Cloudflare clearance / coin-locked gating fix, official v1.5.0 and v1.5.1 releases)
 
-**Implementation baseline HEAD:** [`774bee4e810b2554be37c32db391494e574a30d7`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
+**Implementation baseline HEAD:** [`d2648c2b6c63116f79c20689f442f7b64530fea1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1)
 
-**Documentation snapshot parent HEAD:** [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
+**Documentation snapshot parent HEAD:** [`d2648c2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1)
 
-**Focused Reader source commit:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
+**Focused Reader source commit:** [`0e3eeef`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/0e3eeef72449525f9f61ccb8506e69a4c51f4855)
 
-**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), and [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7) on `main`
+**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7), [`075f5be`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/075f5be63fb8dbb5cff0d0155d0809a1eafff9e0), [`0e3eeef`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/0e3eeef72449525f9f61ccb8506e69a4c51f4855), and [`d2648c2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1) on `main`
 
 **Runtime and release status:** The lifecycle-status, protected-Reader fixes, dual-domain reader engine, Cloudflare clearance compatibility, coin-locked chapter gating, and `AvifNativeLoader` multi-tier JNI loader pass the 13-suite deterministic gate and clean builds. The signed release APK (`~/Downloads/procomic-release-v1.5.1.apk`, RSA 4096, v2+v3) is generated with `versionCode=7` and `versionName=1.5.1`.
 
@@ -27,6 +27,7 @@ The extension uses normal OkHttp requests with a bounded RSC boundary parser for
 | Layer | Responsibility | Current implementation |
 |---|---|---|
 | `ProComic.kt` | Mihon source lifecycle, requests, parsing, lifecycle-status mappers, preference filtering, Search batching, Reader page-list assembly, and image requests | `HttpSource` plus `ConfigurableSource` |
+| `AvifNativeLoader.kt` | Multi-tier JNI loader for `libavif_android.so` in Mihon runtime | Resolves native library via classloader, nativeLibraryDir, and codeCacheDir extraction |
 | `ProComicDto.kt` | JSON DTOs and gate/media metadata models | Kotlin serialization DTOs with optional server fields |
 | `ProComicUtils.kt` | RSC/JSON boundary extraction, Reader manifest extraction, chapter normalization, gate classification, protected-page payload parsing, and page-image parsing | Bounded string-aware scans with sibling `deferredMedia` support |
 | `ProComicImageInterceptor.kt` | Protected-page proxy-plan retrieval, tile downloading, decoding, geometry validation, reconstruction, and JPEG response synthesis | OkHttp interceptor with bounded tile/composite resources and platform/AOMedia decoder fallback |

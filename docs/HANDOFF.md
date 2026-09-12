@@ -4,19 +4,19 @@
 
 **Repository:** [LoneVertex/mihon-extension-ar-procomic](https://github.com/LoneVertex/mihon-extension-ar-procomic)
 
-**Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13, plus v1.5 HTTP 403 / Cloudflare clearance / coin-locked gating fix, official v1.5.0 release)
+**Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13, plus v1.5 HTTP 403 / Cloudflare clearance / coin-locked gating fix, official v1.5.0 and v1.5.1 releases)
 
-**Implementation baseline HEAD:** [`774bee4e810b2554be37c32db391494e574a30d7`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
+**Implementation baseline HEAD:** [`d2648c2b6c63116f79c20689f442f7b64530fea1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1)
 
-**Documentation snapshot parent HEAD:** [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
+**Documentation snapshot parent HEAD:** [`d2648c2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1)
 
-**Focused Reader source commit:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
+**Focused Reader source commit:** [`0e3eeef`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/0e3eeef72449525f9f61ccb8506e69a4c51f4855)
 
-**Review path:** All four fix branches merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), and [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7) on `main`
+**Review path:** All four fix branches merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7), [`075f5be`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/075f5be63fb8dbb5cff0d0155d0809a1eafff9e0), [`0e3eeef`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/0e3eeef72449525f9f61ccb8506e69a4c51f4855), and [`d2648c2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1) on `main`
 
-**Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and CI workflow run `34671593564` pass. Direct Android-device rendering remains not verified in this sandbox.
+**Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and CI workflow run `34673312916` pass. Direct Android-device rendering remains not verified in this sandbox.
 
-**Release status:** v1.5.1 release prepared (following v1.5.0 at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0)) with signed release APK asset (`versionCode=7`, `versionName=1.5.1`, v2+v3 RSA 4096, SHA-256 `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c`).
+**Release status:** v1.5.1 published and active at [`v1.5.1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.1) (following v1.5.0 at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0)) with signed release APK asset (`versionCode=7`, `versionName=1.5.1`, v2+v3 RSA 4096, SHA-256 `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c`).
 
 ## Roles
 
@@ -73,6 +73,8 @@ The current branch includes the following completed and tested work:
 14. CI action versions were updated to `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; workflow permissions are limited to `contents: read`; deterministic suites run after installing pinned `Pillow==12.3.0`; corrected post-remediation CI runs passed.
 15. Reader domain failover supports bidirectional delivery across `procomic.net` and `procomic.pro`, with expanded CDN host allowlisting (`app.procomic.net`, `img*.procomic.net`), comics-only category filter on Latest Updates feed, popular fallback covers, and `workflow_dispatch` manual CI trigger.
 16. Resolved HTTP 403 "Check website in WebView" loop by delegating User-Agent to Mihon's `defaultUserAgentProvider` (preventing Cloudflare `cf_clearance` cryptographic mismatch between OkHttp and Android WebView), filtering broken direct deferred `cdn*.procomic.(pro|net)` chapter image endpoints (nginx 403), aligning origin-based Referer headers across image and proxy requests, and fixing coin-locked chapter classification (`lockedByCoins: true` with null cost) with explicit Arabic/English paywall error messaging.
+17. Introduced `AvifNativeLoader` multi-tier loader to resolve and load `libavif_android.so` in Mihon's `DelegateLastClassLoaderCompat` runtime (where `librarySearchPath` is null), dynamic tile Referer matching, and `ARGB_8888` decode fallback (v1.5.1).
+18. Deduplicated host resolution (`resolveAlternateHost`) and referer resolution (`resolveRefererForUrl`), hardened composite bitmap allocation against OutOfMemoryError, and removed dead DTO and constants.
 
 No authentication, login, session/cookie bypass, payment bypass, WebView, browser automation, or fabricated premium page behavior was added.
 

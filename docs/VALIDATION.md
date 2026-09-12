@@ -4,21 +4,21 @@
 
 **Implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13)
 
-**Implementation baseline HEAD:** [`774bee4e810b2554be37c32db391494e574a30d7`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
+**Implementation baseline HEAD:** [`d2648c2b6c63116f79c20689f442f7b64530fea1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1)
 
-**Documentation snapshot parent HEAD:** [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7)
+**Documentation snapshot parent HEAD:** [`d2648c2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1)
 
-**Focused Reader source commit:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
+**Focused Reader source commit:** [`0e3eeef`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/0e3eeef72449525f9f61ccb8506e69a4c51f4855)
 
-**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), and [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7) on `main`
+**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7), [`075f5be`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/075f5be63fb8dbb5cff0d0155d0809a1eafff9e0), [`0e3eeef`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/0e3eeef72449525f9f61ccb8506e69a4c51f4855), and [`d2648c2`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/d2648c2b6c63116f79c20689f442f7b64530fea1) on `main`
 
 **Software-gate status:** PASS for the current implementation and CI evidence.
 
-**Release status:** v1.5.1 release prepared (following v1.5.0 at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0)) with signed release APK asset (`versionCode=7`, `versionName=1.5.1`, v2+v3 RSA 4096, SHA-256 `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c`).
+**Release status:** v1.5.1 published and active at [`v1.5.1`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.1) (following v1.5.0 at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0)) with signed release APK asset (`versionCode=7`, `versionName=1.5.1`, v2+v3 RSA 4096, SHA-256 `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c`).
 
 ## Software Gate
 
-The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. All fix branches (#10, #11, #12, #13) and direct commits `6905482`, `5d2c0a5`, `7c3eb49`, `bc7636c`, `f3b7708`, and `774bee4` are integrated into `main`.
+The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. All fix branches (#10, #11, #12, #13) and direct commits `6905482`, `5d2c0a5`, `7c3eb49`, `bc7636c`, `f3b7708`, `774bee4`, `075f5be`, `0e3eeef`, and `d2648c2` are integrated into `main`.
 
 | Gate | Result | Evidence |
 |---|---|---|
@@ -69,6 +69,9 @@ The current audit-remediation CI history is:
 
 | Run | Purpose | Commit | Result |
 |---:|---|---|---|
+| [34673312916](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34673312916) | Push validation on main (refactor: deduplicate host resolution and harden bitmap allocation) | `d2648c2` | ✅ PASS |
+| [34672707076](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34672707076) | Push validation on main (fix: resolve protected tile decoding error via AvifNativeLoader, v1.5.1) | `0e3eeef` | ✅ PASS |
+| [34671798357](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34671798357) | Push validation on main (docs: synchronize HEAD and CI run references across repository) | `075f5be` | ✅ PASS |
 | [34671593564](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34671593564) | Push validation on main (tag reference alignment to v1.5.0) | `774bee4` | ✅ PASS |
 | [34671454419](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34671454419) | Push validation on main (audit finalization and CI synchronization) | `f3b7708` | ✅ PASS |
 | [34671214722](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34671214722) | Push validation on main (release notes and v1.5.0 publication record) | `bc7636c` | ✅ PASS |
@@ -138,7 +141,7 @@ The Reader validation evidence must distinguish the chapter route, Mihon Reader 
 
 ## Current Limitations
 
-Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes. Signed APK: `~/Downloads/procomic-release-v1.5.apk`.
+Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes. Signed APK: `~/Downloads/procomic-release-v1.5.1.apk`.
 
 ## Milestone Progression — Current State
 
@@ -156,7 +159,10 @@ All four fix branches have been merged into `main` and CI is green:
 | Direct commit | `main` (`bc7636c`) | ✅ Pushed — docs: record publication of v1.5.0 initial release |
 | Direct commit | `main` (`f3b7708`) | ✅ Pushed — docs: finalize v1.5.0 audit and synchronize CI evidence |
 | Direct commit | `main` (`774bee4`) | ✅ Pushed — docs: align release tag references to v1.5.0 |
+| Direct commit | `main` (`075f5be`) | ✅ Pushed — docs: synchronize HEAD and CI run references across repository |
+| Direct commit | `main` (`0e3eeef`) | ✅ Pushed — fix: resolve protected tile decoding error via AvifNativeLoader (v1.5.1 release) |
+| Direct commit | `main` (`d2648c2`) | ✅ Pushed — refactor: deduplicate host resolution and harden bitmap allocation |
 
-Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.5.apk`.
+Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.5.1.apk`.
 
-Status: Official v1.5.0 GitHub Release published with signed release APK asset.
+Status: Official v1.5.1 GitHub Release published with signed release APK asset.

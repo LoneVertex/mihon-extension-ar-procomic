@@ -49,8 +49,11 @@ import java.net.URLEncoder
  */
 class ProComic : HttpSource(), ConfigurableSource {
 
-    private companion object {
-        const val PREF_SHOW_PAID_CHAPTERS = "show_paid_chapters"
+    companion object {
+        @Volatile
+        var applicationContext: android.content.Context? = null
+
+        private const val PREF_SHOW_PAID_CHAPTERS = "show_paid_chapters"
         val PAID_GATE_STATES = setOf(
             ProComicGateState.COIN_LOCKED,
             ProComicGateState.EXCLUSIVE,
@@ -66,6 +69,10 @@ class ProComic : HttpSource(), ConfigurableSource {
         const val MAX_SEARCH_PAGES_PER_BATCH = 6
         const val READER_BASE_URL = "https://procomic.pro"
         val SEARCH_TOKEN_REGEX = Regex("[\\p{L}\\p{N}]+")
+    }
+
+    init {
+        runCatching { AvifNativeLoader.ensureLoaded() }
     }
 
     private fun readBoundedBody(response: Response): String {
@@ -113,7 +120,10 @@ class ProComic : HttpSource(), ConfigurableSource {
     override val supportsLatest = true
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        appContext = screen.context.applicationContext
+        val ctx = screen.context.applicationContext
+        appContext = ctx
+        applicationContext = ctx
+        runCatching { AvifNativeLoader.ensureLoaded(ctx) }
         SwitchPreferenceCompat(screen.context).apply {
             key = PREF_SHOW_PAID_CHAPTERS
             title = "عرض الفصول المدفوعة"

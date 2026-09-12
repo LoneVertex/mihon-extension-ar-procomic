@@ -14,7 +14,7 @@
 
 **Software-gate status:** PASS for the current implementation and CI evidence.
 
-**Release status:** Official v1.5.0 GitHub Release published at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) with signed release APK asset (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
+**Release status:** v1.5.1 release prepared (following v1.5.0 at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0)) with signed release APK asset (`versionCode=7`, `versionName=1.5.1`, v2+v3 RSA 4096, SHA-256 `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c`).
 
 ## Software Gate
 
@@ -90,11 +90,11 @@ The CI runs execute the pinned Pillow install, all 13 contract test suites, `git
 
 ## APK Identity
 
-The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=6` and `versionName=1.5`. The build uses compileSdk 35, targetSdk 35, min SDK 26, official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 35. The compact universal native decoder payload is the primary reason the APK remains larger than a pure-Kotlin extension.
+The implementation package is `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=7` and `versionName=1.5.1`. The build uses compileSdk 35, targetSdk 35, min SDK 26, official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd`, compile-only `org.jsoup:jsoup:1.23.1`, and `useLegacyPackaging=true` for install-time native-library extraction. CI explicitly provisions Android API 35. The compact universal native decoder payload is the primary reason the APK remains larger than a pure-Kotlin extension.
 
 | Variant | Current local APK | Package | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
-| Release (signed) | `~/Downloads/procomic-release-v1.5.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=6`, `versionName=1.5` | 2.1 MB | `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae` (Signed v2+v3, RSA 4096, alias `procomic`) |
+| Release (signed) | `~/Downloads/procomic-release-v1.5.1.apk` | `eu.kanade.tachiyomi.extension.ar.procomic` | `versionCode=7`, `versionName=1.5.1` | 2.1 MB | `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c` (Signed v2+v3, RSA 4096, alias `procomic`) |
 
 The standard local output paths are `app/build/outputs/apk/debug/app-debug.apk` and `app/build/outputs/apk/release/app-release-unsigned.apk`. The CI artifact copies and checksum file are retained in the external synchronization evidence bundle, not committed into this source repository.
 
@@ -104,6 +104,7 @@ The current deterministic fixtures cover the final reported failure sequence:
 
 | Reported or discovered issue | Current coverage and implementation result |
 |---|---|
+| Runtime "protected tile could not be decoded" error | Introduced `AvifNativeLoader` multi-tier loader to resolve and load `libavif_android.so` in Mihon's `DelegateLastClassLoaderCompat` runtime (where `librarySearchPath` is null), dynamic tile Referer matching, and `ARGB_8888` decode fallback |
 | HTTP 403 / "Check website in WebView" loop when reading chapters | Removed hardcoded static Pixel 7 `User-Agent` so Mihon's `UserAgentInterceptor` matches device WebView profile, enabling Cloudflare `cf_clearance` tokens to validate successfully |
 | Unroutable `cdn*.procomic.(pro|net)` chapter images returning HTTP 403 | Filtered out direct `cdn` URLs from `directDeferred` pages in `pageListParse`; all real chapter reader pages are delivered via `app.procomic.pro` and reconstructed protected maps via `img*.procomic.pro/i/...` |
 | Coin-locked chapters displayed despite hiding paid chapters | Updated `classifyGateState` to classify `lockedByCoins == true` as `COIN_LOCKED` even when `coinsRequired` is null in the live API; added paywall detection for `"ChapterLocked"` and `"options":{"coins"` in `extractPageImages` |

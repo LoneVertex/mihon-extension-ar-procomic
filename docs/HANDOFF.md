@@ -16,7 +16,7 @@
 
 **Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and CI workflow run `34671593564` pass. Direct Android-device rendering remains not verified in this sandbox.
 
-**Release status:** Official v1.5.0 GitHub Release published at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) with signed release APK asset (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
+**Release status:** v1.5.1 release prepared (following v1.5.0 at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0)) with signed release APK asset (`versionCode=7`, `versionName=1.5.1`, v2+v3 RSA 4096, SHA-256 `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c`).
 
 ## Roles
 
@@ -37,21 +37,21 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 | Item | Value |
 |---|---|
 | Package | `eu.kanade.tachiyomi.extension.ar.procomic` |
-| `versionCode` / `versionName` | `6` / `1.5` |
+| `versionCode` / `versionName` | `7` / `1.5.1` |
 | Compile/target SDK | `35` / `35` |
 | Minimum SDK | `26` |
 | AVIF dependency | `org.aomedia.avif.android:avif:1.3.0.841110fd` |
 | Jsoup compile-only dependency | `org.jsoup:jsoup:1.23.1` |
 | Native packaging | `useLegacyPackaging=true` |
-| Signed release APK | `~/Downloads/procomic-release-v1.5.apk`, ~2.1 MB (signed v2+v3 RSA 4096) |
-| Release SHA-256 | `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae` |
-| Release local APK | `app/build/outputs/apk/release/app-release.apk`, ~2.1 MB |
+| Signed release APK | `~/Downloads/procomic-release-v1.5.1.apk`, ~2.1 MB (signed v2+v3 RSA 4096) |
+| Release SHA-256 | `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c` |
+| Release local APK | `app/build/outputs/apk/release/app-release-unsigned.apk`, ~2.0 MB |
 | Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, ~2.1 MB |
 | Size rationale | Official AOMedia AVIF native library across four ABIs; no ABI split applied without Mihon distribution evidence |
 | Reproducibility note | Debug hash was stable across repeated clean builds; release hash varies with signing timestamps |
 | Release signing | Signed with project keystore `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes |
 
-The current workflow explicitly installs Android API 35 before building because the final extension compileSdk is 35. The new APK version is intentionally 6/1.5 so Mihon and Android cleanly upgrade any previously installed versions.
+The current workflow explicitly installs Android API 35 before building because the final extension compileSdk is 35. The new APK version is intentionally 7/1.5.1 so Mihon and Android cleanly upgrade any previously installed versions.
 
 ## Completed Implementation Fixes
 
@@ -110,6 +110,6 @@ Authentication and full paid access are not implemented. `RESTRICTED_AUTH_REQUIR
 
 ## Current Status
 
-v1.5 release resolves the HTTP 403 "Check website in WebView" loop, Cloudflare clearance token mismatch, unroutable CDN direct deferred chapter URLs, and coin-locked chapter gating. All 13 test suites pass. Signed APK generated and published at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) (`versionCode=6`, `versionName=1.5`, v2+v3, RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
+v1.5.1 release resolves the runtime "protected tile could not be decoded" error by introducing `AvifNativeLoader` to locate and load `libavif_android.so` in Mihon's `DelegateLastClassLoaderCompat` runtime (where `librarySearchPath` is passed as null), dynamic tile Referer matching, and `ARGB_8888` decode fallback. All 13 test suites pass. Signed APK generated at `~/Downloads/procomic-release-v1.5.1.apk` (`versionCode=7`, `versionName=1.5.1`, v2+v3, RSA 4096, SHA-256 `07e6788f2c80ed25392b17a5bd80cf9946da91c84f3b918d9c612b909857b79c`).
 
-Status: Official v1.5.0 GitHub Release published.
+Status: v1.5.1 signed release APK generated and verified.

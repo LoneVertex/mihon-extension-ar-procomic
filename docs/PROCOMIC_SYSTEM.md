@@ -12,13 +12,13 @@
 
 **Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4), [`f3b7708`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/f3b7708e4d2de88da0132f8c7ecb436f608c9657), and [`774bee4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/774bee4e810b2554be37c32db391494e574a30d7) on `main`
 
-**Runtime and release status:** The lifecycle-status, protected-Reader fixes, dual-domain reader engine, Cloudflare clearance compatibility, and coin-locked chapter gating pass the 13-suite deterministic gate and clean builds. The signed release APK (`~/Downloads/procomic-release-v1.5.apk`, RSA 4096, v2+v3) is generated with `versionCode=6` and `versionName=1.5`.
+**Runtime and release status:** The lifecycle-status, protected-Reader fixes, dual-domain reader engine, Cloudflare clearance compatibility, coin-locked chapter gating, and `AvifNativeLoader` multi-tier JNI loader pass the 13-suite deterministic gate and clean builds. The signed release APK (`~/Downloads/procomic-release-v1.5.1.apk`, RSA 4096, v2+v3) is generated with `versionCode=7` and `versionName=1.5.1`.
 
 ## Purpose and Scope
 
 This document is the current engineering reference for the Arabic ProComic Mihon extension. It describes the implementation present at the current branch HEAD. Deep probes, raw captures, and investigation history remain retained audit artifacts; they are evidence, not alternate implementation instructions.
 
-The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=6` and `versionName=1.5`. The Android build uses compileSdk 35, targetSdk 35, min SDK 26, and the official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd` decoder for protected AVIF tiles. The compact universal native decoder is the reason the release APK is approximately ~2.1 MB rather than pure-Kotlin size.
+The extension targets `https://procomic.net` and uses Mihon’s `HttpSource`/Rx-compatible API surface. It is packaged as `eu.kanade.tachiyomi.extension.ar.procomic`, with `versionCode=7` and `versionName=1.5.1`. The Android build uses compileSdk 35, targetSdk 35, min SDK 26, and the official AOMedia `org.aomedia.avif.android:avif:1.3.0.841110fd` decoder for protected AVIF tiles. The compact universal native decoder is the reason the release APK is approximately ~2.1 MB rather than pure-Kotlin size.
 
 ## System Architecture
 
@@ -109,7 +109,7 @@ The Gradle packaging block sets `useLegacyPackaging=true`, extracting bundled na
 
 The launcher icon is the official ProComic website favicon, sourced from `https://procomic.net/favicon.svg` and rasterized into the required Android density resources. The deterministic icon contract verifies the provenance, launcher reference, resource set, and density hashes.
 
-The module uses compileSdk 35, targetSdk 35, min SDK 26, `versionCode=6`, and `versionName=1.5`. The AVIF native dependency is `org.aomedia.avif.android:avif:1.3.0.841110fd`, and compile-only Jsoup is `org.jsoup:jsoup:1.23.1`; native libraries are packaged with `useLegacyPackaging=true`. The AOMedia artifact ships one 16KB-aligned `libavif_android.so` per supported ABI and has no additional native NEEDED libraries.
+The module uses compileSdk 35, targetSdk 35, min SDK 26, `versionCode=7`, and `versionName=1.5.1`. The AVIF native dependency is `org.aomedia.avif.android:avif:1.3.0.841110fd`, and compile-only Jsoup is `org.jsoup:jsoup:1.23.1`; native libraries are packaged with `useLegacyPackaging=true`. The AOMedia artifact ships one 16KB-aligned `libavif_android.so` per supported ABI and has no additional native NEEDED libraries.
 
 ## Validation Strategy
 

@@ -1,6 +1,6 @@
 # ProComic Mihon Extension
 
-[![CI Build](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml/badge.svg)](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-1.5%20(6)-blue)](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases) ![Platform](https://img.shields.io/badge/Platform-Mihon%20%2F%20Android-green)
+[![CI Build](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml/badge.svg)](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-1.5.1%20(7)-blue)](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases) ![Platform](https://img.shields.io/badge/Platform-Mihon%20%2F%20Android-green)
 
 ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available from [procomic.net](https://procomic.net). It provides server-side Search, verified Popular and Latest feeds, canonical Details parsing, REST chapter listing, Arabic/English chapter normalization, conservative paid-chapter visibility, and a high-resilience raw-HTTP Reader with automatic dual-domain failover (`procomic.pro` <-> `procomic.net`) that reconstructs protected pages through the site’s documented public media contracts.
 
@@ -13,11 +13,11 @@ ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available fr
 | Source class | `eu.kanade.tachiyomi.extension.ar.procomic.ProComic` |
 | Catalog language | Arabic (`ar`) with Arabic and English releases |
 | Base domain | `https://procomic.net` |
-| Version | `versionCode=6`, `versionName=1.5` |
+| Version | `versionCode=7`, `versionName=1.5.1` |
 | Implementation branch | `main` |
-| Implementation baseline | Dual-domain hybrid reader engine (`procomic.pro` & `procomic.net`), Cloudflare clearance compatibility, coin-locked chapter gating |
-| Latest fix | Resolved HTTP 403 / "Check website in WebView" loop by delegating User-Agent to device WebView profile, filtered broken cdn chapter images, classified coin-locked chapters with null cost, added dynamic image referers |
-| Runtime status | v1.5 released: Cloudflare clearance verified, coin-locked chapter paywall detection and hiding implemented, unroutable cdn chapter URLs filtered out. All 13 test suites pass. |
+| Implementation baseline | Dual-domain hybrid reader engine (`procomic.pro` & `procomic.net`), Cloudflare clearance compatibility, coin-locked chapter gating, `AvifNativeLoader` multi-tier JNI loader |
+| Latest fix | Resolved "protected tile could not be decoded" error by introducing `AvifNativeLoader` to locate and load `libavif_android.so` in Mihon's `DelegateLastClassLoaderCompat` runtime, dynamic tile Referer matching, and `ARGB_8888` decode fallback |
+| Runtime status | v1.5.1 released: `AvifNativeLoader` multi-tier JNI binding verified, Cloudflare clearance verified, coin-locked chapter paywall detection implemented. All 13 test suites pass. |
 
 ## Current Architecture
 
@@ -52,7 +52,7 @@ The deterministic software gate passes all 13 repository test suites, `git diff 
 
 Reported Android testing identified the earlier Search false-positive behavior, the three-page Reader symptom, chapter-131 tile decoding failure, trust-transition/native-loading failure, and `Unknown` publication status. The exact series-387/chapter-19273 failure is now covered by a redacted fixture proving two protected maps, nine valid AVIF tiles, YUV444 characteristics, and the AOMedia decode path. Live public probing confirmed the exact deferred-media/proxy-plan contract; direct Android-device rendering of the new APK is still **NOT VERIFIED** here.
 
-The version 1.5 release APK is approximately 2.1 MB (signed v2+v3) because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes.
+The version 1.5.1 release APK is approximately 2.1 MB (signed v2+v3) because the official AOMedia decoder ships one compact native AVIF library per ABI. No ABI split was applied without Mihon distribution evidence; the measured footprint and trade-off are recorded in [`docs/VALIDATION.md`](docs/VALIDATION.md). The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes.
 
 ## Known Limitations
 

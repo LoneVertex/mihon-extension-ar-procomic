@@ -40,6 +40,7 @@ class ProComicImageInterceptor(
         if (!ProComicUtils.isProtectedPageImageUrl(request.url.toString())) {
             return chain.proceed(request)
         }
+        AvifNativeLoader.ensureLoaded()
         val fragment = request.url.fragment ?: return chain.proceed(request)
         val payload = ProComicUtils.decodeProtectedPagePayload(fragment)
             ?: return chain.proceed(request)
@@ -142,10 +143,15 @@ class ProComicImageInterceptor(
                     throw IOException("ProComic Reader: protected tile rectangle is invalid")
                 }
 
+                val tileReferer = if (pieceUrl.contains(".net")) {
+                    "https://procomic.net/"
+                } else {
+                    "https://procomic.pro/"
+                }
                 val tileRequest = pageRequest.newBuilder()
                     .url(pieceUrl)
                     .header("Accept", "image/avif,image/webp,image/*,*/*;q=0.8")
-                    .header("Referer", "https://procomic.pro/")
+                    .header("Referer", tileReferer)
                     .build()
                 tileClient.newCall(tileRequest).execute().use { tileResponse ->
                     if (!tileResponse.isSuccessful) {
@@ -220,6 +226,8 @@ class ProComicImageInterceptor(
             }.getOrNull()?.let { return it }
         }
 
+        AvifNativeLoader.ensureLoaded()
+
         runCatching { decodeWithAomedia(bytes) }
             .onFailure {
                 ProComicDiag.logStage(
@@ -227,7 +235,7 @@ class ProComicImageInterceptor(
                     96,
                     "AOMedia AVIF tile decode failed page=$pageIndex tile=$outputIndex source=$sourceIndex " +
                         "bytes=${bytes.size} contentType=${contentType ?: "(absent)"} " +
-                        "errorType=${it.javaClass.simpleName}",
+                        "errorType=${it.javaClass.simpleName}: ${it.message}",
                 )
             }
             .getOrNull()
@@ -265,14 +273,29 @@ class ProComicImageInterceptor(
         val width = info.width
         val height = info.height
         if (width <= 0 || height <= 0 || width.toLong() * height.toLong() > MAX_TILE_PIXELS) return null
-        val config = if (info.depth > 8) Bitmap.Config.RGBA_F16 else Bitmap.Config.ARGB_8888
+        val config = if (info.depth > 8 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Bitmap.Config.RGBA_F16
+        } else {
+            Bitmap.Config.ARGB_8888
+        }
         val bitmap = Bitmap.createBitmap(width, height, config)
         source.rewind()
         return if (AvifDecoder.decode(source, bytes.size, bitmap)) {
             bitmap
         } else {
             bitmap.recycle()
-            null
+            if (config != Bitmap.Config.ARGB_8888) {
+                val fallbackBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                source.rewind()
+                if (AvifDecoder.decode(source, bytes.size, fallbackBitmap)) {
+                    fallbackBitmap
+                } else {
+                    fallbackBitmap.recycle()
+                    null
+                }
+            } else {
+                null
+            }
         }
     }
 

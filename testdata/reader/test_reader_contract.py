@@ -324,6 +324,8 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert "logUnexpectedTileMetadata" in interceptor
     assert "protected tile body signature invalid" in interceptor
     assert "AOMedia AVIF decoder returned no bitmap" in interceptor
+    assert "AvifNativeLoader" in interceptor
+    assert (PROCOMIC.parent / "AvifNativeLoader.kt").exists()
     build = BUILD.read_text()
     ci = CI.read_text()
     assert "org.aomedia.avif.android:avif:1.3.0.841110fd" in build
@@ -332,8 +334,8 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert 'compileOnly("org.jsoup:jsoup:1.16.2")' not in build
     assert "compileSdk = 35" in build
     assert "targetSdk = 35" in build
-    assert "versionCode = 6" in build
-    assert 'versionName = "1.5"' in build
+    assert "versionCode = 7" in build
+    assert 'versionName = "1.5.1"' in build
     assert 'sdkmanager" "platforms;android-35"' in ci
     assert "useLegacyPackaging = true" in build
     assert "extractNativeLibs" not in MANIFEST.read_text()

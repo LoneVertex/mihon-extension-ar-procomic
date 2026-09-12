@@ -54,7 +54,7 @@ class ProComicImageInterceptor(
     ): ProComicProtectedMap {
         val primaryHost = pageRequest.url.host.takeIf { it == "procomic.net" || it == "procomic.pro" }
             ?: "procomic.pro"
-        val alternateHost = if (primaryHost == "procomic.pro") "procomic.net" else "procomic.pro"
+        val alternateHost = ProComicUtils.resolveAlternateHost(primaryHost)
 
         var lastException: Exception? = null
         for (host in listOf(primaryHost, alternateHost)) {
@@ -117,7 +117,11 @@ class ProComicImageInterceptor(
             fallbackRectangles(map.mode, width, height, order.size)
         }
 
-        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val result = try {
+            Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        } catch (e: OutOfMemoryError) {
+            throw IOException("ProComic Reader: insufficient memory to composite page", e)
+        }
         val canvas = Canvas(result)
         canvas.drawColor(android.graphics.Color.WHITE)
         val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
@@ -143,11 +147,7 @@ class ProComicImageInterceptor(
                     throw IOException("ProComic Reader: protected tile rectangle is invalid")
                 }
 
-                val tileReferer = if (pieceUrl.contains(".net")) {
-                    "https://procomic.net/"
-                } else {
-                    "https://procomic.pro/"
-                }
+                val tileReferer = ProComicUtils.resolveRefererForUrl(pieceUrl)
                 val tileRequest = pageRequest.newBuilder()
                     .url(pieceUrl)
                     .header("Accept", "image/avif,image/webp,image/*,*/*;q=0.8")
@@ -375,7 +375,6 @@ class ProComicImageInterceptor(
     }
 
     private companion object {
-        const val READER_BASE_URL = "https://procomic.pro"
         const val MAX_MAP_RESPONSE_BYTES = 1_000_000
         const val MAX_TILES = 32
         const val MAX_TILE_BYTES = 8_000_000

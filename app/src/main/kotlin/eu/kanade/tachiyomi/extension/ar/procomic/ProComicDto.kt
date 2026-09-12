@@ -106,12 +106,6 @@ data class ProComicSearchMeta(
     val pages: Int = 1,
 )
 
-@Serializable
-data class ProComicSeriesListResponse(
-    val initialSeries: List<ProComicSeriesDto> = emptyList(),
-    val total: Int = 0,
-)
-
 /**
  * Public Popular feed: `/api/public/content/popular-new?limit=N`.
  * Unlike Search/Details, each row wraps the series in `content` and exposes `viewCount`

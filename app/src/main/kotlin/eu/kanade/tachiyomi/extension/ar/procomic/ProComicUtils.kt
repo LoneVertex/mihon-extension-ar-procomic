@@ -208,6 +208,18 @@ object ProComicUtils {
         }
     }
 
+    fun resolveAlternateHost(host: String): String =
+        if (host == "procomic.net") "procomic.pro" else "procomic.net"
+
+    fun resolveRefererForUrl(url: String): String {
+        val host = runCatching { URI(url).host?.lowercase() }.getOrNull()
+        return if (host != null && host.endsWith(".procomic.net")) {
+            "https://procomic.net/"
+        } else {
+            "https://procomic.pro/"
+        }
+    }
+
     fun extractReaderProtection(
         body: String,
         diagTag: String = "",

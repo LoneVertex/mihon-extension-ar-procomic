@@ -489,7 +489,7 @@ class ProComic : HttpSource(), ConfigurableSource {
     override fun chapterListParse(response: Response): List<SChapter> {
         val url = response.request.url
         val mangaUrl = url.queryParameter("_u")
-            ?.let { java.net.URLDecoder.decode(it, "UTF-8") } ?: ""
+            ?.let { URLDecoder.decode(it, "UTF-8") } ?: ""
         val contentId = url.queryParameter("contentId") ?: ""
 
         // Parse first page
@@ -620,7 +620,7 @@ class ProComic : HttpSource(), ConfigurableSource {
             Triple(initialBody, initialUrl, initialHost)
         } else {
             // Attempt fallback to alternate domain (.pro <-> .net)
-            val alternateHost = if (initialHost == "procomic.net") "procomic.pro" else "procomic.net"
+            val alternateHost = ProComicUtils.resolveAlternateHost(initialHost)
             var rootResp = response
             while (rootResp.priorResponse != null) {
                 rootResp = rootResp.priorResponse!!
@@ -767,7 +767,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         activeHost: String = "procomic.pro",
     ): ProComicDeferredMediaData {
         val primaryHost = if (activeHost == "procomic.net") "procomic.net" else "procomic.pro"
-        val alternateHost = if (primaryHost == "procomic.pro") "procomic.net" else "procomic.pro"
+        val alternateHost = ProComicUtils.resolveAlternateHost(primaryHost)
 
         var lastException: Exception? = null
         for (host in listOf(primaryHost, alternateHost)) {
@@ -815,12 +815,7 @@ class ProComic : HttpSource(), ConfigurableSource {
             ProComicDiag.logStage("PAGES", 98, "rejected unrecognized image host")
             throw Exception("ProComic Reader: unrecognized image host")
         }
-        val host = runCatching { java.net.URI(imageUrl).host }.getOrNull()
-        val referer = if (host != null && host.endsWith(".procomic.net")) {
-            "https://procomic.net/"
-        } else {
-            "https://procomic.pro/"
-        }
+        val referer = ProComicUtils.resolveRefererForUrl(imageUrl)
         val imageHeaders = headersBuilder()
             .set("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
             .set("Referer", referer)

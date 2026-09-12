@@ -2,15 +2,15 @@
 
 **Status:** CURRENT
 
-**Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13)
+**Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13, plus v1.5 HTTP 403 / Cloudflare clearance / coin-locked gating fix, official v1.5.0 release)
 
-**Implementation baseline HEAD:** [`5d2c0a5b6fef13388ddea669771ef9638d395e93`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
+**Implementation baseline HEAD:** [`bc7636cb83d8976be94b3b33d68dd570e2e941a4`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4)
 
-**Documentation snapshot parent HEAD:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
+**Documentation snapshot parent HEAD:** [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4)
 
 **Focused Reader source commit:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commit [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93) on `main`
+**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0), [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93), [`7c3eb49`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/7c3eb492f156d11f95dcfd4a2d8d85f795908587), and [`bc7636c`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/bc7636cb83d8976be94b3b33d68dd570e2e941a4) on `main`
 
 **Runtime and release status:** The lifecycle-status, protected-Reader fixes, dual-domain reader engine, Cloudflare clearance compatibility, and coin-locked chapter gating pass the 13-suite deterministic gate and clean builds. The signed release APK (`~/Downloads/procomic-release-v1.5.apk`, RSA 4096, v2+v3) is generated with `versionCode=6` and `versionName=1.5`.
 

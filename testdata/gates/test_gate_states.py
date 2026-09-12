@@ -36,7 +36,7 @@ def classify(record: dict[str, Any]) -> str:
     if locked_by_coins and locked_by_exclusive:
         return "UNKNOWN"
     if locked_by_coins:
-        return "COIN_LOCKED" if record.get("coinsRequired") is not None and record["coinsRequired"] > 0 else "UNKNOWN"
+        return "COIN_LOCKED"
     if locked_by_exclusive:
         return "EXCLUSIVE"
     if has_shortlink:

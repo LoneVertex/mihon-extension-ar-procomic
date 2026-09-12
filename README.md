@@ -1,6 +1,6 @@
 # ProComic Mihon Extension
 
-[![CI Build](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml/badge.svg)](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-1.4%20(5)-blue)](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases) ![Platform](https://img.shields.io/badge/Platform-Mihon%20%2F%20Android-green)
+[![CI Build](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml/badge.svg)](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-1.5%20(6)-blue)](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases) ![Platform](https://img.shields.io/badge/Platform-Mihon%20%2F%20Android-green)
 
 ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available from [procomic.net](https://procomic.net). It provides server-side Search, verified Popular and Latest feeds, canonical Details parsing, REST chapter listing, Arabic/English chapter normalization, conservative paid-chapter visibility, and a high-resilience raw-HTTP Reader with automatic dual-domain failover (`procomic.pro` <-> `procomic.net`) that reconstructs protected pages through the site’s documented public media contracts.
 
@@ -13,11 +13,11 @@ ProComic is an Arabic Mihon extension for manga, manhwa, and manhua available fr
 | Source class | `eu.kanade.tachiyomi.extension.ar.procomic.ProComic` |
 | Catalog language | Arabic (`ar`) with Arabic and English releases |
 | Base domain | `https://procomic.net` |
-| Version | `versionCode=5`, `versionName=1.4` |
+| Version | `versionCode=6`, `versionName=1.5` |
 | Implementation branch | `main` |
-| Implementation baseline | Dual-domain hybrid reader engine (`procomic.pro` & `procomic.net`), comics-only latest updates feed, expanded CDN allowlists |
-| Latest fix | Dual-domain reader failover, `app.procomic.net`/`img*.procomic.net` allowlists, latest updates novel flooding fix, popular cover image resolution |
-| Runtime status | v1.4 released: Reader domain desync resolved with bidirectional failover, full chapter image delivery on both `.net` and `.pro`, CI `workflow_dispatch` added. All 13 test suites pass. |
+| Implementation baseline | Dual-domain hybrid reader engine (`procomic.pro` & `procomic.net`), Cloudflare clearance compatibility, coin-locked chapter gating |
+| Latest fix | Resolved HTTP 403 / "Check website in WebView" loop by delegating User-Agent to device WebView profile, filtered broken cdn chapter images, classified coin-locked chapters with null cost, added dynamic image referers |
+| Runtime status | v1.5 released: Cloudflare clearance verified, coin-locked chapter paywall detection and hiding implemented, unroutable cdn chapter URLs filtered out. All 13 test suites pass. |
 
 ## Current Architecture
 

@@ -141,23 +141,15 @@ class ProComic : HttpSource(), ConfigurableSource {
             .firstOrNull() ?: SManga.UNKNOWN
     }
 
-    // Mobile Chrome UA is required by the current public site contract; plain curl also works,
-    // but this matches the client profile used by Mihon requests.
-    private val mobileUserAgent =
-        "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+    // Mobile Chrome UA is omitted: User-Agent is provided by Mihon's NetworkHelper / WebView to prevent Cloudflare clearance 403 loops.
 
     /**
      * Base headers for normal HTML, JSON, and image requests.
-     * RSC-specific headers are intentionally excluded here so ordinary requests receive
-     * the normal site representation instead of the RSC wire format.
-     *
-     * EVIDENCE (Probe P05, 2026-08-01): Without RSC:1, server returns
-     * text/html (282651B). With RSC:1, server returns text/x-component (169177B).
-     * The site returns the RSC wire format only when the RSC request headers are present.
+     * User-Agent is left to Mihon's NetworkHelper / UserAgentInterceptor so requests
+     * share the exact WebView User-Agent of the user's device. This prevents Cloudflare
+     * cf_clearance token mismatch loops.
      */
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", mobileUserAgent)
         .add("Accept-Language", "ar,en;q=0.9")
         .add("Referer", baseUrl)
 
@@ -599,7 +591,10 @@ class ProComic : HttpSource(), ConfigurableSource {
         if (!ProComicUtils.isAllowedReaderUrl(canonicalUrl)) {
             throw Exception("ProComic Reader: unrecognized chapter host or URL")
         }
-        return GET(canonicalUrl, headers)
+        val readerHeaders = headersBuilder()
+            .set("Referer", "https://procomic.pro/")
+            .build()
+        return GET(canonicalUrl, readerHeaders)
     }
 
     override fun pageListParse(response: Response): List<Page> {
@@ -627,7 +622,10 @@ class ProComic : HttpSource(), ConfigurableSource {
             if (chapterPath.isNotBlank()) {
                 ProComicDiag.logStage("PAGES", 10, "Attempting dual-domain fallback to $alternateHost for $chapterPath")
                 val fallbackResult = runCatching {
-                    val fallbackRequest = GET("https://$alternateHost$chapterPath", headers)
+                    val fallbackHeaders = headersBuilder()
+                        .set("Referer", "https://$alternateHost/")
+                        .build()
+                    val fallbackRequest = GET("https://$alternateHost$chapterPath", fallbackHeaders)
                     client.newCall(fallbackRequest).execute().use { fbResp ->
                         val fbBody = readBoundedBody(fbResp)
                         val fbUrl = fbResp.request.url.toString()
@@ -696,6 +694,7 @@ class ProComic : HttpSource(), ConfigurableSource {
         }
         val directDeferred = deferredData.images
             .filter { ProComicUtils.isAllowedPageImageUrl(it) }
+            .filter { it.startsWith("https://app.procomic.pro/") || it.startsWith("https://app.procomic.net/") }
             .filterNot(publicImages::contains)
             .distinct()
         if (directDeferred.isNotEmpty()) {
@@ -806,9 +805,15 @@ class ProComic : HttpSource(), ConfigurableSource {
             ProComicDiag.logStage("PAGES", 98, "rejected unrecognized image host")
             throw Exception("ProComic Reader: unrecognized image host")
         }
+        val host = runCatching { java.net.URI(imageUrl).host }.getOrNull()
+        val referer = if (host != null && host.endsWith(".procomic.net")) {
+            "https://procomic.net/"
+        } else {
+            "https://procomic.pro/"
+        }
         val imageHeaders = headersBuilder()
             .set("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
-            .set("Referer", "$baseUrl/")
+            .set("Referer", referer)
             .build()
         return GET(imageUrl, imageHeaders)
     }

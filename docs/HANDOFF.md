@@ -14,9 +14,9 @@
 
 **Review path:** All four fix branches merged into `main`; direct commit [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0) on `main`
 
-**Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and CI workflow run `34592320462` pass. Direct Android-device rendering remains not verified in this sandbox.
+**Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, and clean debug/release builds pass. Direct Android-device rendering remains not verified in this sandbox.
 
-**Release status:** Signed release APK generated at `~/Downloads/procomic-release-v1.4.apk` (`versionCode=5`, `versionName=1.4`, v2+v3 RSA 4096, SHA-256 `fad43b9532c3eedeb0085e0150d77f66c80a833a19599126412b71dff60bd898`). Physical device validation pending before GitHub Release tag.
+**Release status:** Signed release APK generated at `~/Downloads/procomic-release-v1.5.apk` (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`). Physical device validation pending before GitHub Release tag.
 
 ## Roles
 
@@ -37,21 +37,21 @@ ANDROID_SDK_ROOT=/home/ubuntu/android-sdk \
 | Item | Value |
 |---|---|
 | Package | `eu.kanade.tachiyomi.extension.ar.procomic` |
-| `versionCode` / `versionName` | `5` / `1.4` |
+| `versionCode` / `versionName` | `6` / `1.5` |
 | Compile/target SDK | `35` / `35` |
 | Minimum SDK | `26` |
 | AVIF dependency | `org.aomedia.avif.android:avif:1.3.0.841110fd` |
 | Jsoup compile-only dependency | `org.jsoup:jsoup:1.23.1` |
 | Native packaging | `useLegacyPackaging=true` |
-| Signed release APK | `~/Downloads/procomic-release-v1.4.apk`, ~2.1 MB (signed v2+v3 RSA 4096) |
-| Release SHA-256 | `fad43b9532c3eedeb0085e0150d77f66c80a833a19599126412b71dff60bd898` |
+| Signed release APK | `~/Downloads/procomic-release-v1.5.apk`, ~2.1 MB (signed v2+v3 RSA 4096) |
+| Release SHA-256 | `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae` |
 | Release local APK | `app/build/outputs/apk/release/app-release.apk`, ~2.1 MB |
 | Debug local APK | `app/build/outputs/apk/debug/app-debug.apk`, ~2.1 MB |
 | Size rationale | Official AOMedia AVIF native library across four ABIs; no ABI split applied without Mihon distribution evidence |
 | Reproducibility note | Debug hash was stable across repeated clean builds; release hash varies with signing timestamps |
 | Release signing | Signed with project keystore `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes |
 
-The current workflow explicitly installs Android API 35 before building because the final extension compileSdk is 35. The new APK version is intentionally 5/1.4 so Mihon and Android cleanly upgrade any previously installed versions.
+The current workflow explicitly installs Android API 35 before building because the final extension compileSdk is 35. The new APK version is intentionally 6/1.5 so Mihon and Android cleanly upgrade any previously installed versions.
 
 ## Completed Implementation Fixes
 
@@ -72,6 +72,7 @@ The current branch includes the following completed and tested work:
 13. Protected map responses and tile bodies use explicit byte bounds; the AOMedia decoder validates tile metadata and dimensions before allocating a bounded bitmap.
 14. CI action versions were updated to `actions/checkout@v7`, `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`, and `actions/upload-artifact@v7`; workflow permissions are limited to `contents: read`; deterministic suites run after installing pinned `Pillow==12.3.0`; corrected post-remediation CI runs passed.
 15. Reader domain failover supports bidirectional delivery across `procomic.net` and `procomic.pro`, with expanded CDN host allowlisting (`app.procomic.net`, `img*.procomic.net`), comics-only category filter on Latest Updates feed, popular fallback covers, and `workflow_dispatch` manual CI trigger.
+16. Resolved HTTP 403 "Check website in WebView" loop by delegating User-Agent to Mihon's `defaultUserAgentProvider` (preventing Cloudflare `cf_clearance` cryptographic mismatch between OkHttp and Android WebView), filtering broken direct deferred `cdn*.procomic.(pro|net)` chapter image endpoints (nginx 403), aligning origin-based Referer headers across image and proxy requests, and fixing coin-locked chapter classification (`lockedByCoins: true` with null cost) with explicit Arabic/English paywall error messaging.
 
 No authentication, login, session/cookie bypass, payment bypass, WebView, browser automation, or fabricated premium page behavior was added.
 
@@ -109,7 +110,6 @@ Authentication and full paid access are not implemented. `RESTRICTED_AUTH_REQUIR
 
 ## Current Status
 
-All four fix branches merged into `main`. Commit `6905482` resolved reader domain desync and added dual delivery support (`procomic.net` and `procomic.pro`), comics-only filter for latest updates, popular fallback covers, and `workflow_dispatch` CI trigger. Remote CI ✅ run `34592320462` passed all 13 test suites and build jobs. Signed APK generated at `~/Downloads/procomic-release-v1.4.apk` (`versionCode=5`, `versionName=1.4`, v2+v3, RSA 4096, SHA-256 `fad43b9532c3eedeb0085e0150d77f66c80a833a19599126412b71dff60bd898`).
+v1.5 release resolves the HTTP 403 "Check website in WebView" loop, Cloudflare clearance token mismatch, unroutable CDN direct deferred chapter URLs, and coin-locked chapter gating. All 13 test suites pass. Signed APK generated at `~/Downloads/procomic-release-v1.5.apk` (`versionCode=6`, `versionName=1.5`, v2+v3, RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
 
 Pending: physical Android device smoke test; GitHub Release tag.
-

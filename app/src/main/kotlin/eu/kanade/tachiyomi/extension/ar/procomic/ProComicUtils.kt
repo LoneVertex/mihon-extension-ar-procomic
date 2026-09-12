@@ -600,13 +600,7 @@ object ProComicUtils {
 
         if (lockedForever) return ProComicGateState.PERMANENTLY_LOCKED
         if (lockedByCoins && lockedByExclusive) return ProComicGateState.UNKNOWN
-        if (lockedByCoins) {
-            return if (gate.coinsRequired != null && gate.coinsRequired > 0) {
-                ProComicGateState.COIN_LOCKED
-            } else {
-                ProComicGateState.UNKNOWN
-            }
-        }
+        if (lockedByCoins) return ProComicGateState.COIN_LOCKED
         if (lockedByExclusive) return ProComicGateState.EXCLUSIVE
         if (hasShortlink) return ProComicGateState.SHORTLINK_UNLOCK
 
@@ -792,8 +786,11 @@ object ProComicUtils {
                 body.contains("Log in and disable Safe Browsing", ignoreCase = true) ->
                 "Reader access requires login or Safe Browsing to be disabled in ProComic settings"
             body.contains("Premium chapter", ignoreCase = true) ||
-                body.contains("\\\"options\\\":{\\\"coins\\\"", ignoreCase = false) ->
-                "This chapter is premium or locked by the server and has no public image manifest"
+                body.contains("\\\"options\\\":{\\\"coins\\\"", ignoreCase = false) ||
+                body.contains("\"options\":{\"coins\"", ignoreCase = false) ||
+                body.contains("ChapterLocked", ignoreCase = true) ||
+                body.contains("lockedByCoins", ignoreCase = true) ->
+                "الفصل مقفل ويتطلب عملات على الموقع (This chapter is locked with coins on ProComic)"
             !body.contains("appImages") && !body.contains("\\\"appImages\\\"", ignoreCase = false) ->
                 "No 'appImages' manifest found in response"
             else -> "Failed to decode valid chapter images from 'appImages' manifest"

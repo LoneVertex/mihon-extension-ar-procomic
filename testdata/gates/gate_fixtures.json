@@ -29,6 +29,20 @@
       "expected": "COIN_LOCKED"
     },
     {
+      "name": "coin_locked_null_cost",
+      "id": 9010,
+      "chapter_number": "2.5",
+      "language": "AR",
+      "lockedForever": false,
+      "lockedByCoins": true,
+      "lockedByExclusive": false,
+      "hasShortlink": false,
+      "coinsRequired": null,
+      "coins_unlocks": 1,
+      "shortlink_unlocks": 0,
+      "expected": "COIN_LOCKED"
+    },
+    {
       "name": "exclusive",
       "id": 9003,
       "chapter_number": "3",

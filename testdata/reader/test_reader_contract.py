@@ -332,8 +332,8 @@ def test_source_uses_deferred_media_and_protected_tile_reconstruction() -> None:
     assert 'compileOnly("org.jsoup:jsoup:1.16.2")' not in build
     assert "compileSdk = 35" in build
     assert "targetSdk = 35" in build
-    assert "versionCode = 5" in build
-    assert 'versionName = "1.4"' in build
+    assert "versionCode = 6" in build
+    assert 'versionName = "1.5"' in build
     assert 'sdkmanager" "platforms;android-35"' in ci
     assert "useLegacyPackaging = true" in build
     assert "extractNativeLibs" not in MANIFEST.read_text()

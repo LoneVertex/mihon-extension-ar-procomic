@@ -69,6 +69,7 @@ class ProComicImageInterceptor(
                 .url("https://$host/chapter-map-proxy-plan/${payload.chapterId}")
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
+                .header("Referer", "https://$host/")
                 .post(body)
                 .build()
 
@@ -144,6 +145,7 @@ class ProComicImageInterceptor(
                 val tileRequest = pageRequest.newBuilder()
                     .url(pieceUrl)
                     .header("Accept", "image/avif,image/webp,image/*,*/*;q=0.8")
+                    .header("Referer", "https://procomic.pro/")
                     .build()
                 tileClient.newCall(tileRequest).execute().use { tileResponse ->
                     if (!tileResponse.isSuccessful) {

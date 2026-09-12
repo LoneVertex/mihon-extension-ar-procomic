@@ -135,7 +135,7 @@ Dependabot PRs #1–#9 are open and target `main`. They remain available for sep
 
 ## Tags and releases
 
-The repository has no Git tags and no GitHub Releases. Creating a version tag or publishing a release remains a separate approval-gated operation. CI APK artifacts and checksums are recorded in the current validation evidence and are not treated as a GitHub Release.
+Official release [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) is published with signed APK asset `procomic-release-v1.5.apk` (SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`). Cryptographically signed git tags `v1.5.0` and `v1.5` point to commit `7c3eb49` on `main`.
 
 ## Review and release path
 

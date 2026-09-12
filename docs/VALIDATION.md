@@ -14,7 +14,7 @@
 
 **Software-gate status:** PASS for the current implementation and CI evidence.
 
-**Release status:** Signed release APK generated at `~/Downloads/procomic-release-v1.5.apk` (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`). Physical device smoke testing pending before tag and GitHub Release creation.
+**Release status:** Official v1.5.0 GitHub Release published at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) with signed release APK asset (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
 
 ## Software Gate
 
@@ -150,4 +150,4 @@ All four fix branches have been merged into `main` and CI is green:
 
 Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.5.apk`.
 
-Pending: physical Android device smoke test; version tag and GitHub Release.
+Status: Official v1.5.0 GitHub Release published with signed release APK asset.

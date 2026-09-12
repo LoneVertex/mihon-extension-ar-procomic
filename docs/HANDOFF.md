@@ -16,7 +16,7 @@
 
 **Software status:** PASS. All 13 deterministic suites, protected-path checks, `git diff --check`, clean debug/release builds, and CI workflow run `34670639461` pass. Direct Android-device rendering remains not verified in this sandbox.
 
-**Release status:** Signed release APK generated at `~/Downloads/procomic-release-v1.5.apk` (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`). Physical device validation pending before GitHub Release tag.
+**Release status:** Official v1.5.0 GitHub Release published at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) with signed release APK asset (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
 
 ## Roles
 
@@ -110,6 +110,6 @@ Authentication and full paid access are not implemented. `RESTRICTED_AUTH_REQUIR
 
 ## Current Status
 
-v1.5 release resolves the HTTP 403 "Check website in WebView" loop, Cloudflare clearance token mismatch, unroutable CDN direct deferred chapter URLs, and coin-locked chapter gating. All 13 test suites pass. Signed APK generated at `~/Downloads/procomic-release-v1.5.apk` (`versionCode=6`, `versionName=1.5`, v2+v3, RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
+v1.5 release resolves the HTTP 403 "Check website in WebView" loop, Cloudflare clearance token mismatch, unroutable CDN direct deferred chapter URLs, and coin-locked chapter gating. All 13 test suites pass. Signed APK generated and published at [`v1.5.0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/releases/tag/v1.5.0) (`versionCode=6`, `versionName=1.5`, v2+v3, RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`).
 
-Pending: physical Android device smoke test; GitHub Release tag.
+Status: Official v1.5.0 GitHub Release published.

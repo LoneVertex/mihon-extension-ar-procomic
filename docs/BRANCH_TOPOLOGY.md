@@ -2,8 +2,8 @@
 
 > [!NOTE]
 > **Historical document.** This file recorded the branch topology and stacked PR development history.
-> Current state: All remediation branches (PR #10, #11, #12, #13) and release v1.4 commit `6905482` are merged and pushed on `main`.
-> Only `main` branch exists. All PRs are closed. Dependabot PR limit is 0.
+> Current state: All remediation branches (PR #10, #11, #12, #13), release v1.4 commit `6905482`, and release v1.5 commit `5d2c0a5` are merged and pushed on `main`.
+> Only `main` branch exists both locally and remotely. All PRs are closed. Dependabot PR limit is 0.
 
 
 **Status:** CURRENT

@@ -4,13 +4,13 @@
 
 **Authoritative implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13)
 
-**Implementation baseline HEAD:** [`690548282b85f60dd87f15e63452e1f78e944da0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
+**Implementation baseline HEAD:** [`5d2c0a5b6fef13388ddea669771ef9638d395e93`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Documentation snapshot parent HEAD:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
+**Documentation snapshot parent HEAD:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Focused Reader source commit:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
+**Focused Reader source commit:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commit [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0) on `main`
+**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commit [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93) on `main`
 
 **Runtime and release status:** The lifecycle-status, protected-Reader fixes, dual-domain reader engine, Cloudflare clearance compatibility, and coin-locked chapter gating pass the 13-suite deterministic gate and clean builds. The signed release APK (`~/Downloads/procomic-release-v1.5.apk`, RSA 4096, v2+v3) is generated with `versionCode=6` and `versionName=1.5`.
 

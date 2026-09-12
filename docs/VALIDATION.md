@@ -4,21 +4,21 @@
 
 **Implementation branch:** `main` (all four fix branches merged: #10, #11, #12, #13)
 
-**Implementation baseline HEAD:** [`690548282b85f60dd87f15e63452e1f78e944da0`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
+**Implementation baseline HEAD:** [`5d2c0a5b6fef13388ddea669771ef9638d395e93`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Documentation snapshot parent HEAD:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
+**Documentation snapshot parent HEAD:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Focused Reader source commit:** [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0)
+**Focused Reader source commit:** [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93)
 
-**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commit [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0) on `main`
+**Review path:** All four fix branches (#10, #11, #12, #13) merged into `main`; direct commits [`6905482`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/690548282b85f60dd87f15e63452e1f78e944da0) and [`5d2c0a5`](https://github.com/LoneVertex/mihon-extension-ar-procomic/commit/5d2c0a5b6fef13388ddea669771ef9638d395e93) on `main`
 
 **Software-gate status:** PASS for the current implementation and CI evidence.
 
-**Release status:** Signed release APK generated at `~/Downloads/procomic-release-v1.4.apk`. Physical device smoke testing pending before tag and GitHub Release creation.
+**Release status:** Signed release APK generated at `~/Downloads/procomic-release-v1.5.apk` (`versionCode=6`, `versionName=1.5`, v2+v3 RSA 4096, SHA-256 `5fe6feb1bc0f3094d7847028e96c324b8b483e44d7872750cddbef594e9174ae`). Physical device smoke testing pending before tag and GitHub Release creation.
 
 ## Software Gate
 
-The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. All fix branches (#10, #11, #12, #13) and direct commit `6905482` are integrated into `main`.
+The audit-remediation gate passed all 13 suites, `git diff --check`, protected-path checks, full lint, and clean debug/release builds. All fix branches (#10, #11, #12, #13) and direct commits `6905482` and `5d2c0a5` are integrated into `main`.
 
 | Gate | Result | Evidence |
 |---|---|---|
@@ -69,6 +69,7 @@ The current audit-remediation CI history is:
 
 | Run | Purpose | Commit | Result |
 |---:|---|---|---|
+| [34670639461](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34670639461) | Push validation on main (v1.5, HTTP 403 / WebView fix, 13 suites) | `5d2c0a5` | ✅ PASS |
 | [34592320462](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/34592320462) | Push validation on main (v1.4, dual delivery failover, 13 suites) | `6905482` | ✅ PASS |
 | [33924579769](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/33924579769) | Post-merge on main | `dfef381` | ✅ PASS |
 | [33924198674](https://github.com/LoneVertex/mihon-extension-ar-procomic/actions/runs/33924198674) | PR #13 push run | `dfef381` | ✅ PASS |
@@ -120,7 +121,7 @@ The current deterministic fixtures cover the final reported failure sequence:
 | Extension icon was incorrect | Official `procomic.net/favicon.svg` is rasterized across the Android density resources |
 | Shared response reads could fail at EOF | Bounded at-most body reads distinguish truncated/empty/oversize responses |
 
-Reported manual Android testing informed these fixes. Live public probing confirmed the exact series-387/chapter-19273 deferred-media/proxy-plan route returns two protected maps and nine valid AVIF tiles with YUV444 characteristics, while the sandbox has no connected Android device or emulator. The software remediation and APK build are verified, but direct Mihon rendering on the user’s Android 16 arm64 device remains **NOT VERIFIED** until version 1.4 is installed and tested. The repository does not claim that every Android version, device, authenticated session, premium chapter, or server-side access state has been exhaustively tested.
+Reported manual Android testing informed these fixes. Live public probing confirmed the exact series-387/chapter-19273 deferred-media/proxy-plan route returns two protected maps and nine valid AVIF tiles with YUV444 characteristics, while the sandbox has no connected Android device or emulator. The software remediation and APK build are verified, but direct Mihon rendering on the user’s Android 16 arm64 device remains **NOT VERIFIED** until version 1.5 is installed and tested. The repository does not claim that every Android version, device, authenticated session, premium chapter, or server-side access state has been exhaustively tested.
 
 ## Runtime and Security Boundaries
 
@@ -132,7 +133,7 @@ The Reader validation evidence must distinguish the chapter route, Mihon Reader 
 
 ## Current Limitations
 
-Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes. Signed APK: `~/Downloads/procomic-release-v1.4.apk`.
+Authenticated restricted-content behavior is not provided or validated. Full paid access is outside the implementation scope. Server-side public-image rules can still limit availability for particular chapters. Novel content is excluded because Mihon is a comic reader. No WebView fallback is present. The audit-remediation software gate is PASS; the global Mihon viewer-gap classification is VERIFIED at the contract/image-boundary level, while exact Android-device rendering remains PARTIAL/NOT VERIFIED until physical-device confirmation, and authenticated/premium behavior remains outside scope. The universal native decoder footprint is measured and explained, but no ABI split was applied without Mihon distribution evidence. The release APK is signed with the project keystore (RSA 4096, alias `procomic`, valid to 2051) using v2+v3 signature schemes. Signed APK: `~/Downloads/procomic-release-v1.5.apk`.
 
 ## Milestone Progression — Current State
 
@@ -145,7 +146,8 @@ All four fix branches have been merged into `main` and CI is green:
 | [#12](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/12) | `fix/adversarial-hardening` | ✅ Merged |
 | [#13](https://github.com/LoneVertex/mihon-extension-ar-procomic/pull/13) | `fix/site-contract-sync` | ✅ Merged — live audit: CDN deferred image allowlist, legacy thumbnail hosts, preference lazy init, hardening applied |
 | Direct commit | `main` (`6905482`) | ✅ Pushed — dual-domain reader failover (`.pro`/`.net`), comics-only latest updates feed, popular cover images, workflow_dispatch |
+| Direct commit | `main` (`5d2c0a5`) | ✅ Pushed — v1.5: HTTP 403 / WebView loop fix, delegate User-Agent, filter broken CDN chapter URLs, coin-locked chapter gating |
 
-Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.4.apk`.
+Dependabot PRs #1–#9 closed; `open-pull-requests-limit: 0` committed. Only `main` branch remains. Keystore generated at `~/.android/procomic.keystore` (RSA 4096, alias `procomic`, valid to 2051). Signed APK at `~/Downloads/procomic-release-v1.5.apk`.
 
 Pending: physical Android device smoke test; version tag and GitHub Release.
